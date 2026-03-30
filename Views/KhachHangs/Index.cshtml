@@ -1,0 +1,356 @@
+﻿@*
+Folder: Views/KhachHangs
+File path: Views/KhachHangs/Index.cshtml
+File name: Index.cshtml
+Label: V-KhachHang-Index (A/B/C)
+Mô tả:
+- A: FIX lề ngoài ổn định khi zoom (page-shell + outer-gutter clamp)
+- B: Đồng bộ UI kiểu Voucher (pill filter + KPI + table modern)
+- C: Thao tác chuyển dropdown (gọn, đúng admin style)
+*@
+
+@model IEnumerable<Tour_2040.Models.KhachHang>
+
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+    var keyword = ViewData["Keyword"] as string ?? "";
+    var nhomKhach = ViewData["NhomKhach"] as string ?? "All";
+
+    var totalClients = Model?.Count() ?? 0;
+    var newClientsToday = Model?.Count(x => x.NgayTao.Date == DateTime.Now.Date) ?? 0;
+    var vipClients = Model?.Count(x => x.NhomKhach == "Vàng" || x.NhomKhach == "Kim Cương") ?? 0;
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-thin: 1px solid rgba(226,232,240,.92);
+        --shadow-soft: 0 12px 28px rgba(2,6,23,.07);
+        --primary-blue: #3a86ff;
+        --outer-gutter: clamp(16px, 4vw, 72px);
+        --radius-lg: 18px;
+    }
+
+    body {
+        background: var(--bg-system) !important;
+        font-family: Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+        color: var(--text-main);
+    }
+
+    .page-shell {
+        width: 100%;
+        padding: 12px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    .pill-filter {
+        background: #fff;
+        border: var(--border-thin);
+        border-radius: 999px;
+        padding: 8px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        box-shadow: 0 10px 22px rgba(2,6,23,.05);
+    }
+
+        .pill-filter:focus-within {
+            border-color: rgba(58,134,255,.35);
+        }
+
+    .search-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: .88rem;
+        color: var(--text-main);
+        min-width: 230px;
+    }
+
+    .select-pill {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: .86rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        white-space: nowrap;
+    }
+
+    .kpi-card {
+        border: var(--border-thin);
+        padding: 1.15rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #fff;
+        box-shadow: 0 8px 20px rgba(2,6,23,.05);
+        transition: transform .18s ease, border-color .18s ease;
+        height: 100%;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(58,134,255,.35);
+        }
+
+    .icon-shape {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(248,250,252,.95);
+        border: var(--border-thin);
+        font-size: 1.2rem;
+    }
+
+    .table-container {
+        border: var(--border-thin);
+        border-radius: var(--radius-lg);
+        background: #fff;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: #fcfcff;
+            font-size: .7rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            letter-spacing: .5px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table-modern td {
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            font-size: .92rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover td {
+            background: #f9fafb;
+        }
+
+    .avatar-xs {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: .9rem;
+        border: var(--border-thin);
+        background: rgba(248,250,252,.95);
+        color: var(--primary-blue);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 900;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+
+    /* dropdown */
+    .dropdown-glass {
+        border-radius: 16px;
+        border: var(--border-thin);
+        box-shadow: 0 18px 40px rgba(2,6,23,.12);
+        padding: 8px;
+        min-width: 210px;
+        background: rgba(255,255,255,.96);
+        backdrop-filter: blur(8px);
+    }
+
+        .dropdown-glass .dropdown-item {
+            border-radius: 12px;
+            font-weight: 900;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .dropdown-glass .dropdown-item i {
+                width: 18px;
+                text-align: center;
+            }
+
+            .dropdown-glass .dropdown-item:hover {
+                background: rgba(58,134,255,.08);
+            }
+</style>
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <div>
+                <h4 class="fw-bold mb-1">Quản lý khách hàng</h4>
+                <p class="text-muted small mb-0">Theo dõi hồ sơ thành viên và hạng mức khách hàng</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <form asp-action="Index" method="get" class="pill-filter">
+                    <i class="bi bi-search text-muted"></i>
+                    <input type="text" name="keyword" class="search-input" placeholder="Tên, SĐT, Email..." value="@keyword" />
+                    <div class="vr mx-2" style="height: 15px; opacity: 0.2;"></div>
+                    <select name="nhomKhach" class="select-pill" onchange="this.form.submit()">
+                        <option value="All" selected="@(nhomKhach == "All")">Tất cả hạng</option>
+                        <option value="Thường" selected="@(nhomKhach == "Thường")">Thành viên</option>
+                        <option value="Bạc" selected="@(nhomKhach == "Bạc")">Hạng Bạc</option>
+                        <option value="Vàng" selected="@(nhomKhach == "Vàng")">Hạng Vàng</option>
+                        <option value="Kim Cương" selected="@(nhomKhach == "Kim Cương")">Kim Cương</option>
+                    </select>
+                </form>
+
+                <a asp-action="Create" class="btn btn-primary btn-sm btn-pill px-3">
+                    <i class="bi bi-person-plus-fill"></i> Thêm mới
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="icon-shape text-primary"><i class="bi bi-people"></i></div>
+                    <div>
+                        <div class="small text-muted fw-bold text-uppercase" style="font-size:.68rem;">Tổng khách hàng</div>
+                        <div class="h5 fw-bold mb-0">@totalClients</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="icon-shape text-success"><i class="bi bi-person-plus"></i></div>
+                    <div>
+                        <div class="small text-muted fw-bold text-uppercase" style="font-size:.68rem;">Khách mới hôm nay</div>
+                        <div class="h5 fw-bold mb-0">@newClientsToday</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="icon-shape text-warning"><i class="bi bi-gem"></i></div>
+                    <div>
+                        <div class="small text-muted fw-bold text-uppercase" style="font-size:.68rem;">Khách VIP (Vàng+)</div>
+                        <div class="h5 fw-bold mb-0">@vipClients</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Thông tin khách hàng</th>
+                            <th>Liên hệ</th>
+                            <th>Hạng thành viên</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                string badgeClass = "bg-light text-dark border-secondary-subtle";
+                                if (item.NhomKhach == "Kim Cương") badgeClass = "bg-info bg-opacity-10 text-info border-info-subtle";
+                                else if (item.NhomKhach == "Vàng") badgeClass = "bg-warning bg-opacity-10 text-warning border-warning-subtle";
+                                else if (item.NhomKhach == "Bạc") badgeClass = "bg-secondary bg-opacity-10 text-secondary border-secondary-subtle";
+
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-xs">
+                                                @((item.HoTen?.Substring(0, 1) ?? "K").ToUpper())
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark">@item.HoTen</div>
+                                                <div class="text-muted font-monospace" style="font-size: 0.72rem;">#@item.MaKhachHang</div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="small fw-semibold text-dark"><i class="bi bi-envelope me-1 text-muted"></i>@item.Email</span>
+                                            <span class="small text-muted"><i class="bi bi-telephone me-1"></i>@item.SoDienThoai</span>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="status-badge @badgeClass">@item.NhomKhach</span>
+                                    </td>
+
+                                    <td class="text-end pe-4">
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-pill dropdown-toggle px-3 py-2"
+                                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i> Thao tác
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end dropdown-glass">
+                                                <li>
+                                                    <a asp-action="Details" asp-route-id="@item.MaKhachHang" class="dropdown-item">
+                                                        <i class="bi bi-eye"></i> Chi tiết
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-person-x fs-1 d-block mb-3 opacity-25"></i>
+                                    <p class="mb-0">Không tìm thấy dữ liệu khách hàng.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

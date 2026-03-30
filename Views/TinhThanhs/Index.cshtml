@@ -1,0 +1,195 @@
+﻿@model IEnumerable<Tour_2040.Models.TinhThanh>
+
+@{
+    ViewData["Title"] = "Quản lý Tỉnh/Thành";
+    var currentKeyword = ViewData["CurrentKeyword"] as string ?? "";
+    var total = Model.Count();
+}
+
+<style>
+    :root {
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .glass-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    .kpi-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.03);
+        transition: transform 0.3s ease;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+    /* Style cho bảng */
+    .table-elegant thead th {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #6b7280;
+        font-weight: 600;
+        padding: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .table-elegant tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: #374151;
+        font-weight: 500;
+    }
+
+    .icon-box {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    /* Tùy chỉnh nút tìm kiếm đẹp hơn */
+    .search-btn:hover {
+        background-color: var(--primary);
+        color: white !important;
+        border-color: var(--primary) !important;
+    }
+</style>
+
+<div class="container-fluid py-4 px-4 animate__animated animate__fadeIn">
+
+    <div class="card glass-bar rounded-4 mb-4 p-3 sticky-top" style="top: 10px; z-index: 99;">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                    <i class="bi bi-building fs-5"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">Tỉnh / Thành phố</h4>
+                    <small class="text-muted">Danh mục hành chính cấp 1</small>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <form asp-action="Index" method="get" class="d-flex gap-2">
+                    <div class="input-group rounded-pill border bg-white shadow-sm overflow-hidden p-1" style="width: 350px;">
+                        <input type="text" name="keyword" class="form-control border-0 shadow-none ps-3"
+                               placeholder="Nhập tên hoặc mã tỉnh..." value="@currentKeyword">
+
+                        @if (!string.IsNullOrEmpty(currentKeyword))
+                        {
+                            <a asp-action="Index" class="btn btn-white text-danger border-0 d-flex align-items-center" title="Xóa lọc">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        }
+
+                        <button type="submit" class="btn btn-light rounded-pill px-3 fw-bold text-primary search-btn transition-all">
+                            <i class="bi bi-search me-1"></i> Tìm
+                        </button>
+                    </div>
+                </form>
+
+                <div class="vr mx-1 text-muted h-50 align-self-center d-none d-md-block"></div>
+
+                <a asp-action="Create" class="btn btn-dark rounded-pill px-4 py-2 fw-medium shadow-sm d-flex align-items-center gap-2">
+                    <i class="bi bi-plus-lg"></i> <span class="d-none d-md-inline">Thêm mới</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card p-3 d-flex align-items-center gap-3">
+                <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="bi bi-map-fill"></i></div>
+                <div>
+                    <h4 class="fw-bold mb-0">@total</h4>
+                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Tổng Tỉnh/Thành</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover table-elegant mb-0 w-100">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Mã Hành Chính</th>
+                        <th>Tên Tỉnh / Thành</th>
+                        <th>Quản lý trực thuộc</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <div class="mb-3"><i class="bi bi-search display-4 text-muted opacity-25"></i></div>
+                                <p class="text-muted fw-medium mb-0">Không tìm thấy kết quả phù hợp.</p>
+                                @if (!string.IsNullOrEmpty(currentKeyword))
+                                {
+                                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary mt-2">Xóa bộ lọc</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="icon-box bg-light text-primary border">
+                                            <i class="bi bi-geo-alt"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark font-monospace">@item.MaTinhThanh</div>
+                                            <div class="small text-muted">ID Hệ thống</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark fs-6">@item.TenTinh</span>
+                                </td>
+                                <td>
+                                    <a asp-controller="XaPhuongs" asp-action="Index" asp-route-tinhThanhId="@item.MaTinhThanh"
+                                       class="btn btn-outline-primary btn-sm rounded-pill px-3 border-opacity-25 bg-primary bg-opacity-10 text-primary fw-bold">
+                                        <i class="bi bi-diagram-3 me-1"></i> Quản lý Xã/Phường
+                                    </a>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.MaTinhThanh" class="btn btn-light btn-sm text-primary rounded-start" title="Sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.MaTinhThanh" class="btn btn-light btn-sm text-danger rounded-end" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

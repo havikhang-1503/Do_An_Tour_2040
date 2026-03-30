@@ -1,0 +1,265 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<Tour_2040.Models.ApplicationUser>
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Quản lý thành viên";
+}
+
+<style>
+    :root {
+        --primary-soft: #eef2ff;
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8fafc;
+    }
+
+    /* Glass Effect Card */
+    .card-glass {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    /* Table Styles */
+    .table-custom thead th {
+        background-color: #f1f5f9;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+    }
+
+    .table-custom tbody td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table-custom tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    /* Avatar Initials */
+    .avatar-initial {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: white;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+    }
+
+    .avatar-img {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        object-fit: cover;
+    }
+
+    /* Status Badge */
+    .badge-soft {
+        padding: 0.5em 1em;
+        border-radius: 50rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .badge-soft-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-soft-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-soft-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-soft-primary {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+    .btn-action-edit {
+        background: #f0f9ff;
+        color: #0284c7;
+    }
+
+        .btn-action-edit:hover {
+            background: #0284c7;
+            color: white;
+        }
+
+    .btn-action-lock {
+        background: #fff1f2;
+        color: #e11d48;
+    }
+
+        .btn-action-lock:hover {
+            background: #e11d48;
+            color: white;
+        }
+
+    .btn-action-unlock {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+        .btn-action-unlock:hover {
+            background: #059669;
+            color: white;
+        }
+</style>
+
+<div class="container py-5 animate__animated animate__fadeIn">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Quản lý <span class="text-primary">Thành Viên</span></h2>
+            <p class="text-muted mb-0">Theo dõi, phân quyền và kiểm soát truy cập hệ thống.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white border" style="max-width: 300px;">
+                <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-0 shadow-none ps-1" placeholder="Tìm thành viên...">
+            </div>
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="card-glass">
+        <div class="table-responsive">
+            <table class="table table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Thành viên</th>
+                        <th>Thông tin liên hệ</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        var isLocked = user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now;
+                        var roles = await UserManager.GetRolesAsync(user);
+                        var roleName = roles.FirstOrDefault() ?? "Member";
+
+                        var badgeClass = roleName switch
+                        {
+                            "Admin" => "badge-soft-danger",
+                            "Staff" => "badge-soft-warning",
+                            _ => "badge-soft-primary"
+                        };
+
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                                    {
+                                        <img src="@user.ProfilePictureUrl" class="avatar-img shadow-sm" alt="Avatar" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-initial shadow-sm">
+                                            @(user.UserName?.Substring(0, 1).ToUpper() ?? "U")
+                                        </div>
+                                    }
+                                    <div>
+                                        <div class="fw-bold text-dark">@(user.HoTen ?? "Chưa cập nhật")</div>
+                                        <div class="small text-muted">@user.UserName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="small text-dark"><i class="bi bi-envelope-at me-2 text-primary opacity-75"></i>@user.Email</div>
+                                    <div class="small text-muted"><i class="bi bi-phone me-2 text-primary opacity-75"></i>@(user.PhoneNumber ?? "---")</div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-soft @badgeClass">@roleName</span>
+                            </td>
+                            <td>
+                                @if (isLocked)
+                                {
+                                    <span class="badge badge-soft badge-soft-danger"><i class="bi bi-lock-fill me-1"></i>Đang khóa</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-soft badge-soft-success"><i class="bi bi-check-circle-fill me-1"></i>Hoạt động</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-2">
+                                    @if (roleName != "Admin")
+                                    {
+                                        <a asp-action="ToggleStatus" asp-route-id="@user.Id"
+                                           class="btn-action @(isLocked ? "btn-action-unlock" : "btn-action-lock")"
+                                           title="@(isLocked ? "Mở khóa tài khoản" : "Khóa tài khoản")">
+                                            <i class="bi @(isLocked ? "bi-unlock-fill" : "bi-lock-fill")"></i>
+                                        </a>
+                                    }
+                                    <button class="btn-action btn-action-edit" title="Chỉnh sửa thông tin">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-3 border-top d-flex justify-content-between align-items-center bg-light bg-opacity-50">
+            <small class="text-muted">Hiển thị @Model.Count() thành viên</small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled"><a class="page-link border-0 bg-transparent" href="#"><i class="bi bi-chevron-left"></i></a></li>
+                    <li class="page-item active"><a class="page-link border-0 rounded-3 bg-primary text-white shadow-sm" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link border-0 bg-transparent text-muted" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link border-0 bg-transparent text-muted" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link border-0 bg-transparent" href="#"><i class="bi bi-chevron-right"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>

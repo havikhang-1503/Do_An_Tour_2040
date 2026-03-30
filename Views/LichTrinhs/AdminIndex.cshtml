@@ -1,0 +1,373 @@
+﻿@*
+   Folder: Views/LichTrinhs
+   File path: Views/LichTrinhs/AdminIndex.cshtml
+   File name: AdminIndex.cshtml
+   Label: V-LichTrinh-AdminIndex (A/B/C)
+   Mô tả:
+   - A: FIX lề ngoài ổn định khi zoom (page-shell + outer-gutter clamp), bỏ container-fluid px-lg-5
+   - B: Kéo “thanh lọc” gần header hơn + spacing gọn hơn
+   - C: Giữ nguyên route ExportCsv/Dashboard + query params, không xóa chức năng
+*@
+
+@model IEnumerable<Tour_2040.Models.LichTrinh>
+
+@{
+    ViewData["Title"] = "Quản lý lịch trình";
+    var keyword = ViewData["Keyword"]?.ToString() ?? "";
+    var status = ViewData["Status"]?.ToString() ?? "";
+    var tourId = ViewData["TourId"]?.ToString() ?? "";
+    var fromDate = ViewData["FromDate"]?.ToString() ?? "";
+    var toDate = ViewData["ToDate"]?.ToString() ?? "";
+    var statuses = ViewData["AllowedStatuses"] as string[] ?? Array.Empty<string>();
+}
+
+<style>
+    :root {
+        /* nền + text */
+        --bg: #F8F8FF;
+        --text: #0f172a;
+        --muted: #64748b;
+        /* glass */
+        --card: rgba(255,255,255,0.86);
+        --border: 1px solid rgba(226,232,240,0.95);
+        --shadow: 0 12px 30px rgba(2,6,23,.06);
+        /* màu nút theo quy ước dự án */
+        --blue: #3a86ff; /* xác nhận */
+        --green: #22c55e; /* thành công */
+        --red: #ef4444; /* nguy hiểm */
+        --yellow: #f59e0b; /* quay lại */
+        /* FIX: lề ngoài ổn định khi zoom */
+        --outer-gutter: clamp(16px, 4vw, 72px);
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+        font-family: Inter,system-ui;
+    }
+
+    /* FIX: wrapper thay cho container-fluid px-lg-5 */
+    .page-shell {
+        width: 100%;
+        padding: 12px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    .card-glass {
+        background: var(--card);
+        border: var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Buttons pill */
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        white-space: nowrap;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+    }
+
+        .btn-pill:active {
+            transform: translateY(1px);
+        }
+
+    /* đúng quy ước màu */
+    .btn-confirm {
+        background: rgba(58,134,255,0.14);
+        border-color: rgba(58,134,255,0.35);
+        color: #0b2a66 !important;
+    }
+
+        .btn-confirm:hover {
+            background: rgba(58,134,255,0.20);
+            box-shadow: 0 12px 20px rgba(58,134,255,0.16);
+        }
+
+    .btn-successx {
+        background: rgba(34,197,94,0.14);
+        border-color: rgba(34,197,94,0.35);
+        color: #0a3a20 !important;
+    }
+
+        .btn-successx:hover {
+            background: rgba(34,197,94,0.20);
+            box-shadow: 0 12px 20px rgba(34,197,94,0.14);
+        }
+
+    .btn-dangerx {
+        background: rgba(239,68,68,0.12);
+        border-color: rgba(239,68,68,0.35);
+        color: #5b0b0b !important;
+    }
+
+        .btn-dangerx:hover {
+            background: rgba(239,68,68,0.18);
+            box-shadow: 0 12px 20px rgba(239,68,68,0.12);
+        }
+
+    .btn-back {
+        background: rgba(245,158,11,0.16);
+        border-color: rgba(245,158,11,0.35);
+        color: #5a3a07 !important;
+    }
+
+        .btn-back:hover {
+            background: rgba(245,158,11,0.22);
+            box-shadow: 0 12px 20px rgba(245,158,11,0.12);
+        }
+
+    .form-control, .form-select {
+        border-radius: 14px;
+        padding: .65rem .9rem;
+    }
+
+    .form-label {
+        font-weight: 900;
+        color: #334155;
+        font-size: .88rem;
+    }
+
+    /* FIX: khoảng cách gọn hơn */
+    .head-row {
+        margin-bottom: 10px;
+    }
+    /* trước mb-3 hơi xa */
+    .filter-card {
+        margin-bottom: 12px;
+        padding: 14px 14px;
+    }
+ 
+    @@media (min-width: 768px) {
+        .filter-card {
+            padding: 16px 16px;
+        }
+    }
+
+    .table-wrap {
+        overflow: auto;
+        border-radius: 20px;
+        border: var(--border);
+        background: #fff;
+        box-shadow: var(--shadow);
+    }
+
+    table.table {
+        margin: 0;
+    }
+
+    .table thead th {
+        background: #f1f5f9;
+        border-bottom: var(--border);
+        font-size: .85rem;
+        color: #334155;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .table tbody td {
+        border-top: 1px solid #eef2f7;
+        vertical-align: middle;
+    }
+
+    .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .badge-status {
+        padding: .35rem .7rem;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: .82rem;
+        border: 1px solid rgba(15,23,42,.08);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: #f8fafc;
+        color: #0f172a;
+    }
+
+    .st-pending {
+        background: #fff7ed;
+        color: #9a3412;
+    }
+
+    .st-confirmed {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .st-progress {
+        background: #ecfeff;
+        color: #0e7490;
+    }
+
+    .st-completed {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .st-canceled {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .sub {
+        color: var(--muted);
+        font-size: .92rem;
+    }
+</style>
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 head-row">
+            <div>
+                <div class="text-muted small mb-1">
+                    <i class="bi bi-diagram-3"></i> Lịch trình / <b class="text-dark">Quản lý</b>
+                </div>
+                <h3 class="fw-bold mb-1">Quản lý tất cả lịch trình</h3>
+                <div class="sub">Admin/Staff xem tất cả. Người dùng thường chỉ nhìn lịch trình của họ.</div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-pill btn-confirm" asp-action="Dashboard">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+
+                <a class="btn btn-pill btn-successx"
+                   asp-action="ExportCsv"
+                   asp-route-keyword="@keyword"
+                   asp-route-status="@status"
+                   asp-route-tourId="@tourId"
+                   asp-route-fromDate="@fromDate"
+                   asp-route-toDate="@toDate">
+                    <i class="bi bi-filetype-csv"></i> Export CSV
+                </a>
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success rounded-4">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger rounded-4">@TempData["Error"]</div>
+        }
+
+        <form method="get" class="card-glass filter-card">
+            <div class="row g-2 align-items-end">
+                <div class="col-lg-4">
+                    <label class="form-label">Từ khóa</label>
+                    <input class="form-control" name="keyword" value="@keyword" placeholder="Mã lịch trình / tên tour / email / username..." />
+                </div>
+
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" name="status">
+                        <option value="">-- Tất cả --</option>
+                        @foreach (var s in statuses)
+                        {
+                            <option value="@s" selected="@(s == status)">@s</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">TourId</label>
+                    <input class="form-control" name="tourId" value="@tourId" placeholder="VD: T001" />
+                </div>
+
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Từ ngày</label>
+                    <input class="form-control" type="date" name="fromDate" value="@fromDate" />
+                </div>
+
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Đến ngày</label>
+                    <input class="form-control" type="date" name="toDate" value="@toDate" />
+                </div>
+
+                <div class="col-12 d-flex gap-2 mt-2 flex-wrap">
+                    <button class="btn btn-pill btn-confirm" type="submit">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
+                    <a class="btn btn-pill btn-back" asp-action="AdminIndex">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-wrap">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="min-width:140px">Mã</th>
+                        <th style="min-width:220px">Tour</th>
+                        <th style="min-width:220px">Khách</th>
+                        <th style="min-width:170px">Ngày đặt</th>
+                        <th class="text-end" style="min-width:140px">Tổng tiền</th>
+                        <th style="min-width:160px">Trạng thái</th>
+                        <th class="text-end" style="min-width:120px">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            var st = (item.TrangThai ?? "").Trim();
+                            var cls = st == "Chờ xác nhận" ? "st-pending"
+                            : st == "Đã xác nhận" ? "st-confirmed"
+                            : st == "Đang khởi hành" ? "st-progress"
+                            : st == "Hoàn thành" ? "st-completed"
+                            : "st-canceled";
+
+                            <tr>
+                                <td class="fw-bold mono">@item.MaLichTrinh</td>
+                                <td>@(item.Tour?.TenTour ?? item.TourId)</td>
+                                <td>@(item.User?.UserName ?? item.User?.Email ?? item.UserId)</td>
+                                <td>@item.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end fw-bold">@item.TongTien.ToString("N0")</td>
+                                <td>
+                                    <span class="badge-status @cls">
+                                        <i class="bi bi-dot"></i> @item.TrangThai
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-pill btn-confirm btn-sm"
+                                       asp-action="AdminDetails" asp-route-id="@item.MaLichTrinh">
+                                        <i class="bi bi-eye"></i> Xem
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Không có dữ liệu.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

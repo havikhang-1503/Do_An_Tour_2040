@@ -1,0 +1,371 @@
+﻿@*
+   Folder: Views/DichVus
+   File path: Views/DichVus/Edit.cshtml
+   File name: Edit.cshtml
+   Label: V-DichVu-Edit
+   Mô tả: Sửa dịch vụ - dropdown Loại + dropdown Đơn vị tính + cascade địa điểm.
+   FIX(A): Loại dịch vụ = dropdown, tự selected theo Model.
+   FIX(B): Đơn vị tính = dropdown, tự selected theo Model + gợi ý nếu trống.
+   FIX(C): Edit auto chọn lại Tỉnh/Xã/Địa điểm bằng API trace (nhanh, không loop).
+*@
+
+@model Tour_2040.Models.DichVu
+
+@{
+    ViewData["Title"] = "Sửa dịch vụ";
+    var currentMaDiaDiem = Model.MaDiaDiem ?? "";
+}
+
+<style>
+    :root {
+        --bg: #F8F8FF;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: 1px solid #e2e8f0;
+        --shadow: 0 12px 30px rgba(2,6,23,.06);
+        --green: #16a34a;
+        --yellow: #f59e0b;
+        --blue: #2563eb;
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+        font-family: Inter,system-ui;
+    }
+
+    .card-glass {
+        background: rgba(255,255,255,.92);
+        border: var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+    }
+
+    .btn-successx {
+        background: linear-gradient(135deg,var(--green),#22c55e);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg,var(--yellow),#fbbf24);
+        border: none;
+        color: #111827;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg,var(--blue),#4f46e5);
+        border: none;
+        color: #fff;
+    }
+
+    .form-control, .form-select {
+        border-radius: 14px;
+        padding: .7rem .9rem;
+    }
+
+    .form-label {
+        font-weight: 900;
+        color: #334155;
+        font-size: .88rem;
+    }
+
+    .hint {
+        color: var(--muted);
+        font-size: .82rem;
+    }
+
+    .mini-note {
+        color: var(--muted);
+        font-size: .78rem;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-3">
+        <div>
+            <div class="text-muted small mb-1"><i class="bi bi-grid"></i> Dịch vụ / <b class="text-dark">Sửa</b></div>
+            <h3 class="fw-bold mb-1">Sửa dịch vụ</h3>
+            <div class="text-muted">Chỉnh loại, đơn vị tính và gắn địa điểm theo Tỉnh → Xã/Phường → Địa điểm.</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" class="btn btn-pill btn-back"><i class="bi bi-arrow-left"></i> Quay lại</a>
+            <a asp-action="Details" asp-route-id="@Model.MaTenDichVu" class="btn btn-pill btn-confirm"><i class="bi bi-eye"></i> Xem</a>
+        </div>
+    </div>
+
+    <div class="card-glass p-3 p-md-4">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <input type="hidden" asp-for="MaTenDichVu" />
+            <input type="hidden" asp-for="MaDichVu" />
+            <input type="hidden" asp-for="HinhAnhUrl" />
+
+            <input asp-for="MaDiaDiem" type="hidden" id="MaDiaDiem" value="@currentMaDiaDiem" />
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label asp-for="TenDichVu" class="form-label"></label>
+                    <input asp-for="TenDichVu" class="form-control" />
+                    <span asp-validation-for="TenDichVu" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="LoaiDichVu" class="form-label"></label>
+                    <select asp-for="LoaiDichVu" class="form-select" id="LoaiDichVu">
+                        <option value="">-- Chọn loại dịch vụ --</option>
+                        <option value="Bảo hiểm">Bảo hiểm</option>
+                        <option value="Hướng dẫn viên">Hướng dẫn viên</option>
+                        <option value="Khác">Khác</option>
+                        <option value="Khách sạn">Khách sạn</option>
+                        <option value="Khu vui chơi">Khu vui chơi</option>
+                        <option value="Nhà hàng">Nhà hàng</option>
+                        <option value="Phương tiện">Phương tiện</option>
+                        <option value="Vé tham quan">Vé tham quan</option>
+                    </select>
+                    <span asp-validation-for="LoaiDichVu" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="TrangThai" class="form-label"></label>
+                    <select asp-for="TrangThai" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                    <span asp-validation-for="TrangThai" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DonGia" class="form-label"></label>
+                    <input asp-for="DonGia" class="form-control" type="number" min="0" step="1000" />
+                    <span asp-validation-for="DonGia" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DonViTinh" class="form-label"></label>
+                    <select asp-for="DonViTinh" class="form-select" id="DonViTinh">
+                        <option value="">-- Chọn đơn vị tính --</option>
+                        <option value="Vé">Vé</option>
+                        <option value="Suất">Suất</option>
+                        <option value="Người">Người</option>
+                        <option value="Chuyến">Chuyến</option>
+                        <option value="Phòng/Đêm">Phòng/Đêm</option>
+                        <option value="Đêm">Đêm</option>
+                        <option value="Ngày">Ngày</option>
+                        <option value="Giờ">Giờ</option>
+                        <option value="Gói">Gói</option>
+                        <option value="Lượt">Lượt</option>
+                        <option value="Km">Km</option>
+                    </select>
+                    <div class="mini-note mt-1">Nếu để trống, chị sẽ gợi ý theo Loại khi em đổi Loại.</div>
+                    <span asp-validation-for="DonViTinh" class="text-danger"></span>
+                </div>
+
+                @* ===== CASCADE ===== *@
+                <div class="col-md-4">
+                    <label class="form-label">Tỉnh thành</label>
+                    <select id="TinhSel" class="form-select">
+                        <option value="">-- Chọn tỉnh thành --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Xã / Phường</label>
+                    <select id="XaSel" class="form-select" disabled>
+                        <option value="">-- Chọn xã/phường --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Địa điểm</label>
+                    <select id="DiaDiemSel" class="form-select" disabled>
+                        <option value="">-- Không gắn địa điểm --</option>
+                    </select>
+                    <span asp-validation-for="MaDiaDiem" class="text-danger"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="DiaChi" class="form-label"></label>
+                    <input asp-for="DiaChi" class="form-control" />
+                    <span asp-validation-for="DiaChi" class="text-danger"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="MoTa" class="form-label"></label>
+                    <textarea asp-for="MoTa" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="MoTa" class="text-danger"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="GhiChu" class="form-label"></label>
+                    <textarea asp-for="GhiChu" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="GhiChu" class="text-danger"></span>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Ảnh dịch vụ (tuỳ chọn)</label>
+                    <input type="file" name="HinhAnhFile" class="form-control" accept="image/*" />
+                    @if (!string.IsNullOrWhiteSpace(Model.HinhAnhUrl))
+                    {
+                        <div class="hint mt-2">
+                            Ảnh hiện tại:
+                            <a href="@Model.HinhAnhUrl" target="_blank" class="text-decoration-none">@Model.HinhAnhUrl</a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-end">
+                <button type="submit" class="btn btn-pill btn-successx px-4">
+                    <i class="bi bi-save"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        async function fetchJson(url) {
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            return await res.json();
+        }
+
+        // ===== Auto gợi ý Đơn vị tính theo Loại =====
+        const loaiSel = document.getElementById("LoaiDichVu");
+        const dvtSel  = document.getElementById("DonViTinh");
+        let dvtTouched = false;
+
+        const recommendDVT = (loai) => {
+            const map = {
+                "Khách sạn": "Phòng/Đêm",
+                "Nhà hàng": "Suất",
+                "Phương tiện": "Chuyến",
+                "Vé tham quan": "Vé",
+                "Khu vui chơi": "Vé",
+                "Bảo hiểm": "Gói",
+                "Hướng dẫn viên": "Ngày",
+                "Khác": ""
+            };
+            return map[loai] || "";
+        };
+
+        dvtSel.addEventListener("change", () => dvtTouched = true);
+        loaiSel.addEventListener("change", () => {
+            if (dvtTouched) return;
+            if (dvtSel.value) return; // có rồi thì không phá
+            const rec = recommendDVT(loaiSel.value);
+            if (rec) dvtSel.value = rec;
+        });
+
+        // ===== Cascade: Tỉnh/Xã/Địa điểm =====
+        const tinhSel = document.getElementById("TinhSel");
+        const xaSel = document.getElementById("XaSel");
+        const ddSel = document.getElementById("DiaDiemSel");
+        const maDiaDiemHidden = document.getElementById("MaDiaDiem");
+
+        function resetXa() {
+            xaSel.innerHTML = `<option value="">-- Chọn xã/phường --</option>`;
+            xaSel.disabled = true;
+        }
+        function resetDiaDiem(clearHidden = false) {
+            ddSel.innerHTML = `<option value="">-- Không gắn địa điểm --</option>`;
+            ddSel.disabled = true;
+            if (clearHidden) maDiaDiemHidden.value = "";
+        }
+
+        async function loadTinh(selected = "") {
+            const list = await fetchJson("/DichVus/GetTinhThanhs");
+            if (!list) return;
+            tinhSel.innerHTML = `<option value="">-- Chọn tỉnh thành --</option>` +
+                list.map(x => `<option value="${x.id}" ${selected && (""+selected) === (""+x.id) ? "selected" : ""}>${x.name}</option>`).join("");
+        }
+
+        async function loadXa(tinhId, selected = "") {
+            resetXa(); resetDiaDiem(true);
+            if (!tinhId) return;
+
+            const list = await fetchJson(`/DichVus/GetXaPhuongsByTinh?maTinh=${encodeURIComponent(tinhId)}`);
+            if (!list) return;
+
+            xaSel.innerHTML = `<option value="">-- Chọn xã/phường --</option>` +
+                list.map(x => `<option value="${x.id}" ${selected && (""+selected) === (""+x.id) ? "selected" : ""}>${x.name}</option>`).join("");
+            xaSel.disabled = false;
+        }
+
+        async function loadDiaDiem(xaId, selected = "") {
+            resetDiaDiem(true);
+            if (!xaId) return;
+
+            const list = await fetchJson(`/DichVus/GetDiaDiemsByXaPhuong?maXa=${encodeURIComponent(xaId)}`);
+            if (!list) return;
+
+            ddSel.innerHTML = `<option value="">-- Không gắn địa điểm --</option>` +
+                list.map(x => `<option value="${x.id}" ${selected && (""+selected) === (""+x.id) ? "selected" : ""}>${x.name}</option>`).join("");
+            ddSel.disabled = false;
+
+            if (selected) maDiaDiemHidden.value = selected;
+        }
+
+        tinhSel.addEventListener("change", async () => {
+            await loadXa(tinhSel.value, "");
+        });
+
+        xaSel.addEventListener("change", async () => {
+            await loadDiaDiem(xaSel.value, "");
+        });
+
+        ddSel.addEventListener("change", () => {
+            maDiaDiemHidden.value = ddSel.value || "";
+        });
+
+        async function autoBindFromMaDiaDiem(maDiaDiem) {
+            await loadTinh("");
+            resetXa();
+            resetDiaDiem(false);
+
+            if (!maDiaDiem) return;
+
+            // ✅ dùng API trace để biết tỉnh/xã nhanh (khỏi loop)
+            const trace = await fetchJson(`/DichVus/GetDiaDiemTrace?maDiaDiem=${encodeURIComponent(maDiaDiem)}`);
+            if (!trace || !trace.ok) {
+                maDiaDiemHidden.value = "";
+                return;
+            }
+
+            await loadTinh(trace.tinhThanhId);
+            await loadXa(trace.tinhThanhId, trace.xaPhuongId);
+            await loadDiaDiem(trace.xaPhuongId, trace.maDiaDiem);
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const currentMaDiaDiem = "@currentMaDiaDiem";
+            await autoBindFromMaDiaDiem(currentMaDiaDiem);
+
+            // nếu Edit thiếu DonViTinh (data cũ), gợi ý theo Loại
+            if (!dvtSel.value) {
+                const rec = recommendDVT(loaiSel.value);
+                if (rec) dvtSel.value = rec;
+            }
+        });
+    </script>
+}

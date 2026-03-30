@@ -1,0 +1,944 @@
+﻿@* 
+Folder: Views/HopDongs
+FilePath: Views/HopDongs/Index.cshtml
+FileName: Index.cshtml
+Method/Class/View: HopDong - Index
+Label: A,B,C
+Desc: 
+A) Chỉnh lại UI ADMIN: header dạng card quản trị + search/clear + chips lọc trạng thái (client-side) + lề ngoài ổn định khi zoom
+B) User giữ style Voucher (glass + pill + chips + KPI)
+C) Không xóa chức năng, giữ Create/Details/PDF/Delete (Delete chỉ Admin)
+*@
+
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<Tour_2040.Models.ApplicationUser> SignInManager
+@inject UserManager<Tour_2040.Models.ApplicationUser> UserManager
+@model IEnumerable<Tour_2040.Models.HopDong>
+
+@{
+    ViewData["Title"] = "Quản lý Hợp đồng";
+
+    var isAdmin = User.IsInRole("Admin");
+    var isStaff = User.IsInRole("Staff");
+    var isManagement = isAdmin || isStaff;
+
+    var list = Model?.ToList() ?? new List<Tour_2040.Models.HopDong>();
+
+    var total = list.Count;
+    var active = list.Count(x => x.TrangThai == "HieuLuc" || x.TrangThai == "Đã ký");
+    var pending = total - active;
+
+    string GetStatusKey(Tour_2040.Models.HopDong hd)
+    {
+        if (hd.TrangThai == "HieuLuc" || hd.TrangThai == "Đã ký") return "active";
+        return "pending";
+    }
+}
+
+<style>
+    :root {
+        --bg-system: #F7F8FF;
+        --card-bg: rgba(255,255,255,0.86);
+        --glass-border: 1px solid rgba(148,163,184,0.35);
+        --shadow-soft: 0 10px 30px rgba(2, 6, 23, 0.08);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-thin: 1px solid rgba(226,232,240,0.9);
+        --primary-blue: #3a86ff; /* confirm */
+        --success-green: #22c55e; /* success */
+        --danger-red: #ef4444; /* danger */
+        --warning-yellow: #f59e0b; /* back */
+
+        --chip-bg: rgba(255,255,255,0.8);
+        --chip-bg-hover: rgba(255,255,255,0.95);
+        /* FIX: lề ngoài ổn định khi zoom */
+        --outer-gutter: clamp(16px, 4vw, 72px);
+    }
+
+    body {
+        background: radial-gradient(1200px 500px at 20% 0%, rgba(58,134,255,0.12), transparent 60%), radial-gradient(900px 420px at 90% 10%, rgba(34,197,94,0.10), transparent 55%), radial-gradient(900px 420px at 70% 100%, rgba(245,158,11,0.12), transparent 55%), var(--bg-system) !important;
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text-main);
+    }
+
+    .page-shell {
+        width: 100%;
+        padding: 12px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    /* ===== shared ===== */
+    .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    /* pill buttons */
+    .btn-pill {
+        border-radius: 999px !important;
+        padding: 10px 14px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none !important;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .btn-pill:active {
+            transform: translateY(1px);
+        }
+
+    .btn-pill-primary {
+        background: rgba(58,134,255,0.12);
+        border-color: rgba(58,134,255,0.35);
+        color: #0b2a66 !important;
+    }
+
+        .btn-pill-primary:hover {
+            background: rgba(58,134,255,0.18);
+            box-shadow: 0 10px 18px rgba(58,134,255,0.14);
+        }
+
+    .btn-pill-danger {
+        background: rgba(239,68,68,0.10);
+        border-color: rgba(239,68,68,0.35);
+        color: #5b0b0b !important;
+    }
+
+        .btn-pill-danger:hover {
+            background: rgba(239,68,68,0.16);
+            box-shadow: 0 10px 18px rgba(239,68,68,0.12);
+        }
+
+    .btn-pill-neutral {
+        background: rgba(100,116,139,0.10);
+        border-color: rgba(100,116,139,0.25);
+        color: var(--text-main) !important;
+    }
+
+        .btn-pill-neutral:hover {
+            background: rgba(100,116,139,0.14);
+        }
+
+    /* ===== chips ===== */
+    .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .chip {
+        border-radius: 999px;
+        padding: 8px 12px;
+        border: var(--glass-border);
+        background: var(--chip-bg);
+        font-weight: 900;
+        font-size: 0.78rem;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: background .15s ease, transform .15s ease, border-color .15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .chip:hover {
+            background: var(--chip-bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .chip.active {
+            border-color: rgba(58,134,255,0.45);
+            background: rgba(58,134,255,0.12);
+            color: #0b2a66;
+        }
+
+        .chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: rgba(100,116,139,0.7);
+        }
+
+        .chip.dot-blue .dot {
+            background: rgba(58,134,255,0.9);
+        }
+
+        .chip.dot-green .dot {
+            background: rgba(34,197,94,0.9);
+        }
+
+        .chip.dot-yellow .dot {
+            background: rgba(245,158,11,0.95);
+        }
+
+    /* ===== status badge ===== */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 900;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+    .badge-green {
+        background: rgba(34,197,94,0.10);
+        border-color: rgba(34,197,94,0.30);
+        color: #14532d;
+    }
+
+        .badge-green .dot {
+            background: rgba(34,197,94,0.9);
+        }
+
+    .badge-yellow {
+        background: rgba(245,158,11,0.12);
+        border-color: rgba(245,158,11,0.30);
+        color: #5a3a07;
+    }
+
+        .badge-yellow .dot {
+            background: rgba(245,158,11,0.95);
+        }
+
+    /* ===== table glass ===== */
+    .table-shell {
+        margin-top: 12px;
+        background: rgba(255,255,255,0.92);
+        border: var(--border-thin);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 26px rgba(2,6,23,0.06);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: rgba(255,255,255,0.96);
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 14px 14px;
+            border-bottom: var(--border-thin);
+            letter-spacing: 0.6px;
+        }
+
+        .table-modern td {
+            padding: 14px 14px;
+            border-bottom: var(--border-thin);
+            font-size: 0.92rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover td {
+            background: rgba(2,6,23,0.02);
+        }
+
+    .state-box {
+        padding: 44px 18px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+        .state-box i {
+            font-size: 2.4rem;
+            opacity: 0.25;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+    /* ===== ADMIN: chỉnh lại đúng “admin look” ===== */
+    .admin-head {
+        background: rgba(255,255,255,0.92);
+        border: var(--border-thin);
+        border-radius: 18px;
+        padding: 16px 16px;
+        box-shadow: 0 10px 26px rgba(2,6,23,0.06);
+    }
+
+    .admin-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .admin-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(245,158,11,0.10);
+        border: var(--border-thin);
+        color: var(--warning-yellow);
+        font-size: 1.15rem;
+    }
+
+    .admin-sub {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+        margin: 2px 0 0 0;
+    }
+
+    .admin-tools {
+        margin-top: 10px; /* FIX: kéo thanh gần hơn */
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .admin-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: var(--border-thin);
+        border-radius: 14px;
+        padding: 10px 12px;
+        min-width: 300px;
+    }
+
+        .admin-search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 260px;
+            max-width: 60vw;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+    /* KPI flat admin */
+    .kpi-row {
+        margin-top: 12px;
+    }
+
+    .kpi-card-flat {
+        border: var(--border-thin);
+        padding: 1.15rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #fff;
+        transition: transform 0.2s, border-color .2s;
+        height: 100%;
+    }
+
+        .kpi-card-flat:hover {
+            transform: translateY(-3px);
+            border-color: rgba(58,134,255,0.35);
+        }
+
+    .icon-shape {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-system);
+        border: var(--border-thin);
+    }
+
+    @@media (max-width: 768px) {
+        .admin-search {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .admin-search input {
+                width: 100%;
+            }
+
+        .page-shell {
+            padding: 12px 16px;
+        }
+    }
+
+    /* ===== USER (giữ style voucher) ===== */
+    .glass-header {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        border-radius: 20px;
+        padding: 18px 18px;
+        backdrop-filter: blur(10px);
+    }
+
+    .title-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .hero-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(58,134,255,0.10);
+        border: var(--glass-border);
+    }
+
+    .subtitle {
+        margin: 2px 0 0 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+    }
+
+    .search-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--chip-bg);
+        border: var(--glass-border);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 18px rgba(2,6,23,0.06);
+        min-width: 260px;
+    }
+
+        .search-pill input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 260px;
+            max-width: 65vw;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+    .kpi-grid {
+        margin-top: 14px;
+    }
+
+    .kpi-card {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        border-radius: 18px;
+        padding: 16px 16px;
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        backdrop-filter: blur(10px);
+        height: 100%;
+        transition: transform .15s ease, border-color .15s ease;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(58,134,255,0.40);
+        }
+
+    .kpi-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        border: var(--glass-border);
+    }
+
+        .kpi-icon.blue {
+            background: rgba(58,134,255,0.10);
+            color: var(--primary-blue);
+        }
+
+        .kpi-icon.green {
+            background: rgba(34,197,94,0.10);
+            color: var(--success-green);
+        }
+
+        .kpi-icon.yellow {
+            background: rgba(245,158,11,0.12);
+            color: var(--warning-yellow);
+        }
+
+    .kpi-meta .label {
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.6px;
+    }
+
+    .kpi-meta .value {
+        font-size: 1.35rem;
+        font-weight: 900;
+        margin-top: 2px;
+        letter-spacing: -0.3px;
+    }
+
+    .table-shell-user {
+        margin-top: 14px;
+        background: var(--card-bg);
+        border: var(--glass-border);
+        border-radius: 20px;
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-grey-sm {
+        background: rgba(241,245,249,0.95);
+        border: var(--border-thin);
+        color: var(--text-muted);
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-decoration: none;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-grey-sm:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border-color: #cbd5e1;
+        }
+</style>
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        @* ====================== ADMIN / STAFF ====================== *@
+        @if (isManagement)
+        {
+            <div class="admin-head">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-2">
+                    <div class="admin-hero">
+                        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+                        <div>
+                            <h4 class="m-0 fw-bold">Quản lý Hợp đồng</h4>
+                            <p class="admin-sub mb-0">Quản lý và phê duyệt hồ sơ pháp lý toàn hệ thống</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-action="Create" class="btn-pill btn-pill-primary">
+                            <i class="bi bi-plus-lg"></i> Tạo mới
+                        </a>
+                        <a asp-action="Index" class="btn-pill btn-pill-neutral">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </a>
+                    </div>
+                </div>
+
+                <div class="admin-tools">
+                    <div class="admin-search">
+                        <i class="bi bi-search text-muted"></i>
+                        <input type="text" id="adminSearch" placeholder="Tìm số hợp đồng, tên tour, khách hàng..." autocomplete="off" />
+                        <span id="adminClear" class="btn-pill btn-pill-neutral" style="padding:6px 10px; font-size:0.78rem;">
+                            <i class="bi bi-x-lg"></i>
+                        </span>
+                    </div>
+
+                    <div class="filter-chips" id="adminChips">
+                        <span class="chip active dot-blue" data-status="all"><span class="dot"></span> Tất cả (@total)</span>
+                        <span class="chip dot-green" data-status="active"><span class="dot"></span> Hiệu lực (@active)</span>
+                        <span class="chip dot-yellow" data-status="pending"><span class="dot"></span> Đang xử lý (@pending)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 kpi-row">
+                <div class="col-md-4">
+                    <div class="kpi-card-flat">
+                        <div class="icon-shape text-primary"><i class="bi bi-files"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">TỔNG HỢP ĐỒNG</div>
+                            <div class="h5 fw-bold mb-0">@total</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="kpi-card-flat">
+                        <div class="icon-shape text-success"><i class="bi bi-check-all"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">ĐÃ KÝ / HIỆU LỰC</div>
+                            <div class="h5 fw-bold mb-0">@active</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="kpi-card-flat">
+                        <div class="icon-shape text-warning"><i class="bi bi-hourglass-split"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">ĐANG XỬ LÝ</div>
+                            <div class="h5 fw-bold mb-0">@pending</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-shell">
+                <div class="table-responsive">
+                    <table class="table-modern" id="adminTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Số hiệu</th>
+                                <th>Thông tin Tour & Ngày ký</th>
+                                <th>Khách hàng</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (list.Any())
+                            {
+                                foreach (var item in list)
+                                {
+                                    var key = GetStatusKey(item);
+
+                                    <tr data-status="@key">
+                                        <td class="ps-4">
+                                            <span class="fw-bold text-primary mono">#@item.MaHopDong</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-dark">@(item.GiaoDich?.Tour?.TenTour ?? "Tour thiết kế riêng")</div>
+                                            <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i>@item.NgayTao.ToString("dd/MM/yyyy HH:mm")</div>
+                                        </td>
+
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-xs bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary"
+                                                     style="width: 26px; height: 26px; font-size: 0.75rem; border: 1px solid rgba(226,232,240,1);">
+                                                    @((item.GiaoDich?.KhachHang?.HoTen ?? "K").Substring(0, 1).ToUpper())
+                                                </div>
+                                                <span class="small fw-medium">@(item.GiaoDich?.KhachHang?.HoTen ?? item.GiaoDich?.User?.UserName ?? "Khách lẻ")</span>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            @if (key == "active")
+                                            {
+                                                <span class="status-badge badge-green"><span class="dot"></span> Hiệu lực</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge badge-yellow"><span class="dot"></span> Đang xử lý</span>
+                                            }
+                                        </td>
+
+                                        <td class="text-end pe-4">
+                                            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                                <a asp-action="Details" asp-route-id="@item.MaHopDong" class="btn-grey-sm" title="Xem chi tiết">
+                                                    <i class="bi bi-eye"></i> <span>Xem</span>
+                                                </a>
+                                                <a asp-action="DownloadPdf" asp-route-id="@item.MaHopDong" class="btn-grey-sm text-danger" title="Tải File PDF">
+                                                    <i class="bi bi-file-pdf"></i>
+                                                </a>
+
+                                                @if (isAdmin)
+                                                {
+                                                    <a asp-action="Delete" asp-route-id="@item.MaHopDong"
+                                                       class="btn-grey-sm text-muted"
+                                                       onclick="return confirm('Bạn có chắc chắn muốn xóa hợp đồng này?')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+                                        <p class="mb-0">Không tìm thấy dữ liệu hợp đồng nào.</p>
+                                    </td>
+                                </tr>
+                            }
+
+                            <tr id="adminNoRow" style="display:none;">
+                                <td colspan="5">
+                                    <div class="state-box">
+                                        <i class="bi bi-search"></i>
+                                        <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">Không có kết quả</div>
+                                        <div class="text-muted small">Thử đổi từ khóa hoặc bộ lọc.</div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ====================== USER (Voucher style) ====================== *@
+        else
+        {
+            <div class="glass-header">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-2">
+                    <div class="title-hero">
+                        <div class="hero-icon">
+                            <i class="bi bi-file-earmark-text text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="m-0 fw-bold">Hợp đồng của tôi</h4>
+                            <p class="subtitle">Theo dõi thỏa thuận tour, trạng thái và tải PDF nhanh.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <a asp-controller="Tours" asp-action="Index" class="btn-pill btn-pill-primary">
+                            <i class="bi bi-compass"></i> Đặt tour mới
+                        </a>
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-pill">
+                        <i class="bi bi-search text-muted"></i>
+                        <input type="text" id="userSearch" placeholder="Tìm số hợp đồng, tên tour..." autocomplete="off" />
+                        <span id="userClear" class="btn-pill btn-pill-neutral" style="padding:6px 10px; font-size:0.78rem;">
+                            <i class="bi bi-x-lg"></i>
+                        </span>
+                    </div>
+
+                    <div class="filter-chips" id="userChips">
+                        <span class="chip active dot-blue" data-status="all"><span class="dot"></span> Tất cả (@total)</span>
+                        <span class="chip dot-green" data-status="active"><span class="dot"></span> Hiệu lực (@active)</span>
+                        <span class="chip dot-yellow" data-status="pending"><span class="dot"></span> Đang xử lý (@pending)</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 kpi-grid">
+                    <div class="col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-icon blue"><i class="bi bi-files"></i></div>
+                            <div class="kpi-meta">
+                                <div class="label">TỔNG HỢP ĐỒNG</div>
+                                <div class="value">@total</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-icon green"><i class="bi bi-check2-circle"></i></div>
+                            <div class="kpi-meta">
+                                <div class="label">HIỆU LỰC</div>
+                                <div class="value">@active</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-icon yellow"><i class="bi bi-hourglass-split"></i></div>
+                            <div class="kpi-meta">
+                                <div class="label">ĐANG XỬ LÝ</div>
+                                <div class="value">@pending</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-shell-user">
+                <div class="table-responsive">
+                    <table class="table-modern" id="userTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Số hiệu</th>
+                                <th>Thông tin Tour & Ngày ký</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (list.Any())
+                            {
+                                foreach (var item in list)
+                                {
+                                    var key = GetStatusKey(item);
+
+                                    <tr data-status="@key">
+                                        <td class="ps-4">
+                                            <span class="fw-bold text-primary mono">#@item.MaHopDong</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-dark">@(item.GiaoDich?.Tour?.TenTour ?? "Tour thiết kế riêng")</div>
+                                            <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i>@item.NgayTao.ToString("dd/MM/yyyy HH:mm")</div>
+                                        </td>
+                                        <td>
+                                            @if (key == "active")
+                                            {
+                                                <span class="status-badge badge-green"><span class="dot"></span> Hiệu lực</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge badge-yellow"><span class="dot"></span> Đang xử lý</span>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                                <a asp-action="Details" asp-route-id="@item.MaHopDong"
+                                                   class="btn-pill btn-pill-primary" style="padding:8px 12px; font-size:0.8rem;">
+                                                    <i class="bi bi-eye"></i> Xem
+                                                </a>
+
+                                                <a asp-action="DownloadPdf" asp-route-id="@item.MaHopDong"
+                                                   class="btn-pill btn-pill-danger" style="padding:8px 12px; font-size:0.8rem;">
+                                                    <i class="bi bi-file-pdf"></i> PDF
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="state-box">
+                                            <i class="bi bi-inbox"></i>
+                                            <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">Chưa có hợp đồng</div>
+                                            <div class="text-muted small mb-3">Khi đặt tour và phát sinh hợp đồng, dữ liệu sẽ hiển thị ở đây.</div>
+                                            <a asp-controller="Tours" asp-action="Index" class="btn-pill btn-pill-primary">
+                                                <i class="bi bi-compass"></i> Khám phá tour
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+
+                            <tr id="userNoRow" style="display:none;">
+                                <td colspan="4">
+                                    <div class="state-box">
+                                        <i class="bi bi-search"></i>
+                                        <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">Không có kết quả</div>
+                                        <div class="text-muted small">Thử đổi từ khóa hoặc bộ lọc.</div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            function initFilter(tableId, searchId, clearId, chipsId, noRowId) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
+                const tbody = table.querySelector('tbody');
+                const search = document.getElementById(searchId);
+                const clearBtn = document.getElementById(clearId);
+                const chips = document.getElementById(chipsId);
+                const noRow = document.getElementById(noRowId);
+
+                let active = 'all';
+                let timer = null;
+
+                const rows = () => Array.from(tbody.querySelectorAll('tr'))
+                    .filter(r => r.id !== noRowId);
+
+                function apply() {
+                    const q = (search?.value || '').trim().toLowerCase();
+                    let visible = 0;
+
+                    rows().forEach(tr => {
+                        const st = tr.getAttribute('data-status') || 'all';
+                        const text = (tr.textContent || '').toLowerCase();
+
+                        const okStatus = (active === 'all') || (st === active);
+                        const okSearch = !q || text.includes(q);
+
+                        const show = okStatus && okSearch;
+                        tr.style.display = show ? '' : 'none';
+                        if (show) visible++;
+                    });
+
+                    if (noRow) noRow.style.display = (visible === 0) ? '' : 'none';
+                }
+
+                if (search) {
+                    search.addEventListener('input', () => {
+                        clearTimeout(timer);
+                        timer = setTimeout(apply, 150);
+                    });
+                }
+
+                if (clearBtn && search) {
+                    clearBtn.addEventListener('click', () => {
+                        search.value = '';
+                        apply();
+                        search.focus();
+                    });
+                }
+
+                if (chips) {
+                    chips.addEventListener('click', (e) => {
+                        const chip = e.target.closest('.chip');
+                        if (!chip) return;
+
+                        chips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        active = chip.getAttribute('data-status') || 'all';
+                        apply();
+                    });
+                }
+
+                apply();
+            }
+
+            initFilter('adminTable', 'adminSearch', 'adminClear', 'adminChips', 'adminNoRow');
+            initFilter('userTable', 'userSearch', 'userClear', 'userChips', 'userNoRow');
+        })();
+    </script>
+}

@@ -1,0 +1,285 @@
+﻿@using System.Globalization
+@using Tour_2040.Models
+@model Tour_2040.Models.Tour
+
+@{
+    ViewData["Title"] = "Chi tiết tour: " + (Model.TenTour ?? "");
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+
+    var giaTourText = (Model.GiaTour).ToString("N0", culture) + " đ / người lớn";
+
+    double avgRating = ViewBag.AverageRating ?? 5.0;
+    int totalReviews = ViewBag.TotalReviews ?? 0;
+
+    var noiKhoiHanhInfo = ViewBag.NoiKhoiHanhInfo as DiaDiem;
+    var diaDiemInfo = ViewBag.DiaDiemInfo as DiaDiem;
+
+    int soToiDa = Model.SoNguoiToiDa ?? 0;
+    int soDaDat = Model.SoNguoiHienTai ?? 0;
+
+    double percentBooked = (soToiDa > 0) ? (soDaDat * 100.0 / soToiDa) : 0.0;
+    if (percentBooked < 0) percentBooked = 0;
+    if (percentBooked > 100) percentBooked = 100;
+
+    var ngayDiText = Model.NgayDi?.ToString("dd/MM/yyyy") ?? "Đang cập nhật";
+    var ngayVeText = Model.NgayVe?.ToString("dd/MM/yyyy") ?? "Đang cập nhật";
+    var soNgayText = (Model.NgayDi.HasValue && Model.NgayVe.HasValue)
+        ? (((Model.NgayVe.Value - Model.NgayDi.Value).Days + 1) + " ngày")
+        : "Đang cập nhật";
+
+    var services = Model.TourDichVus?.ToList() ?? new List<TourDichVu>();
+    decimal serviceUnitTotal = services.Sum(s => (decimal)(s.DichVu?.DonGia ?? 0));
+}
+
+@functions {
+    private string FormatFullLocation(DiaDiem? dd, string fallback)
+    {
+        if (dd == null) return fallback;
+
+        var parts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(dd.TenDiaDiem))
+            parts.Add(dd.TenDiaDiem);
+
+        if (dd.XaPhuong != null && !string.IsNullOrWhiteSpace(dd.XaPhuong.TenXaPhuong))
+            parts.Add(dd.XaPhuong.TenXaPhuong);
+
+        if (dd.XaPhuong?.TinhThanh != null && !string.IsNullOrWhiteSpace(dd.XaPhuong.TinhThanh.TenTinh))
+            parts.Add(dd.XaPhuong.TinhThanh.TenTinh);
+
+        return parts.Count > 0 ? string.Join(", ", parts) : fallback;
+    }
+}
+
+@section Styles {
+    <style>
+        .hero-img-detail {
+            width: 100%;
+            height: 380px;
+            object-fit: cover;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .service-list-scroll {
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        @@media (max-width: 768px) {
+            .hero-img-detail { height: 240px; }
+        }
+    </style>
+}
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+        
+        <!-- Header / Breadcrumb -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a asp-action="Index" class="text-muted text-decoration-none">Hành trình</a></li>
+                        <li class="breadcrumb-item active text-primary fw-bold" aria-current="page">Chi tiết</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold m-0 text-dark">@Model.TenTour</h2>
+                <div class="d-flex align-items-center gap-3 mt-2 text-muted fw-bold small">
+                    <span><i class="bi bi-calendar-event me-1"></i> @ngayDiText - @ngayVeText</span>
+                    <span><i class="bi bi-clock me-1"></i> @soNgayText</span>
+                </div>
+            </div>
+             <a class="btn btn-primary btn-pill shadow-sm hover-scale text-decoration-none px-4 py-2"
+               href="@(isAuthenticated? Url.Action("Register", "Tours", new { id = Model.MaTour }) : ("/Identity/Account/Login?ReturnUrl=" + Context.Request.Path))">
+                <i class="bi bi-arrow-right-circle-fill me-2"></i> Đăng ký ngay
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- LEFT CONTENT -->
+            <div class="col-lg-8">
+                <!-- Hero Image -->
+                <div class="mb-4">
+                    <img class="hero-img-detail" src="@(Model.HinhAnhTourUrl ?? "/images/default-tour.jpg")" alt="@Model.TenTour" />
+                </div>
+
+                <!-- Info Grid -->
+                <div class="glass-panel p-4 mb-4 shadow-sm">
+                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                        <i class="bi bi-info-circle-fill text-primary me-2"></i>Thông tin hành trình
+                    </h5>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-primary-subtle p-2 rounded-circle text-primary">
+                                    <i class="bi bi-geo-alt-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Điểm khởi hành</div>
+                                    <div class="fw-bold text-dark">@FormatFullLocation(noiKhoiHanhInfo, Model.NoiKhoiHanh ?? "Đang cập nhật")</div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-success-subtle p-2 rounded-circle text-success">
+                                    <i class="bi bi-geo-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Điểm đến</div>
+                                    <div class="fw-bold text-dark">@FormatFullLocation(diaDiemInfo, Model.DiaDiem ?? "Đang cập nhật")</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-warning-subtle p-2 rounded-circle text-warning">
+                                    <i class="bi bi-people-fill fs-5"></i>
+                                </div>
+                                <div class="w-100">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <div class="text-muted small fw-bold text-uppercase">Sĩ số</div>
+                                        <div class="small fw-bold text-primary">@soDaDat / @soToiDa</div>
+                                    </div>
+                                    <div class="progress" style="height: 6px; border-radius: 10px;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: @percentBooked.ToString("0.##", CultureInfo.InvariantCulture)%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="bg-info-subtle p-2 rounded-circle text-info">
+                                    <i class="bi bi-tag-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase mb-1">Giá tham khảo</div>
+                                    <div class="fw-bold text-primary fs-5">@giaTourText</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="glass-panel p-4 mb-4 shadow-sm">
+                    <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                        <i class="bi bi-card-text text-primary me-2"></i>Mô tả chi tiết
+                    </h5>
+                    <div class="bg-light rounded-4 p-3 border border-light-subtle">
+                        <p class="m-0 text-secondary" style="white-space: pre-line; line-height: 1.6;">
+                            @(string.IsNullOrWhiteSpace(Model.MoTa) ? "Chưa có mô tả chi tiết." : Model.MoTa)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="glass-panel p-4 shadow-sm">
+                    <h5 class="fw-bold text-dark mb-3 border-bottom pb-2 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-gift-fill text-primary me-2"></i>Dịch vụ bao gồm</span>
+                        <span class="badge bg-light text-muted border rounded-pill">@services.Count mục</span>
+                    </h5>
+
+                    @if (services.Any())
+                    {
+                        <div class="service-list-scroll custom-scrollbar">
+                            @foreach (var item in services)
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-3 mb-2 bg-white border border-light-subtle rounded-3 hover-scale shadow-sm" style="transition:0.2s;">
+                                    <div class="d-flex align-items-center gap-3 overflow-hidden">
+                                        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;">
+                                            <i class="bi bi-check-lg fw-bold"></i>
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <div class="fw-bold text-dark text-truncate">@item.DichVu?.TenDichVu</div>
+                                            <div class="small text-muted text-truncate">
+                                                <i class="bi bi-geo-alt me-1"></i> @(item.DichVu?.DiaDiem?.TenDiaDiem ?? "N/A")
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="fw-bold text-primary flex-shrink-0">
+                                        @((item.DichVu?.DonGia ?? 0).ToString("N0", culture))đ
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted small fw-bold bg-light rounded-4">
+                            Chưa có dịch vụ đi kèm
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT STICKY SIDEBAR -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 100px;">
+                    <div class="glass-panel p-4 shadow-sm mb-4">
+                        <h5 class="fw-bold text-dark mb-4">
+                            <i class="bi bi-wallet2 text-primary me-2"></i>Tóm tắt
+                        </h5>
+                        
+                        <a href="@Url.Action("Index", "DanhGiaTours", new { tourId = Model.MaTour })" class="d-block text-decoration-none mb-4">
+                             <div class="d-flex align-items-center gap-3 bg-warning-subtle p-3 rounded-4 border border-warning-subtle">
+                                <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" 
+                                     style="width:48px; height:48px; background: linear-gradient(135deg, #f59e0b, #d97706); font-weight:900; font-size:1.1rem;">
+                                    @avgRating.ToString("0.0", culture)
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-dark small text-uppercase">Đánh giá tour</div>
+                                    <div class="text-muted small fw-bold">@totalReviews lượt đánh giá</div>
+                                </div>
+                                <i class="bi bi-chevron-right text-muted"></i>
+                            </div>
+                        </a>
+
+                        <div class="d-flex flex-column gap-3 mb-4">
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-light pb-2">
+                                <span class="text-muted small fw-bold text-uppercase">Ngày đi</span>
+                                <span class="fw-bold text-dark">@ngayDiText</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-light pb-2">
+                                <span class="text-muted small fw-bold text-uppercase">Ngày về</span>
+                                <span class="fw-bold text-dark">@ngayVeText</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-light pb-2">
+                                <span class="text-muted small fw-bold text-uppercase">Thời lượng</span>
+                                <span class="fw-bold text-dark">@soNgayText</span>
+                            </div>
+                           <div class="d-flex justify-content-between align-items-center border-bottom border-light pb-2">
+                                <span class="text-muted small fw-bold text-uppercase">Trạng thái</span>
+                                <span class="fw-bold text-primary">@(Model.TrangThai == "DaDuyet" ? "Đang mở" : "Chờ/Đầy")</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-light rounded-4 p-3 border border-light-subtle text-center mb-4">
+                            <div class="small text-muted fw-bold text-uppercase mb-1">Tổng chi phí dự kiến</div>
+                            <div class="fs-3 fw-bold text-primary">@Model.GiaTour.ToString("N0", culture) <small class="fs-6 text-muted">đ</small></div>
+                            <div class="small text-muted mt-1" style="font-size:0.75rem;">(Chưa bao gồm phụ phí phát sinh)</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-primary btn-pill py-2 shadow-sm fw-bold hover-scale"
+                               href="@(isAuthenticated? Url.Action("Register", "Tours", new { id = Model.MaTour }) : ("/Identity/Account/Login?ReturnUrl=" + Context.Request.Path))">
+                                <i class="bi bi-check-circle-fill me-2"></i> Đặt tour ngay
+                            </a>
+                            <a class="btn btn-outline-secondary btn-pill py-2 fw-bold" href="@Url.Action("Index", "Tours")">
+                                <i class="bi bi-arrow-left me-2"></i> Quay lại
+                            </a>
+                        </div>
+                        
+                        <div class="text-center mt-3 d-flex align-items-center justify-content-center gap-2 text-muted small fw-bold">
+                            <i class="bi bi-shield-lock-fill text-success"></i> Thanh toán an toàn 24/7
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

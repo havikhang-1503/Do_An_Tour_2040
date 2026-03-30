@@ -1,0 +1,279 @@
+﻿@model IEnumerable<Tour_2040.Models.Voucher>
+
+@{
+    ViewData["Title"] = "Đặc quyền Voucher";
+
+    // Thống kê KPI nhanh
+    var total = Model?.Count() ?? 0;
+    var maxDiscount = Model?.Any() == true ? Model.Max(x => x.GiaTriGiam) : 0;
+    var limitedQty = Model?.Count(x => x.SoLuong <= 10 && x.SoLuong > 0) ?? 0;
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --btn-grey: #f1f5f9;
+        --btn-grey-hover: #e2e8f0;
+        --primary-blue: #3a86ff;
+    }
+
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    /* Thẻ KPI */
+    .kpi-card-flat {
+        border: var(--border-thin);
+        padding: 1.25rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        transition: transform 0.2s;
+    }
+
+        .kpi-card-flat:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-blue);
+        }
+
+    .icon-shape {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-system);
+        border: var(--border-thin);
+    }
+
+    /* Thiết kế Voucher Modern Flat */
+    .voucher-card-flat {
+        background: white;
+        border: var(--border-thin);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .voucher-card-flat:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        /* Hiệu ứng đục lỗ tinh tế */
+        .voucher-card-flat::before, .voucher-card-flat::after {
+            content: "";
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: var(--bg-system);
+            border-radius: 50%;
+            top: 35%; /* Vị trí phân cách giữa header và body */
+            z-index: 2;
+            border: var(--border-thin);
+        }
+
+        .voucher-card-flat::before {
+            left: -12px;
+        }
+
+        .voucher-card-flat::after {
+            right: -12px;
+        }
+
+    .v-header-flat {
+        padding: 1.5rem;
+        background: #f8faff;
+        border-bottom: 1px dashed #e2e8f0;
+        text-align: center;
+    }
+
+    .v-value-flat {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--primary-blue);
+        margin-bottom: 0;
+        letter-spacing: -1px;
+    }
+
+    .v-body-flat {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .code-badge-flat {
+        background: #f1f5f9;
+        border: 1px dashed #cbd5e1;
+        color: var(--text-main);
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+
+    .btn-action-flat {
+        background: var(--primary-blue);
+        color: white !important;
+        border: none;
+        border-radius: 50px;
+        padding: 10px;
+        font-weight: 700;
+        width: 100%;
+        transition: 0.2s;
+        font-size: 0.85rem;
+    }
+
+        .btn-action-flat:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+        }
+
+        .btn-action-flat.disabled {
+            background: #e2e8f0;
+            color: #94a3b8 !important;
+        }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    @* --- HEADER SECTION --- *@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Kho Voucher Ưu Đãi</h4>
+            <p class="text-muted small mb-0">Khám phá các đặc quyền giảm giá dành riêng cho thành viên Royal Ascend</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <a asp-action="My" class="btn btn-white border rounded-pill px-3 fw-bold shadow-sm small" style="background: white;">
+                <i class="bi bi-wallet2 me-2 text-primary"></i> Voucher của tôi
+            </a>
+        </div>
+    </div>
+
+    @* --- KPI SECTION --- *@
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-primary"><i class="bi bi-ticket-perforated"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold">ƯU ĐÃI ĐANG CÓ</div>
+                    <div class="h5 fw-bold mb-0">@total</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-success"><i class="bi bi-graph-up-arrow"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold">GIẢM CAO NHẤT</div>
+                    <div class="h5 fw-bold mb-0">@maxDiscount.ToString("N0")@(Model?.FirstOrDefault()?.LoaiGiam == "PhanTram" ? "%" : "đ")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-danger"><i class="bi bi-fire"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold">SẮP HẾT LƯỢT</div>
+                    <div class="h5 fw-bold mb-0">@limitedQty</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert bg-white border-success-subtle text-success border rounded-3 px-4 mb-4 shadow-sm small d-flex align-items-center">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["StatusMessage"]
+        </div>
+    }
+
+    @* --- GRID SECTION --- *@
+    @if (Model == null || !Model.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-4 border shadow-sm">
+            <i class="bi bi-ticket-detailed fs-1 text-muted opacity-25"></i>
+            <p class="mt-3 text-muted">Hiện chưa có ưu đãi nào mới được phát hành.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var v in Model)
+            {
+                var conLai = v.SoLuong.HasValue ? (v.SoLuong.Value - v.DaSuDung) : 999;
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="voucher-card-flat shadow-sm">
+                        @* Header: Hiển thị giá trị *@
+                        <div class="v-header-flat">
+                            <span class="text-muted small fw-bold text-uppercase">Giảm ngay</span>
+                            <h3 class="v-value-flat">
+                                @if (v.LoaiGiam == "PhanTram")
+                                {
+                                    @($"{v.GiaTriGiam:N0}%")
+                                }
+                                else
+                                {
+
+                                    @($"{v.GiaTriGiam / 1000:N0}K")
+                                }
+                            </h3>
+                        </div>
+
+                        @* Body: Thông tin *@
+                        <div class="v-body-flat">
+                            <div class="text-center mb-3">
+                                <span class="code-badge-flat">@v.MaVoucher</span>
+                            </div>
+
+                            <h6 class="fw-bold text-dark text-center mb-2">@v.TenVoucher</h6>
+                            <p class="small text-muted text-center mb-3 flex-grow-1">
+                                @(string.IsNullOrWhiteSpace(v.MoTa) ? "Ưu đãi đặc quyền dành cho hành trình của bạn." : v.MoTa)
+                            </p>
+
+                            <div class="bg-light p-2 rounded-3 mb-3" style="font-size: 0.75rem;">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Đơn tối thiểu:</span>
+                                    <span class="fw-bold text-dark">@(v.DonHangToiThieu > 0 ? v.DonHangToiThieu?.ToString("N0") + "đ" : "0đ")</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted">Hạn sử dụng:</span>
+                                    <span class="fw-bold text-danger">@(v.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "Vô thời hạn")</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Lượt còn lại:</span>
+                                    <span class="fw-bold text-primary">@(conLai > 0 ? conLai.ToString() : "Hết lượt")</span>
+                                </div>
+                            </div>
+
+                            <form asp-action="SaveToMyVoucher" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@v.MaVoucher" />
+                                <button type="submit" class="btn-action-flat @(conLai <= 0 ? "disabled" : "")" @(conLai <= 0 ? "disabled" : "")>
+                                    <i class="bi bi-plus-lg me-1"></i> LẤY MÃ NGAY
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,256 @@
+﻿@model IEnumerable<Tour_2040.Models.Tour>
+
+@{
+    ViewData["Title"] = "Duyệt Tour Cá Nhân";
+}
+
+<style>
+    /* Card duyệt tour cao cấp */
+    .approval-card {
+        background: white;
+        border-radius: 2rem;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: 0.3s;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+        .approval-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(79, 70, 229, 0.1);
+            border-color: var(--primary-indigo);
+        }
+
+    /* Header của card (Thông tin khách) */
+    .card-header-luxury {
+        background: linear-gradient(to right, #f8fafc, #fff);
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-avatar {
+        width: 45px;
+        height: 45px;
+        background: #e0e7ff;
+        color: var(--primary-indigo);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.2rem;
+    }
+
+    /* Nội dung yêu cầu */
+    .req-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .req-item label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .req-item div {
+        font-weight: 600;
+        color: #334155;
+    }
+
+    /* Actions Footer */
+    .card-actions {
+        padding: 1.5rem;
+        background: #fff;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    /* Modal Custom */
+    .modal-content {
+        border-radius: 2rem;
+        border: none;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        border: none;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 0 0 2rem 2rem;
+    }
+</style>
+
+<div class="container py-4 animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <h2 class="fw-bold text-dark display-6">Inbox <span style="color:var(--primary-indigo)">Yêu Cầu</span></h2>
+            <p class="text-muted mb-0">Danh sách các tour thiết kế riêng đang chờ báo giá và phê duyệt.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                <i class="bi bi-list-ul me-2"></i> Tour hệ thống
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-4 border-dashed shadow-sm">
+            <div class="mb-3 text-success opacity-50"><i class="bi bi-check-circle-fill display-3"></i></div>
+            <h4 class="fw-bold text-dark">Tuyệt vời! Không có yêu cầu tồn đọng</h4>
+            <p class="text-muted">Tất cả các tour cá nhân đã được xử lý.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <div class="approval-card">
+                <div class="card-header-luxury">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            @(item.User?.HoTen?.Substring(0, 1).ToUpper() ?? "U")
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">@(item.User?.HoTen ?? item.User?.UserName)</div>
+                            <div class="small text-muted">@item.User?.Email • @item.NgayTao.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                        <i class="bi bi-hourglass-split me-1"></i> Chờ báo giá
+                    </span>
+                </div>
+
+                <div class="p-4">
+                    <h4 class="fw-bold text-primary mb-3">@item.TenTour</h4>
+                    <p class="text-muted mb-4 fst-italic">"@item.MoTa"</p>
+
+                    <div class="req-grid bg-light rounded-4 border">
+                        <div class="req-item">
+                            <label><i class="bi bi-geo-alt-fill me-1"></i> Điểm đến</label>
+                            <div>@item.DiaDiem</div>
+                        </div>
+                        <div class="req-item">
+                            <label><i class="bi bi-calendar-range me-1"></i> Thời gian</label>
+                            <div>
+                                @(item.NgayDi?.ToString("dd/MM") ?? "?") - @(item.NgayVe?.ToString("dd/MM/yyyy") ?? "?")
+                            </div>
+                        </div>
+                        <div class="req-item">
+                            <label><i class="bi bi-people-fill me-1"></i> Số khách</label>
+                            <div>@item.SoNguoiToiDa người</div>
+                        </div>
+                        <div class="req-item">
+                            <label><i class="bi bi-wallet2 me-1"></i> Ngân sách khách</label>
+                            <div>@(item.YeuCauKhac ?? "Không có")</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="row g-3">
+                            <div class="col-md-3"><small class="fw-bold text-muted d-block mb-1">Lưu trú</small> @(item.YeuCauKhachSan ?? "---")</div>
+                            <div class="col-md-3"><small class="fw-bold text-muted d-block mb-1">Ăn uống</small> @(item.YeuCauNhaHang ?? "---")</div>
+                            <div class="col-md-3"><small class="fw-bold text-muted d-block mb-1">Di chuyển</small> @(item.YeuCauPhuongTien ?? "---")</div>
+                            <div class="col-md-3"><small class="fw-bold text-muted d-block mb-1">Vui chơi</small> @(item.YeuCauVuiChoi ?? "---")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button type="button" class="btn btn-light text-danger fw-bold rounded-pill px-4"
+                            data-bs-toggle="modal" data-bs-target="#rejectModal-@item.MaTour">
+                        Từ chối
+                    </button>
+                    <button type="button" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm"
+                            style="background: var(--primary-indigo); border:none;"
+                            data-bs-toggle="modal" data-bs-target="#approveModal-@item.MaTour">
+                        <i class="bi bi-check2-circle me-2"></i> Báo giá & Duyệt
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal fade" id="approveModal-@item.MaTour" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form asp-action="ApprovePersonal" method="post">
+                            <input type="hidden" name="id" value="@item.MaTour" />
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold">Xác nhận duyệt Tour</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-info small mb-3">
+                                    <i class="bi bi-info-circle me-1"></i> Sau khi duyệt, tour sẽ chuyển sang trạng thái <strong>"Đã duyệt"</strong> và khách hàng có thể tiến hành thanh toán.
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Báo giá chính thức (VNĐ)</label>
+                                    <input type="number" name="giaTour" class="form-control form-control-lg fw-bold text-primary" placeholder="Nhập số tiền..." required min="1000" />
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label fw-bold">Ghi chú cho khách (Admin Note)</label>
+                                    <textarea name="adminNote" class="form-control" rows="3" placeholder="Ví dụ: Giá đã bao gồm vé máy bay và khách sạn 5 sao..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-success rounded-pill fw-bold px-4">Xác nhận Duyệt</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="rejectModal-@item.MaTour" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form asp-action="RejectPersonal" method="post">
+                            <input type="hidden" name="id" value="@item.MaTour" />
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold text-danger">Từ chối yêu cầu</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted">Bạn có chắc chắn muốn từ chối yêu cầu này? Hành động này không thể hoàn tác.</p>
+                                <div class="mb-0">
+                                    <label class="form-label fw-bold">Lý do từ chối (Gửi cho khách)</label>
+                                    <textarea name="lyDo" class="form-control" rows="3" required placeholder="Ví dụ: Yêu cầu không khả thi trong thời gian này..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-danger rounded-pill fw-bold px-4">Xác nhận Từ chối</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

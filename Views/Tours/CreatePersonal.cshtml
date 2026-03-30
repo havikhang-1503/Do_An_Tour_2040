@@ -1,0 +1,695 @@
+﻿@using System.Linq
+@using Tour_2040.Models
+@model Tour_2040.Models.Tour
+
+@{
+    ViewData["Title"] = "Thiết kế hành trình riêng";
+
+    var tinhThanhList = ViewData["TinhThanhList"] as SelectList;
+    var dsDichVu = ViewBag.DichVuList as List<DichVu> ?? new List<DichVu>();
+
+    // Nhóm dịch vụ em đang dùng trên UI
+    var categories = new[]
+    {
+        "Phương tiện",
+        "Nhà hàng",
+        "Khách sạn",
+        "Khu vui chơi",
+        "Bảo hiểm",
+        "Hướng dẫn viên",
+        "Vé tham quan"
+    };
+}
+
+<div class="premium-container animate-fade-in">
+    <form asp-action="CreatePersonal" method="post">
+        @Html.AntiForgeryToken()
+
+        <!-- Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold m-0 text-gradient-title"><i class="bi bi-stars text-warning me-2"></i>Thiết Kế Hành Trình Riêng</h2>
+                <div class="text-muted small">Tự do lựa chọn điểm đến và dịch vụ theo ý muốn.</div>
+            </div>
+            <button type="submit" class="btn-pill btn-pill-primary px-4 py-2 fs-6 shadow-lg hover-scale">
+                <i class="bi bi-send-fill me-2"></i> Gửi Yêu Cầu
+            </button>
+        </div>
+
+        <div class="row g-4">
+            <!-- ================= LEFT COLUMN: INFO ================= -->
+            <div class="col-lg-8">
+                
+                <!-- SECTION 1: TRIP INFO -->
+                <div class="glass-panel mb-4">
+                    <div class="section-title text-primary mb-3">
+                        <i class="bi bi-geo-alt-fill"></i> Thông Tin Hành Trình
+                    </div>
+
+                    <!-- KHỞI HÀNH -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted text-uppercase small">Điểm khởi hành</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <select class="form-select-modern" id="StartTinh" onchange="loadXaByTinh('StartTinh','StartXa','StartDiaDiem')">
+                                    <option value="">-- Tỉnh/TP --</option>
+                                    @if (tinhThanhList != null) { foreach (var item in tinhThanhList) { <option value="@item.Value">@item.Text</option> } }
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select-modern" id="StartXa" onchange="loadDiaDiemByXa('StartXa','StartDiaDiem')" disabled>
+                                    <option value="">-- Xã/Phường --</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select-modern" id="StartDiaDiem" name="NoiKhoiHanh" disabled>
+                                    <option value="">-- Địa điểm --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-2 small text-muted">
+                            <i class="bi bi-check-circle-fill text-success me-1"></i>
+                            <span class="fw-bold me-1">Đã chọn:</span> <span id="StartChosenText" class="text-dark">Chưa chọn</span>
+                        </div>
+                    </div>
+
+                    <!-- ĐIỂM ĐẾN -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted text-uppercase small">Điểm đến mong muốn</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <select class="form-select-modern" id="DestTinh" onchange="loadXaByTinh('DestTinh','DestXa','DestDiaDiem', true)">
+                                    <option value="">-- Tỉnh/TP --</option>
+                                    @if (tinhThanhList != null) { foreach (var item in tinhThanhList) { <option value="@item.Value">@item.Text</option> } }
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select-modern" id="DestXa" onchange="loadDiaDiemByXa('DestXa','DestDiaDiem', true)" disabled>
+                                    <option value="">-- Xã/Phường --</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select-modern" id="DestDiaDiem" name="DiaDiem" disabled onchange="applyServiceFilter()">
+                                    <option value="">-- Địa điểm --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- FREE TEXT FILTER -->
+                        <div class="mt-2 position-relative">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" class="form-control-modern ps-5" id="DestFreeText"
+                                   placeholder="Gõ nhanh địa điểm để lọc dịch vụ (VD: Ninh Kiều)..."
+                                   oninput="applyServiceFilter()" />
+                        </div>
+                        <div class="d-flex align-items-center mt-2 small text-muted">
+                            <i class="bi bi-pin-map-fill text-danger me-1"></i>
+                            <span class="fw-bold me-1">Đã chọn:</span> <span id="DestChosenText" class="text-dark">Chưa chọn</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: DETAILS -->
+                <div class="glass-panel">
+                    <div class="section-title text-success mb-3">
+                        <i class="bi bi-info-circle-fill"></i> Chi Tiết Yêu Cầu
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Tên chuyến đi</label>
+                            <input asp-for="TenTour" class="form-control-modern fw-bold fs-5 text-primary" placeholder="VD: Kỷ niệm ngày cưới Phú Quốc..." required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày đi dự kiến</label>
+                            <input asp-for="NgayDi" type="date" class="form-control-modern" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày về dự kiến</label>
+                            <input asp-for="NgayVe" type="date" class="form-control-modern" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Mô tả & Ghi chú thêm</label>
+                            <textarea asp-for="MoTa" class="form-control-modern" rows="5"
+                                      placeholder="Ví dụ: Đoàn 4 người lớn, 2 trẻ em, cần khách sạn có hồ bơi, ăn chay 1 người..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: ITINERARY BUILDER (Added by User Request) -->
+                <div class="glass-panel mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-title text-success mb-0">
+                            <i class="bi bi-map-fill"></i> Lộ Trình Chi Tiết
+                        </div>
+                        <div class="form-check form-switch">
+                             <input class="form-check-input" type="checkbox" id="ReturnToStartSwitch" checked>
+                             <label class="form-check-label small fw-bold" for="ReturnToStartSwitch">Khứ hồi (Về điểm A)</label>
+                        </div>
+                    </div>
+
+                    <!-- Route Preview -->
+                    <div class="p-3 bg-light rounded-3 mb-4 border border-dashed text-center">
+                        <span class="text-muted small text-uppercase fw-bold d-block mb-1">Hành trình dự kiến</span>
+                        <div class="fw-bold text-primary fs-5" id="routePreview">A → ... → A</div>
+                    </div>
+
+                    <!-- Stops Container (Filled by JS) -->
+                    <div id="stopsContainer" class="stops-container"></div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="button" class="btn-pill btn-pill-primary" id="btnAddStop">
+                            <i class="bi bi-plus-lg"></i> Thêm Điểm Dừng
+                        </button>
+                        <button type="button" class="btn-pill btn-pill-success" id="btnFillMoTa">
+                            <i class="bi bi-magic"></i> Tạo Mô Tả Tự Động
+                        </button>
+                    </div>
+                    
+                    <!-- Hidden Preview Textarea / Input for JS Logic -->
+                    <textarea id="itineraryTextPreview" class="d-none"></textarea>
+                    <input type="hidden" name="LichTrinhJson" id="LichTrinhJson" />
+                </div>
+            </div>
+
+            <!-- ================= RIGHT COLUMN: SERVICES ================= -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 100px; z-index: 90;">
+                    <div class="glass-panel border-primary shadow-sm bg-white p-0 overflow-hidden">
+                        <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold m-0 text-primary"><i class="bi bi-wallet2 me-2"></i>Dịch Vụ & Ngân Sách</h6>
+                        </div>
+
+                        <!-- Service Scroll Area -->
+                        <div class="custom-scroll p-3" style="max-height: 500px; overflow-y: auto;">
+                            @for (int i = 0; i < categories.Length; i++)
+                            {
+                                var cat = categories[i];
+                                var list = dsDichVu
+                                .Where(d => (d.LoaiDichVu ?? "").Trim() == cat)
+                                .OrderBy(d => d.TenDichVu)
+                                .ToList();
+
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.7rem;">@cat</div>
+                                        <span class="badge bg-primary-soft text-primary rounded-pill small" id="count_@i">0</span>
+                                    </div>
+
+                                    <div class="service-box p-2 mb-2 border rounded-3 bg-white">
+                                        <select class="form-select border-0 shadow-none p-0 text-dark fw-bold service-dd"
+                                                style="font-size: 0.9rem;"
+                                                id="svc_@i"
+                                                data-cat="@cat"
+                                                onchange="handlePickService(@i)">
+                                            <option value="">+ Thêm @cat...</option>
+
+                                            <optgroup label="Hệ thống có sẵn">
+                                                @foreach (var dv in list)
+                                                {
+                                                    var tenDD = dv.DiaDiem?.TenDiaDiem ?? "";
+                                                    var xaId = dv.DiaDiem != null ? dv.DiaDiem.XaPhuongId.ToString() : "";
+                                                    var always = string.IsNullOrEmpty(dv.MaDiaDiem) ? "1" : "0";
+                                                    <option value="@dv.MaTenDichVu"
+                                                            data-kind="svc"
+                                                            data-cat="@cat"
+                                                            data-label="@dv.TenDichVu"
+                                                            data-price="@dv.DonGia"
+                                                            data-dd="@tenDD"
+                                                            data-xa="@xaId"
+                                                            data-always="@always">
+                                                        @dv.TenDichVu - @dv.DonGia.ToString("N0")đ
+                                                    </option>
+                                                }
+                                            </optgroup>
+
+                                            <optgroup label="Gợi ý bổ sung">
+                                                @if (cat == "Phương tiện")
+                                                {
+                                                    <option value="__SUG_FLIGHT__" data-kind="sug" data-cat="@cat" data-label="Vé máy bay (gợi ý)" data-price="0" data-always="1">Vé máy bay</option>
+                                                    <option value="__SUG_BUS__" data-kind="sug" data-cat="@cat" data-label="Xe khách / Limousine (gợi ý)" data-price="0" data-always="1">Xe khách / Limousine</option>
+                                                    <option value="__SUG_MOTOR__" data-kind="sug" data-cat="@cat" data-label="Thuê xe máy (gợi ý)" data-price="0" data-always="1">Thuê xe máy</option>
+                                                }
+                                                else if (cat == "Nhà hàng")
+                                                {
+                                                    <option value="__SUG_LOCALFOOD__" data-kind="sug" data-cat="@cat" data-label="Quán địa phương (gợi ý)" data-price="0" data-always="1">Quán địa phương</option>
+                                                    <option value="__SUG_SEAFOOD__" data-kind="sug" data-cat="@cat" data-label="Hải sản (gợi ý)" data-price="0" data-always="1">Hải sản</option>
+                                                }
+                                                else if (cat == "Khách sạn")
+                                                {
+                                                    <option value="__SUG_3STAR__" data-kind="sug" data-cat="@cat" data-label="Khách sạn 3 sao (gợi ý)" data-price="0" data-always="1">Khách sạn 3 sao</option>
+                                                    <option value="__SUG_4STAR__" data-kind="sug" data-cat="@cat" data-label="Khách sạn 4 sao (gợi ý)" data-price="0" data-always="1">Khách sạn 4 sao</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="__SUG_OTHER__@i" data-kind="sug" data-cat="@cat" data-label="Dịch vụ bổ sung" data-price="0" data-always="1">Dịch vụ bổ sung</option>
+                                                }
+                                            </optgroup>
+                                        </select>
+                                    </div>
+
+                                    <!-- Chips Container -->
+                                    <div class="d-flex flex-wrap gap-2 mb-2" id="chips_@i"></div>
+
+                                    <!-- Custom Input -->
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control bg-light border-0" id="custom_@i" placeholder="Tự nhập..." />
+                                        <button type="button" class="btn btn-light border" onclick="addCustomService(@i)"><i class="bi bi-plus"></i></button>
+                                    </div>
+                                </div>
+                                <hr class="border-light my-3" />
+                            }
+                        </div>
+                        
+                        <!-- Budget Summary -->
+                        <div class="p-3 bg-light border-top">
+                            <label class="form-label small fw-bold text-muted">Ngân sách dự kiến (VNĐ)</label>
+                            <div class="input-group mb-2">
+                                <input asp-for="GiaTour" id="FinalBudget" type="number" 
+                                       class="form-control form-control-modern border-primary text-primary fw-bold fs-5" 
+                                       placeholder="0" />
+                                <span class="input-group-text bg-primary text-white fw-bold">đ</span>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted fs-6">
+                                <small>Hệ thống gợi ý:</small>
+                                <strong id="SvcHint" class="text-success">0 đ</strong>
+                            </div>
+                        </div>
+
+                        <!-- Hidden Inputs -->
+                        <div id="hiddenInputs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Scoped Refinements for Service Chips */
+    .chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 10px; border-radius: 50px;
+        background: var(--primary-soft); color: var(--primary-indigo);
+        font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(79, 70, 229, 0.1);
+        animation: fadeIn 0.3s ease;
+    }
+    .chip button {
+        border: none; background: transparent; color: inherit;
+        padding: 0; line-height: 1; font-size: 1.1em; cursor: pointer; opacity: 0.6;
+    }
+    .chip button:hover { opacity: 1; }
+    .bg-primary-soft { background-color: #eef2ff; color: #4f46e5; }
+</style>
+
+@section Scripts {
+    <script>
+        // ================== DATA ==================
+        // Pass TinhThanhList from ViewData to JS safely
+        const TINH_OPTIONS = [];
+        @if (tinhThanhList != null)
+        {
+            foreach(var t in tinhThanhList)
+            {
+                <text>TINH_OPTIONS.push({ value: "@t.Value", text: "@Html.Raw(t.Text)" });</text>
+            }
+        }
+
+        let itinerary = {
+            returnToStart: true,
+            start: { tinhId: "", xaId: "", tenDiaDiem: "" },
+            stops: [
+                { day: 1, tinhId: "", xaId: "", tenDiaDiem: "", activities: [] }
+            ]
+        };
+
+        const selectedMap = new Map(); // Service Logic
+
+        // ================== HELPERS ==================
+        function escapeHtml(str) { return (str ?? "").toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+        function escapeJs(str) { return (str || '').replaceAll('\\', '\\\\').replaceAll("'", "\\'"); }
+        function normalizeText(s) { return (s ?? "").toString().trim(); }
+        function money(v) { try { return (v || 0).toLocaleString('vi-VN') + ' đ'; } catch { return v + ' đ'; } }
+
+        function getDateString(dayOffset) {
+            const dateInput = document.getElementById('NgayDi');
+            if (!dateInput || !dateInput.value) return "";
+            
+            const start = new Date(dateInput.value);
+            if (isNaN(start.getTime())) return "";
+
+            // dayOffset = 1 means same day (start date)
+            const targetDate = new Date(start);
+            targetDate.setDate(start.getDate() + (dayOffset - 1));
+
+            const day = String(targetDate.getDate()).padStart(2, '0');
+            const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const year = targetDate.getFullYear();
+            return `(${day}/${month}/${year})`;
+        }
+
+        function resetSelect(selectEl, placeholder) {
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = ''; opt.textContent = placeholder;
+            selectEl.appendChild(opt);
+        }
+        function fillSelect(selectEl, items, placeholder, mapFn) {
+            resetSelect(selectEl, placeholder);
+            if (!items || items.length === 0) return;
+            items.forEach(it => {
+                const { value, text } = mapFn(it);
+                const opt = document.createElement('option');
+                opt.value = value; opt.textContent = text;
+                selectEl.appendChild(opt);
+            });
+        }
+        async function fetchJson(url) {
+            try { return (await fetch(url)).ok ? await (await fetch(url)).json() : []; } catch { return []; }
+        }
+
+        // ================== CASCADING LOGIC (For Main Form) ==================
+        async function loadXaByTinh(tinhSelectId, xaSelectId, ddSelectId, isDest = false) {
+            const tinhEl = document.getElementById(tinhSelectId);
+            if(isDest) { /* Specific logic for Dest if needed, but simplified here */ }
+            const val = tinhEl?.value || "";
+
+            const xaEl = document.getElementById(xaSelectId);
+            const ddEl = document.getElementById(ddSelectId);
+            
+            resetSelect(xaEl, '-- Xã/Phường --'); xaEl.disabled = true;
+            resetSelect(ddEl, '-- Địa điểm --'); ddEl.disabled = true;
+
+            if(!val) { updateChosenText(); return; }
+
+            const xaList = await fetchJson(`/Tours/GetXaPhuongs?tinhThanhId=${encodeURIComponent(val)}`);
+            fillSelect(xaEl, xaList, '-- Xã/Phường --', it => ({ value: it.id, text: it.name }));
+            xaEl.disabled = false;
+            
+            // Sync Itinerary Start if applicable
+            if (tinhSelectId === 'StartTinh') {
+                itinerary.start.tinhId = val; 
+                itinerary.start.xaId = ""; itinerary.start.tenDiaDiem = "";
+                syncAll(); 
+            }
+            updateChosenText();
+        }
+
+        async function loadDiaDiemByXa(xaSelectId, ddSelectId, isDest = false) {
+            const xaEl = document.getElementById(xaSelectId);
+            const val = xaEl?.value || "";
+            const ddEl = document.getElementById(ddSelectId);
+
+            resetSelect(ddEl, '-- Địa điểm --'); ddEl.disabled = true;
+            if(!val) { updateChosenText(); return; }
+
+            const ddList = await fetchJson(`/Tours/GetDiaDiems?xaPhuongId=${encodeURIComponent(val)}`);
+            fillSelect(ddEl, ddList, '-- Địa điểm --', it => ({ value: it.name, text: it.name }));
+            ddEl.disabled = false;
+
+            if (!isDest) { // Start Location
+                 itinerary.start.xaId = val; itinerary.start.tenDiaDiem = "";
+                 syncAll();
+            }
+            updateChosenText();
+        }
+
+        function updateChosenText() {
+            const startDD = document.getElementById('StartDiaDiem')?.value || '';
+            const destDD = document.getElementById('DestDiaDiem')?.value || '';
+            document.getElementById('StartChosenText').textContent = startDD ? startDD : 'Chưa chọn';
+            document.getElementById('DestChosenText').textContent = destDD ? destDD : 'Chưa chọn';
+        }
+
+        // ================== ITINERARY BUILDER LOGIC ==================
+        function addStop() {
+            const lastDay = itinerary.stops.length > 0 ? itinerary.stops[itinerary.stops.length - 1].day : 1;
+            itinerary.stops.push({ day: lastDay, tinhId: "", xaId: "", tenDiaDiem: "", activities: [] });
+            renderStops(); syncAll();
+        }
+        function removeStop(idx) {
+            if (itinerary.stops.length <= 1) return;
+            itinerary.stops.splice(idx, 1);
+            renderStops(); syncAll();
+        }
+        function addActivity(stopIdx) {
+            itinerary.stops[stopIdx].activities.push({ startTime: "09:00", endTime: "10:00", slot: "Sang", title: "", note: "" });
+            renderStops(); syncAll();
+        }
+        function removeActivity(stopIdx, actIdx) {
+            itinerary.stops[stopIdx].activities.splice(actIdx, 1);
+            renderStops(); syncAll();
+        }
+
+        // Factory Functions for Selects
+        function createSelectTinh(val, onChange) {
+            const s = document.createElement('select'); s.className = "form-select-modern";
+            fillSelect(s, TINH_OPTIONS, "-- Tỉnh/TP --", x => ({value: x.value, text: x.text}));
+            if(val) s.value = val;
+            s.addEventListener('change', onChange);
+            return s;
+        }
+        function createSelectXa() {
+            const s = document.createElement('select'); s.className = "form-select-modern";
+            s.innerHTML = '<option value="">-- Xã/Phường --</option>'; s.disabled = true;
+            return s;
+        }
+        function createSelectDiaDiem() {
+            const s = document.createElement('select'); s.className = "form-select-modern";
+            s.innerHTML = '<option value="">-- Địa điểm --</option>'; s.disabled = true;
+            return s;
+        }
+        async function loadXaForStop(tinhId, xaSel, ddSel) {
+            resetSelect(xaSel, '-- Xã/Phường --'); xaSel.disabled = true;
+            resetSelect(ddSel, '-- Địa điểm --'); ddSel.disabled = true;
+            if(!tinhId) return;
+            const res = await fetchJson(`/Tours/GetXaPhuongs?tinhThanhId=${encodeURIComponent(tinhId)}`);
+            fillSelect(xaSel, res, '-- Xã/Phường --', x => ({value: x.id, text: x.name}));
+            xaSel.disabled = false;
+        }
+        async function loadDiaDiemForStop(xaId, ddSel) {
+            resetSelect(ddSel, '-- Địa điểm --'); ddSel.disabled = true;
+            if(!xaId) return;
+            const res = await fetchJson(`/Tours/GetDiaDiems?xaPhuongId=${encodeURIComponent(xaId)}`);
+            fillSelect(ddSel, res, '-- Địa điểm --', x => ({value: x.name, text: x.name}));
+            ddSel.disabled = false;
+        }
+
+        // RENDER STOPS (Core UI)
+        function renderStops() {
+            const container = document.getElementById('stopsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            itinerary.stops.forEach((stop, idx) => {
+                const card = document.createElement('div'); card.className = 'it-stop-card';
+                
+                // Show Calculated Date
+                const dateStr = getDateString(stop.day || 1);
+
+                const head = document.createElement('div');
+                head.className = 'd-flex justify-content-between align-items-center mb-2';
+                head.innerHTML = `
+                   <div class="d-flex align-items-center gap-2">
+                       <span class="it-badge"><i class="bi bi-geo-alt-fill"></i> Điểm #${idx + 1}</span>
+                       <div class="d-flex align-items-center gap-1">
+                           <label class="form-label mb-0 small text-muted text-nowrap">Ngày thứ</label>
+                           <input type="number" min="1" class="form-control-modern py-1 text-center fw-bold" value="${stop.day || 1}" style="width: 60px;" />
+                           <span class="small text-primary fw-bold ms-1" id="dateDisplay_${idx}">${dateStr}</span>
+                       </div>
+                   </div>
+                   <div class="d-flex gap-2">
+                       <button type="button" class="btn-pill btn-pill-primary py-1 px-3" style="font-size:0.75rem"><i class="bi bi-plus-circle"></i> HĐ</button>
+                       <button type="button" class="btn-pill btn-pill-danger py-1 px-3" style="font-size:0.75rem" ${(itinerary.stops.length <= 1) ? "disabled" : ""}><i class="bi bi-trash"></i></button>
+                   </div>
+                `;
+
+                // Events
+                const btnAddAct = head.querySelectorAll('button')[0]; btnAddAct.onclick = () => addActivity(idx);
+                const btnDelStop = head.querySelectorAll('button')[1]; btnDelStop.onclick = () => removeStop(idx);
+                const dayInput = head.querySelector('input[type="number"]');
+                dayInput.oninput = (e) => {
+                    stop.day = parseInt(e.target.value) || 1;
+                    document.getElementById(`dateDisplay_${idx}`).textContent = getDateString(stop.day);
+                    syncAll();
+                };
+
+                card.appendChild(head);
+
+                // Location Selects
+                const row = document.createElement('div'); row.className = "row g-2 mb-3";
+                const c1 = document.createElement('div'), c2 = document.createElement('div'), c3 = document.createElement('div');
+                c1.className = c2.className = c3.className = "col-md-4";
+
+                const xaSel = createSelectXa();
+                const ddSel = createSelectDiaDiem();
+                const tinhSel = createSelectTinh(stop.tinhId, async (e) => {
+                    stop.tinhId = e.target.value; stop.xaId = ""; stop.tenDiaDiem = "";
+                    await loadXaForStop(stop.tinhId, xaSel, ddSel); syncAll();
+                });
+                xaSel.onchange = async (e) => {
+                    stop.xaId = e.target.value; stop.tenDiaDiem = "";
+                    await loadDiaDiemForStop(stop.xaId, ddSel); syncAll();
+                };
+                ddSel.onchange = (e) => { stop.tenDiaDiem = e.target.value; syncAll(); };
+
+                // Async load previous values
+                (async () => {
+                    if(stop.tinhId) {
+                        await loadXaForStop(stop.tinhId, xaSel, ddSel);
+                        if(stop.xaId) {
+                            xaSel.value = stop.xaId;
+                            await loadDiaDiemForStop(stop.xaId, ddSel);
+                            if(stop.tenDiaDiem) ddSel.value = stop.tenDiaDiem;
+                        }
+                    }
+                })();
+
+                c1.appendChild(tinhSel); c2.appendChild(xaSel); c3.appendChild(ddSel);
+                row.append(c1, c2, c3); card.appendChild(row);
+
+                // Activities
+                (stop.activities || []).forEach((act, aIdx) => {
+                    const actBox = document.createElement('div'); actBox.className = "it-activity-row";
+                    actBox.innerHTML = `
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-2"><label class="small text-muted">Bắt đầu</label><input type="time" class="form-control-modern py-1" value="${act.startTime}"></div>
+                            <div class="col-md-2"><label class="small text-muted">Kết thúc</label><input type="time" class="form-control-modern py-1" value="${act.endTime}"></div>
+                            <div class="col-md-2"><label class="small text-muted">Buổi</label>
+                                <select class="form-select-modern py-1">
+                                    <option value="Sang" ${act.slot==="Sang"?"selected":""}>Sáng</option>
+                                    <option value="Chieu" ${act.slot==="Chieu"?"selected":""}>Chiều</option>
+                                    <option value="Toi" ${act.slot==="Toi"?"selected":""}>Tối</option>
+                                    <option value="Khuya" ${act.slot==="Khuya"?"selected":""}>Khuya</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3"><label class="small text-muted">Tên HĐ</label><input type="text" class="form-control-modern py-1" value="${act.title}" placeholder="Nhập tên..."></div>
+                            <div class="col-md-2"><label class="small text-muted">Ghi chú</label><input type="text" class="form-control-modern py-1" value="${act.note}" placeholder="..."></div>
+                            <div class="col-md-1"><button type="button" class="btn-pill btn-pill-danger w-100 py-1"><i class="bi bi-x"></i></button></div>
+                        </div>
+                    `;
+                    const inps = actBox.querySelectorAll('input, select, button');
+                    inps[0].oninput = e => { act.startTime = e.target.value; syncAll(); };
+                    inps[1].oninput = e => { act.endTime = e.target.value; syncAll(); };
+                    inps[2].onchange = e => { act.slot = e.target.value; syncAll(); };
+                    inps[3].oninput = e => { act.title = e.target.value; syncAll(); };
+                    inps[4].oninput = e => { act.note = e.target.value; syncAll(); };
+                    inps[5].onclick = () => removeActivity(idx, aIdx);
+                    card.appendChild(actBox);
+                });
+
+                container.appendChild(card);
+            });
+        }
+
+        // ================== SYNC & EVENTS ==================
+        function syncAll() {
+             const hidden = document.getElementById('LichTrinhJson');
+             if(hidden) {
+                 itinerary.returnToStart = !!document.getElementById('ReturnToStartSwitch').checked;
+                 hidden.value = JSON.stringify(itinerary);
+             }
+             
+             // Logic: Main destination defaults to first stop or manually selected
+             const firstStop = itinerary.stops.length > 0 ? itinerary.stops[0].tenDiaDiem : "";
+             
+             // If user picked dest in form, keep it. If empty, maybe suggest?
+             // For now, let's keep Route Preview updated
+             const A = normalizeText(itinerary.start.tenDiaDiem) || "A";
+             const route = [A, ...itinerary.stops.map(s => normalizeText(s.tenDiaDiem)).filter(x=>x), (itinerary.returnToStart ? A : "Kết thúc")].join(" → ");
+             document.getElementById('routePreview').textContent = route;
+        }
+
+        // Bind Main Form Events
+        document.addEventListener('DOMContentLoaded', () => {
+            updateChosenText();
+
+            // Link "NgayDi" change to re-render dates
+            const dateInput = document.getElementById('NgayDi');
+            if(dateInput) {
+                dateInput.addEventListener('change', () => {
+                    renderStops(); // Refresh dates labels
+                });
+            }
+
+            document.getElementById('StartDiaDiem')?.addEventListener('change', (e) => {
+                itinerary.start.tenDiaDiem = e.target.value; syncAll();
+            });
+
+            const sw = document.getElementById('ReturnToStartSwitch');
+            if(sw) sw.addEventListener('change', syncAll);
+
+            document.getElementById('btnAddStop')?.addEventListener('click', addStop);
+            
+            document.getElementById('btnFillMoTa')?.addEventListener('click', () => {
+                // Simplified text gen check
+                const moTa = document.getElementById('MoTa');
+                if(moTa) moTa.value += `\nLộ trình dự kiến: ${document.getElementById('routePreview').textContent}`;
+            });
+
+            renderStops(); syncAll();
+        });
+
+        // ---------------------------
+        // RE-INTEGRATING SERVICE LOGIC
+        // ---------------------------
+        function rebuildHiddenInputs() {
+            const box = document.getElementById('hiddenInputs');
+            box.innerHTML = '';
+            selectedMap.forEach((val, key) => {
+                const input = document.createElement('input'); input.type = 'hidden';
+                if (val.isCustom) {
+                    input.name = 'CustomServices'; input.value = `${val.cat}||${val.label}`;
+                } else {
+                    input.name = 'SelectedServices'; input.value = key;
+                }
+                box.appendChild(input);
+            });
+        }
+        function renderChips() {
+            const counts = new Array(@categories.Length).fill(0);
+            for (let i = 0; i < @categories.Length; i++) document.getElementById(`chips_${i}`).innerHTML = '';
+            selectedMap.forEach((val, key) => {
+                const wrap = document.getElementById(`chips_${val.catIndex}`);
+                if (!wrap) return;
+                const chip = document.createElement('span'); chip.className = 'chip';
+                chip.innerHTML = `<span>${escapeHtml(val.label)}${val.price > 0 ? ` • ${money(val.price)}` : ''}</span><button type="button" onclick="removeService('${escapeJs(key)}')">×</button>`;
+                wrap.appendChild(chip);
+                counts[val.catIndex]++;
+            });
+            for (let i = 0; i < counts.length; i++) {
+                const c = document.getElementById(`count_${i}`); if(c) c.textContent = counts[i];
+            }
+            rebuildHiddenInputs(); updateBudgetHint();
+        }
+        function handlePickService(catIndex) {
+            const sel = document.getElementById(`svc_${catIndex}`);
+            if (!sel || !sel.value) return;
+            const opt = sel.selectedOptions[0];
+            const key = opt.value;
+            if (!selectedMap.has(key)) selectedMap.set(key, { catIndex, cat: opt.dataset.cat, label: opt.dataset.label, price: parseFloat(opt.dataset.price)||0, isCustom: false });
+            sel.value = ''; renderChips();
+        }
+        function addCustomService(catIndex) {
+            const input = document.getElementById(`custom_${catIndex}`);
+            const text = (input?.value || '').trim();
+            if (!text) return;
+            const cat = document.getElementById(`svc_${catIndex}`)?.dataset.cat || '';
+            selectedMap.set(`__CUSTOM__${catIndex}__${text}`, { catIndex, cat, label: text, price: 0, isCustom: true });
+            input.value = ''; renderChips();
+        }
+        function removeService(key) { selectedMap.delete(key); renderChips(); }
+        function updateBudgetHint() {
+            let sum = 0; selectedMap.forEach(v => sum += v.price);
+            document.getElementById('SvcHint').textContent = money(sum);
+            const budgetInput = document.getElementById('FinalBudget');
+            if (budgetInput && (!budgetInput.value || parseFloat(budgetInput.value) === 0)) budgetInput.value = sum;
+        }
+        window.handlePickService = handlePickService; window.addCustomService = addCustomService; window.removeService = removeService;
+    </script>
+}
+}

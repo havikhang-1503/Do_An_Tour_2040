@@ -1,0 +1,352 @@
+﻿@model Tour_2040.Models.HopDong
+
+@{
+    Layout = null; // Không dùng layout chung để tối ưu in ấn
+
+    var gd = Model.GiaoDich;
+    var tour = Model.Tour ?? gd?.Tour;
+    decimal tongTien = gd?.TongTien ?? 0m;
+
+    // Tính toán thanh toán
+    var daThanhToan = (gd?.ThanhToans?.Sum(t => t.SoTien)) ?? 0m;
+    var conLai = tongTien - daThanhToan;
+    if (conLai < 0) { conLai = 0; }
+
+    // Lấy tên khách từ thông tin đăng ký tour
+    var tenKhach = gd?.KhachHang?.HoTen
+                   ?? gd?.HoTenNguoiDaiDien // Lấy từ trường đại diện trong giao dịch
+                   ?? gd?.User?.HoTen
+                   ?? gd?.User?.UserName
+                   ?? "Quý khách hàng";
+
+    // Ngày tháng năm lập hợp đồng
+    DateTime ngayLap = Model.NgayTao == DateTime.MinValue ? DateTime.Now : Model.NgayTao;
+    string ngayLapChu = $"Ngày {ngayLap:dd} tháng {ngayLap:MM} năm {ngayLap:yyyy}";
+
+    // Danh sách dịch vụ đi kèm
+    var dichVus = tour?.TourDichVus?
+        .Where(td => td.DichVu != null)
+        .Select(td => td.DichVu!)
+        .ToList() ?? new List<Tour_2040.Models.DichVu>();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Hợp đồng du lịch - @Model.MaHopDong</title>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        @@page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        body {
+            font-family: "Times New Roman", serif;
+            font-size: 13pt;
+            line-height: 1.5;
+            color: #000;
+            background-color: #525659;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .paper-a4 {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm 25mm;
+            margin: 30px auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .c-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .c-country {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14pt;
+        }
+
+        .c-motto {
+            font-weight: bold;
+            font-size: 14pt;
+            padding-bottom: 5px;
+            position: relative;
+            display: inline-block;
+        }
+
+            .c-motto::after {
+                content: "";
+                display: block;
+                width: 150px;
+                border-bottom: 2px solid #000;
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+        .c-title {
+            text-align: center;
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 30px 0 10px;
+            text-transform: uppercase;
+        }
+
+        .c-number {
+            text-align: center;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        .c-date {
+            text-align: right;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .c-section-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .c-indent {
+            margin-left: 20px;
+            text-align: justify;
+        }
+
+            .c-indent p {
+                margin: 5px 0;
+            }
+
+        .c-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 12pt;
+        }
+
+            .c-table th, .c-table td {
+                border: 1px solid #000;
+                padding: 8px;
+                vertical-align: middle;
+            }
+
+            .c-table th {
+                background-color: #f0f0f0;
+                text-align: center;
+                font-weight: bold;
+            }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .c-sign-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .c-sign-col {
+            width: 45%;
+        }
+
+        .c-sign-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 80px;
+        }
+
+        /* THANH CÔNG CỤ */
+        .action-bar {
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 10px 25px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .btn-light {
+            background: #f8f9fa;
+            color: #333;
+            border-color: #ddd;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        @@media print {
+            body {
+                background: white;
+            }
+
+            .action-bar {
+                display: none !important;
+            }
+
+            .paper-a4 {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="action-bar">
+        <a href="javascript:history.back()" class="btn btn-light">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> In Hợp đồng
+        </button>
+    </div>
+
+    <div class="paper-a4">
+
+        <div class="c-header">
+            <div class="c-country">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div class="c-motto">Độc lập - Tự do - Hạnh phúc</div>
+        </div>
+
+        <div class="c-title">HỢP ĐỒNG DỊCH VỤ DU LỊCH</div>
+        <div class="c-number">Số: @(string.IsNullOrWhiteSpace(Model.MaHopDong) ? "..............." : Model.MaHopDong)</div>
+        <div class="c-date">@ngayLapChu</div>
+
+        <div class="c-body">
+
+            <div class="c-section-title">ĐIỀU 1: CÁC BÊN THAM GIA KÝ KẾT</div>
+            <div class="c-indent">
+                <p><strong>BÊN A (Bên cung cấp dịch vụ): CÔNG TY DU LỊCH TOUR_2040</strong></p>
+                <p>Địa chỉ trụ sở: 123 Đường Du Lịch, Quận 1, TP. Hồ Chí Minh</p>
+                <p>Điện thoại: 1900 6789 - Email: contact@tour2040.com</p>
+                <p>Mã số thuế: 0312345678</p>
+                @* Cập nhật đại diện bên A *@
+                <p>Đại diện bởi: Ông <strong>Nguyễn Văn Giám Đốc</strong> - Chức vụ: Giám đốc điều hành</p>
+
+                <p style="margin-top: 15px;"><strong>BÊN B (Bên sử dụng dịch vụ):</strong></p>
+                @* Cập nhật đại diện bên B lấy từ Tour Registration/Transaction *@
+                <p>Ông/Bà: <strong>@tenKhach.ToUpper()</strong></p>
+                <p>Điện thoại: @(gd?.KhachHang?.SoDienThoai ?? gd?.User?.PhoneNumber ?? "....................")</p>
+                <p>Email: @(gd?.KhachHang?.Email ?? gd?.User?.Email ?? "....................")</p>
+                <p>CCCD/CMND: @(gd?.User?.CCCD ?? "....................")</p>
+            </div>
+
+            <div class="c-section-title">ĐIỀU 2: NỘI DUNG DỊCH VỤ</div>
+            <div class="c-indent">
+                @if (tour != null)
+                {
+                    <p>Bên A đồng ý cung cấp cho Bên B chương trình du lịch trọn gói với chi tiết như sau:</p>
+                    <table style="width: 100%; margin-top: 5px;">
+                        <tr><td style="width: 150px;"><strong>Tên chương trình:</strong></td><td>@tour.TenTour</td></tr>
+                        <tr><td><strong>Mã tour:</strong></td><td>@tour.MaTour</td></tr>
+                        <tr><td><strong>Điểm đến:</strong></td><td>@tour.DiaDiem</td></tr>
+                        <tr><td><strong>Thời gian:</strong></td><td>@(tour.NgayDi?.ToString("dd/MM/yyyy") ?? "...") - @(tour.NgayVe?.ToString("dd/MM/yyyy") ?? "...")</td></tr>
+                        <tr><td><strong>Số lượng khách:</strong></td><td>@(gd?.SoNguoiLon ?? 0) Người lớn, @(gd?.SoTreEm ?? 0) Trẻ em</td></tr>
+                    </table>
+
+                    @if (dichVus.Any())
+                    {
+                        <p style="margin-top: 10px;"><strong>Chi tiết dịch vụ bao gồm:</strong></p>
+                        <table class="c-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">STT</th>
+                                    <th>Tên dịch vụ</th>
+                                    <th>Loại hình</th>
+                                    <th>Đơn giá dự kiến</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < dichVus.Count; i++)
+                                {
+                                    <tr>
+                                        <td class="text-center">@(i + 1)</td>
+                                        <td>@dichVus[i].TenDichVu</td>
+                                        <td class="text-center">@dichVus[i].LoaiDichVu</td>
+                                        <td class="text-right">@dichVus[i].DonGia.ToString("N0") đ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                }
+            </div>
+
+            <div class="c-section-title">ĐIỀU 3: GIÁ TRỊ HỢP ĐỒNG & THANH TOÁN</div>
+            <div class="c-indent">
+                <p>1. Tổng giá trị trọn gói: <strong>@tongTien.ToString("N0") VNĐ</strong></p>
+                <p><em>(Bằng chữ: @Tour_2040.Utils.CurrencyHelper.NumberToText(tongTien) đồng chẵn)</em></p>
+                <p>2. Số tiền đã thanh toán: <strong>@conLai.ToString("N0") VNĐ</strong></p>
+                <p>3. Số tiền còn lại: <strong>@daThanhToan.ToString("N0") VNĐ</strong></p>
+            </div>
+
+            <div class="c-section-title">ĐIỀU 4: ĐIỀU KHOẢN CHUNG</div>
+            <div class="c-indent">
+                <p>1. Bên A có trách nhiệm thực hiện đúng lịch trình và chất lượng dịch vụ cam kết.</p>
+                <p>2. Bên B có trách nhiệm thanh toán đầy đủ và cung cấp thông tin cá nhân chính xác.</p>
+                <p>3. Hợp đồng có giá trị pháp lý kể từ thời điểm hai bên xác nhận trực tuyến.</p>
+            </div>
+        </div>
+
+        <div class="c-sign-row">
+            <div class="c-sign-col">
+                <div class="c-sign-title">ĐẠI DIỆN BÊN A</div>
+                <br><br><br>
+                <p><strong>NGUYỄN VĂN GIÁM ĐỐC</strong></p>
+                <p><em>(Đã ký điện tử)</em></p>
+            </div>
+            <div class="c-sign-col">
+                <div class="c-sign-title">ĐẠI DIỆN BÊN B</div>
+                <br><br><br>
+                <p><strong>@tenKhach.ToUpper()</strong></p>
+                <p><em>(Khách hàng đã xác nhận)</em></p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,518 @@
+﻿@* Folder: Views/DanhGiaTours
+   File path: Views/DanhGiaTours/Index.cshtml
+   File name: Index.cshtml
+   Labels: A(Admin UI - Voucher style), B(Full-bleed), C(Dropdown actions), D(Responsive)
+   Mô tả: Trang quản trị thống kê + điều hướng chi tiết đánh giá tour (UI mềm, pill, bảng hiện đại).
+*@
+@model Tour_2040.Models.DanhGiaTourIndexViewModels
+@{
+    ViewData["Title"] = "Đánh giá Tour";
+}
+
+<style>
+    /* ========== Scoped theme (không đụng body) ========== */
+    .dg-admin {
+        --outer-gutter: clamp(10px, 2.6vw, 28px);
+        --maxw: 1400px;
+        --text: #0f172a;
+        --muted: #64748b;
+        --line: rgba(226,232,240,.95);
+        --shadow: 0 16px 36px rgba(2,6,23,.10);
+        --shadow-sm: 0 10px 18px rgba(2,6,23,.08);
+        --r-xl: 22px;
+        --r-lg: 18px;
+        --r-md: 14px;
+        --blue: #2563eb; /* xác nhận */
+        --green: #16a34a; /* thành công */
+        --red: #ef4444; /* nguy hiểm */
+        --yellow: #f59e0b; /* quay lại / reset */
+
+        color: var(--text);
+    }
+
+    /* full-bleed hợp lý */
+    .dg-shell {
+        padding: 10px var(--outer-gutter) 24px;
+    }
+
+    .dg-wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+    }
+
+    /* card kiểu voucher */
+    .dg-card {
+        background: rgba(255,255,255,.92);
+        border: 1px solid var(--line);
+        border-radius: var(--r-xl);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .dg-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .dg-title {
+        font-weight: 900;
+        letter-spacing: -.02em;
+        margin: 0;
+    }
+
+    .dg-sub {
+        color: var(--muted);
+        font-size: .92rem;
+        margin-top: 4px;
+    }
+
+    /* KPI row */
+    .dg-kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin: 12px 0 14px;
+    }
+
+    @@media (max-width: 992px) {
+        .dg-kpis {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .dg-kpi {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+        padding: 14px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .dg-kpi-ic {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        background: rgba(37,99,235,.08);
+        color: var(--blue);
+        font-size: 1.15rem;
+        flex: 0 0 auto;
+    }
+
+    .dg-kpi:nth-child(2) .dg-kpi-ic {
+        background: rgba(22,163,74,.10);
+        color: var(--green);
+    }
+
+    .dg-kpi:nth-child(3) .dg-kpi-ic {
+        background: rgba(245,158,11,.12);
+        color: var(--yellow);
+    }
+
+    .dg-kpi-lb {
+        color: var(--muted);
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 800;
+        margin-bottom: 2px;
+        white-space: nowrap;
+    }
+
+    .dg-kpi-num {
+        font-weight: 950;
+        font-size: 1.55rem;
+        line-height: 1.1;
+    }
+
+    /* Pills / buttons */
+    .btn-pill {
+        border-radius: 999px !important;
+        padding: .58rem 1.02rem;
+        font-weight: 900;
+        letter-spacing: .01em;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+        text-decoration: none;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .btn-blue {
+        background: var(--blue);
+        color: #fff;
+    }
+
+        .btn-blue:hover {
+            filter: brightness(.95);
+            color: #fff;
+        }
+
+    .btn-yellow {
+        background: rgba(245,158,11,.14);
+        border-color: rgba(245,158,11,.28);
+        color: #92400e;
+    }
+
+        .btn-yellow:hover {
+            background: rgba(245,158,11,.18);
+            color: #92400e;
+        }
+
+    .btn-ghost {
+        background: #fff;
+        border-color: var(--line);
+        color: var(--text);
+        box-shadow: none;
+    }
+
+        .btn-ghost:hover {
+            background: rgba(241,245,249,.8);
+        }
+
+    /* Filter bar */
+    .dg-filter {
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(248,250,252,.9), #fff);
+    }
+
+    .dg-filter-grid {
+        display: grid;
+        grid-template-columns: 1.5fr .8fr .8fr auto auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    @@media (max-width: 1100px) {
+        .dg-filter-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .dg-field {
+        position: relative;
+    }
+
+    .dg-input, .dg-select {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: rgba(248,250,252,.9);
+        border-radius: 14px;
+        padding: 10px 12px;
+        outline: none;
+        font-weight: 650;
+        color: var(--text);
+    }
+
+        .dg-input:focus, .dg-select:focus {
+            background: #fff;
+            border-color: rgba(37,99,235,.45);
+            box-shadow: 0 0 0 .18rem rgba(37,99,235,.12);
+        }
+
+    /* Table */
+    .dg-table-wrap {
+        background: #fff;
+    }
+
+    .dg-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+        .dg-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: rgba(248,250,252,.96);
+            border-bottom: 1px solid var(--line);
+            padding: 12px 14px;
+            font-size: .74rem;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 900;
+            letter-spacing: .06em;
+            white-space: nowrap;
+        }
+
+        .dg-table tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(241,245,249,.95);
+            vertical-align: middle;
+            font-weight: 650;
+        }
+
+        .dg-table tbody tr:hover td {
+            background: rgba(248,250,252,.85);
+        }
+
+    .dg-mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .dg-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-weight: 900;
+        font-size: .78rem;
+        border: 1px solid var(--line);
+        background: rgba(241,245,249,.8);
+        color: var(--text);
+        white-space: nowrap;
+    }
+
+        .dg-badge.ok {
+            background: rgba(22,163,74,.10);
+            border-color: rgba(22,163,74,.22);
+            color: #166534;
+        }
+
+    .dg-stars {
+        font-weight: 950;
+        color: #b45309;
+        white-space: nowrap;
+    }
+
+    /* Dropdown */
+    .dg-dd .dropdown-menu {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-sm);
+        padding: 8px;
+        min-width: 210px;
+    }
+
+    .dg-dd .dropdown-item {
+        border-radius: 12px;
+        font-weight: 800;
+        padding: .55rem .7rem;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+        .dg-dd .dropdown-item:hover {
+            background: rgba(37,99,235,.08);
+        }
+
+    /* Pager */
+    .dg-pager {
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--line);
+        background: linear-gradient(180deg, #fff, rgba(248,250,252,.9));
+    }
+
+        .dg-pager small {
+            color: var(--muted);
+            font-weight: 800;
+        }
+
+    /* Empty state */
+    .dg-empty {
+        padding: 28px 14px;
+        text-align: center;
+        color: var(--muted);
+        font-weight: 800;
+    }
+</style>
+
+<div class="dg-admin dg-shell">
+    <div class="dg-wrap">
+
+        <div class="dg-head">
+            <div>
+                <h3 class="dg-title">Đánh giá tour</h3>
+                <div class="dg-sub">Quản lý thống kê và xem chi tiết đánh giá từ khách hàng.</div>
+            </div>
+        </div>
+
+        <div class="dg-kpis">
+            <div class="dg-kpi">
+                <div class="dg-kpi-ic"><i class="bi bi-chat-square-text"></i></div>
+                <div>
+                    <div class="dg-kpi-lb">Tổng đánh giá</div>
+                    <div class="dg-kpi-num">@Model.TongDanhGia</div>
+                </div>
+            </div>
+
+            <div class="dg-kpi">
+                <div class="dg-kpi-ic"><i class="bi bi-bar-chart-line"></i></div>
+                <div>
+                    <div class="dg-kpi-lb">Điểm trung bình</div>
+                    <div class="dg-kpi-num">@Model.DiemTrungBinh</div>
+                </div>
+            </div>
+
+            <div class="dg-kpi">
+                <div class="dg-kpi-ic"><i class="bi bi-star-fill"></i></div>
+                <div>
+                    <div class="dg-kpi-lb">Đánh giá 5 sao</div>
+                    <div class="dg-kpi-num">@Model.DanhGiaNamSao</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dg-card">
+            <div class="dg-filter">
+                <form method="get" class="dg-filter-grid">
+                    <div class="dg-field">
+                        <input class="dg-input" name="tuKhoa" value="@Model.TuKhoa"
+                               placeholder="Tìm mã tour / tên tour / địa điểm..." />
+                    </div>
+
+                    <div class="dg-field">
+                        <select class="dg-select" name="trangThai">
+                            <option value="tatca" selected="@(Model.TrangThai == "tatca" ? "selected" : null)">Tất cả trạng thái</option>
+                            <option value="dadanhgia" selected="@(Model.TrangThai == "dadanhgia" ? "selected" : null)">Đã có đánh giá</option>
+                            <option value="chuadanhgia" selected="@(Model.TrangThai == "chuadanhgia" ? "selected" : null)">Chưa có đánh giá</option>
+                        </select>
+                    </div>
+
+                    <div class="dg-field">
+                        <select class="dg-select" name="soSao">
+                            <option value="" selected="@(Model.SoSaoLoc == null ? "selected" : null)">Tất cả sao</option>
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <option value="@i" selected="@(Model.SoSaoLoc == i ? "selected" : null)">@i sao</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button class="btn-pill btn-blue" type="submit">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
+
+                    <a class="btn-pill btn-yellow" asp-action="Index">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </form>
+            </div>
+
+            <div class="dg-table-wrap table-responsive">
+                <table class="dg-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width:260px;">Tên tour</th>
+                            <th style="min-width:200px;">Địa điểm</th>
+                            <th class="text-center" style="min-width:140px;">Số đánh giá</th>
+                            <th class="text-center" style="min-width:120px;">Điểm TB</th>
+                            <th class="text-center" style="min-width:120px;">Mới nhất</th>
+                            <th class="text-end" style="min-width:140px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.DanhSachDong)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">@r.TenTour</div>
+                                    <div class="small text-muted dg-mono">#@r.MaTour</div>
+                                </td>
+
+                                <td class="text-muted">@r.DiaDiem</td>
+
+                                <td class="text-center">
+                                    @if (r.SoLuongDanhGia > 0)
+                                    {
+                                        <span class="dg-badge ok"><i class="bi bi-check2-circle"></i> @r.SoLuongDanhGia</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="dg-badge"><i class="bi bi-dash-circle"></i> 0</span>
+                                    }
+                                </td>
+
+                                <td class="text-center">
+                                    <span class="dg-stars"><i class="bi bi-star-fill"></i> @r.DiemTrungBinh.ToString("0.00")</span>
+                                </td>
+
+                                <td class="text-center small text-muted">
+                                    @((r.NgayDanhGiaGanNhat.HasValue) ? r.NgayDanhGiaGanNhat.Value.ToString("dd/MM/yyyy") : "-")
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="dropdown dg-dd d-inline-block">
+                                        <button class="btn-pill btn-ghost dropdown-toggle" type="button"
+                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots"></i> Thao tác
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" asp-action="PublicTourDetails" asp-route-maTour="@r.MaTour">
+                                                    <i class="bi bi-eye text-primary"></i>
+                                                    Xem (Public)
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" asp-action="AdminTourDetails" asp-route-maTour="@r.MaTour">
+                                                    <i class="bi bi-shield-check text-success"></i>
+                                                    Xem (Admin)
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        @if (Model.DanhSachDong.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6">
+                                    <div class="dg-empty">
+                                        <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                                        Không tìm thấy dữ liệu phù hợp
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="dg-pager">
+                <small>Trang <b>@Model.Trang</b> / <b>@Model.TongSoTrang</b> • Tổng dòng: <b>@Model.TongSoDong</b></small>
+
+                <div class="d-flex gap-2">
+                    @{
+                        var prev = Model.Trang - 1;
+                        var next = Model.Trang + 1;
+                        var prevDisabled = Model.Trang <= 1;
+                        var nextDisabled = Model.Trang >= Model.TongSoTrang;
+                    }
+
+                    <a class="btn-pill btn-ghost @(prevDisabled ? "disabled" : "")"
+                       href="@Url.Action("Index", new { tuKhoa = Model.TuKhoa, trangThai = Model.TrangThai, soSao = Model.SoSaoLoc, trang = prev, kichThuocTrang = Model.KichThuocTrang })">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+
+                    <a class="btn-pill btn-ghost @(nextDisabled ? "disabled" : "")"
+                       href="@Url.Action("Index", new { tuKhoa = Model.TuKhoa, trangThai = Model.TrangThai, soSao = Model.SoSaoLoc, trang = next, kichThuocTrang = Model.KichThuocTrang })">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

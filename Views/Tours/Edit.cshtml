@@ -1,0 +1,746 @@
+﻿@using System.Linq
+@using System.Text.Json
+@model Tour_2040.Models.ViewModels.TourCreateViewModel
+
+@{
+    ViewData["Title"] = "Cập Nhật Tour";
+    var tinhThanhList = ViewData["TinhThanhList"] as SelectList;
+    var tinhJson = JsonSerializer.Serialize(
+        tinhThanhList?.Select(x => (object)new { value = x.Value ?? "", text = x.Text ?? "" }).ToList() ?? new List<object>()
+    );
+}
+
+<div class="premium-container animate-fade-in">
+    <!-- Header Title -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold m-0 text-gradient-title"><i class="bi bi-pencil-square text-warning me-2"></i>Cập Nhật Tour Hệ Thống</h2>
+            <p class="text-muted m-0 small">Chỉnh sửa thông tin và hành trình tour</p>
+        </div>
+        <a asp-action="Index" class="btn-pill btn-pill-warning">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@Model.MaTour" enctype="multipart/form-data" id="mainEditForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 shadow-sm mb-4"></div>
+        
+        <!-- HIDDEN INPUTS FOR EDIT LOGIC -->
+        <input type="hidden" asp-for="MaTour" />
+        <input type="hidden" asp-for="HinhAnhTourUrl" />
+        <input type="hidden" asp-for="SoNguoiHienTai" />
+        
+        <!-- HIDDEN INPUTS FOR JS LOGIC -->
+        <input asp-for="LichTrinhJson" type="hidden" id="LichTrinhJson" />
+        <input asp-for="DiaDiem" type="hidden" id="DiaDiemHidden" />
+
+        <div class="row g-4">
+            <!-- === LEFT COLUMN: MAIN CONTENT === -->
+            <div class="col-lg-8">
+                
+                <!-- SECTION 1: TOUR INFORMATION -->
+                <div class="glass-panel mb-4">
+                    <div class="section-title text-primary">
+                        <i class="bi bi-info-circle-fill"></i> Thông Tin Cơ Bản
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="TenTour" class="form-label fw-bold">Tên chương trình Tour</label>
+                            <input asp-for="TenTour" class="form-control-modern fw-bold text-primary fs-6" 
+                                   placeholder="VD: Hành trình di sản Miền Trung 4N3Đ..." />
+                            <span asp-validation-for="TenTour" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Departure Location -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted">Điểm khởi hành</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <select asp-for="NoiKhoiHanhTinh" class="form-select-modern" id="NoiKhoiHanhTinh"
+                                            onchange="loadXaByTinh('NoiKhoiHanhTinh', 'NoiKhoiHanhXa', 'NoiKhoiHanhDiaDiem')">
+                                        <option value="">-- Tỉnh/TP --</option>
+                                        @if (tinhThanhList != null) { foreach (var item in tinhThanhList) { <option value="@item.Value">@item.Text</option> } }
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <select asp-for="NoiKhoiHanhXa" class="form-select-modern" id="NoiKhoiHanhXa" disabled
+                                            onchange="loadDiaDiemByXa('NoiKhoiHanhXa', 'NoiKhoiHanhDiaDiem')">
+                                        <option value="">-- Xã/Phường --</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <select asp-for="NoiKhoiHanh" class="form-select-modern" id="NoiKhoiHanhDiaDiem" disabled>
+                                        <option value="">-- Địa điểm --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Routing Info (Auto Syncs) -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted">Điểm đến chính (Tự động đồng bộ)</label>
+                            <div class="row g-2 opacity-75">
+                                <div class="col-4"><select asp-for="DiaDiemTinh" class="form-select-modern bg-light" id="DiaDiemTinh" onchange="loadXaByTinh('DiaDiemTinh', 'DiaDiemXa', 'DiaDiem')"><option>-- Tỉnh/TP --</option>@if (tinhThanhList != null) { foreach (var item in tinhThanhList) { <option value="@item.Value">@item.Text</option> } }</select></div>
+                                <div class="col-4"><select asp-for="DiaDiemXa" class="form-select-modern bg-light" id="DiaDiemXa" disabled onchange="loadDiaDiemByXa('DiaDiemXa', 'DiaDiem')"><option>-- Xã/Phường --</option></select></div>
+                                <div class="col-4"><select asp-for="DiaDiem" class="form-select-modern bg-light" id="DiaDiem" disabled><option>-- Địa điểm --</option></select></div>
+                            </div>
+                        </div>
+
+                        <!-- Dates & Details -->
+                        <div class="col-md-6">
+                            <label asp-for="LoaiTour" class="form-label fw-bold">Loại hình</label>
+                            <select asp-for="LoaiTour" class="form-select-modern">
+                                <option value="">-- Chọn loại hình --</option>
+                                <option value="Trong nước">Trong nước</option>
+                                <option value="Quốc tế">Quốc tế</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SoNguoiToiDa" class="form-label fw-bold">Số khách tối đa</label>
+                            <input asp-for="SoNguoiToiDa" class="form-control-modern" type="number" placeholder="VD: 45" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NgayDi" class="form-label">Ngày đi</label>
+                            <input asp-for="NgayDi" class="form-control-modern" type="date" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NgayVe" class="form-label">Ngày về</label>
+                            <input asp-for="NgayVe" class="form-control-modern" type="date" />
+                        </div>
+                        
+                        <div class="col-12 mt-3">
+                             <label asp-for="MoTa" class="form-label fw-bold">Mô tả bài viết (Marketing)</label>
+                             <textarea asp-for="MoTa" id="MoTa" class="form-control-modern" rows="4" placeholder="Viết mô tả hấp dẫn..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: ITINERARY BUILDER -->
+                <div class="glass-panel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-title text-success mb-0">
+                            <i class="bi bi-map-fill"></i> Lộ Trình Chi Tiết
+                        </div>
+                        <div class="form-check form-switch">
+                             <input class="form-check-input" type="checkbox" id="ReturnToStartSwitch" checked>
+                             <label class="form-check-label small fw-bold" for="ReturnToStartSwitch">Khứ hồi (Về điểm A)</label>
+                        </div>
+                    </div>
+
+                    <!-- Route Preview -->
+                    <div class="p-3 bg-light rounded-3 mb-4 border border-dashed text-center">
+                        <span class="text-muted small text-uppercase fw-bold d-block mb-1">Hành trình dự kiến</span>
+                        <div class="fw-bold text-primary fs-5" id="routePreview">A → ... → A</div>
+                    </div>
+
+                    <!-- Stops Container -->
+                    <div id="stopsContainer" class="stops-container"></div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="button" class="btn-pill btn-pill-primary" id="btnAddStop">
+                            <i class="bi bi-plus-lg"></i> Thêm Điểm Dừng
+                        </button>
+                        <button type="button" class="btn-pill btn-pill-success" id="btnFillMoTa">
+                            <i class="bi bi-magic"></i> Copy Vào Mô Tả
+                        </button>
+                    </div>
+                    
+                    <!-- Hidden Preview -->
+                    <textarea id="itineraryTextPreview" class="d-none"></textarea>
+                </div>
+            </div>
+
+            <!-- === RIGHT COLUMN: ACTIONS & RESOURCES === -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 100px; z-index: 90;">
+                    
+                    <!-- 1. ACTION CARD -->
+                    <div class="glass-panel mb-4 text-center border-primary shadow-sm bg-white">
+                        <h5 class="fw-bold text-primary mb-3">Cập Nhật Tour</h5>
+                        <div class="d-grid gap-2">
+                             <button type="submit" class="btn-pill btn-pill-primary w-100 py-3 fs-6 shadow-sm">
+                                 <i class="bi bi-check-circle-fill"></i> LƯU THAY ĐỔI
+                             </button>
+                             <a asp-action="Index" class="btn-pill btn-pill-danger w-100 bg-white text-danger border-danger">
+                                 Hủy Bỏ
+                             </a>
+                        </div>
+                    </div>
+
+                    <!-- 2. PRICE SETTINGS -->
+                    <div class="glass-panel mb-4">
+                        <div class="section-title text-danger fs-6 mb-3"><i class="bi bi-tag-fill"></i> Thiết Lập Giá</div>
+                        <div class="mb-3">
+                            <label asp-for="GiaTour" class="form-label small fw-bold text-muted">Giá vé cơ bản (VNĐ)</label>
+                            <div class="input-group">
+                                <input asp-for="GiaTour" class="form-control-modern fw-bold text-danger fs-5" 
+                                       type="number" placeholder="0" step="1000" id="GiaTour" />
+                                <span class="input-group-text bg-white border-start-0 fw-bold">₫</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Summary -->
+                        <div class="bg-light p-3 rounded-3 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Giá gốc:</span>
+                                <span class="fw-bold" id="displayGiaTour">0 ₫</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Dịch vụ cộng thêm:</span>
+                                <span class="fw-bold text-success" id="displayTongDichVu">0 ₫</span>
+                            </div>
+                            <div class="border-top pt-2 mt-2 d-flex justify-content-between fs-6">
+                                <span class="fw-bold text-dark">Tổng cộng:</span>
+                                <span class="fw-bold text-danger" id="displayTongCong">0 ₫</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. TOUR IMAGE -->
+                    <div class="glass-panel mb-4">
+                        <div class="section-title fs-6 mb-2"><i class="bi bi-image"></i> Ảnh Tour</div>
+                        
+                        @if (!string.IsNullOrEmpty(Model.HinhAnhTourUrl))
+                        {
+                            <div class="mb-2 position-relative">
+                                <img src="@Model.HinhAnhTourUrl" class="w-100 rounded-3 border" style="max-height: 150px; object-fit: cover;" id="currentImg" />
+                                <div class="position-absolute top-0 end-0 bg-white text-muted small px-2 rounded-start opacity-75">Hiện tại</div>
+                            </div>
+                        }
+
+                        <div class="position-relative w-100 rounded-3 overflow-hidden bg-light border d-flex align-items-center justify-content-center cursor-pointer group-hover-effect"
+                             style="aspect-ratio: 16/9;" onclick="document.getElementById('AnhTourFile').click()">
+                            
+                            <!-- Preview Image -->
+                            <img id="previewImg" class="w-100 h-100 object-fit-cover position-absolute top-0 start-0" style="display:none;" />
+                            
+                            <!-- Placeholder -->
+                            <div class="text-center text-muted p-3" id="uploadPlaceholder">
+                                <i class="bi bi-cloud-arrow-up display-4 text-primary opacity-50"></i>
+                                <div class="small fw-bold mt-2">Thay đổi ảnh</div>
+                                <div style="font-size: 0.7rem;">Click để chọn ảnh mới</div>
+                            </div>
+                        </div>
+                        <input type="file" name="AnhTourFile" id="AnhTourFile" class="d-none" accept="image/*" onchange="previewImage(this)" />
+                    </div>
+
+                    <!-- 4. SERVICES SELECTION -->
+                    <div class="glass-panel" style="max-height: 500px; display: flex; flex-direction: column;">
+                        <div class="section-title fs-6 mb-2"><i class="bi bi-gem"></i> Dịch Vụ Đi Kèm</div>
+                        
+                        <div class="input-group mb-2">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="serviceSearch" class="form-control-modern border-start-0 ps-0" placeholder="Tìm dịch vụ..." style="font-size: 0.85rem;" />
+                        </div>
+
+                        <div class="custom-scroll pe-1 pt-1" style="overflow-y: auto; flex: 1;" id="dichVuContainer">
+                            @if (Model.AvailableDichVus != null && Model.AvailableDichVus.Any())
+                            {
+                                foreach (var group in Model.AvailableDichVus.GroupBy(d => d.LoaiDichVu))
+                                {
+                                    <div class="service-group mb-2" data-group="@group.Key">
+                                        <div class="text-uppercase small fw-bold text-muted mb-1 mt-2" style="font-size: 0.7rem;">@group.Key</div>
+                                        @foreach (var dv in group)
+                                        {
+                                            var dvId = dv.MaTenDichVu;
+                                            var isChecked = (Model.SelectedDichVuIds?.Contains(dvId) == true);
+                                            var locName = dv.DiaDiem?.TenDiaDiem ?? "__ALL__";
+
+                                            <div class="service-item-wrapper" data-search="@(dv.TenDichVu?.ToLower() ?? "")" data-location="@locName">
+                                                <input class="form-check-input d-none" type="checkbox" name="SelectedDichVuIds" value="@dvId" id="srv_@dvId" @(isChecked ? "checked" : "") />
+                                                <label class="service-label w-100" for="srv_@dvId">
+                                                    <div class="service-item-box p-2">
+                                                        <div class="flex-grow-1" style="min-width:0;">
+                                                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;">@dv.TenDichVu</div>
+                                                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                                                <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.65rem;">
+                                                                    <i class="bi bi-geo-alt"></i> @(locName == "__ALL__" ? "Chung" : locName)
+                                                                </span>
+                                                                <span class="text-primary fw-bold" style="font-size: 0.8rem;">@dv.DonGia.ToString("N0")đ</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="ms-2 text-primary opacity-0 check-icon"><i class="bi bi-check-circle-fill"></i></div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-1 opacity-25"></i>
+                                    <p class="small m-0">Không có dịch vụ nào.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Scoped Fixes for Image Upload & Service Selection Visuals (Consistent with Create) */
+    .object-fit-cover { object-fit: cover; }
+    .cursor-pointer { cursor: pointer; }
+    .check-icon { transition: 0.2s; }
+    .form-check-input:checked + .service-label .check-icon { opacity: 1 !important; }
+    .service-item-box:hover { border-color: var(--primary-indigo); }
+</style>
+
+@section Scripts {
+    <script>
+        // ================== DATA ==================
+        const TINH_OPTIONS = @Html.Raw(JsonSerializer.Serialize(tinhThanhList?.Select(x => (object)new { value = x.Value ?? "", text = x.Text ?? "" }).ToList() ?? new List<object>()));
+
+        let itinerary = {
+            returnToStart: true,
+            start: { tinhId: "", xaId: "", tenDiaDiem: "" },
+            stops: [
+                { day: 1, tinhId: "", xaId: "", tenDiaDiem: "", activities: [
+                    { startTime: "08:00", endTime: "09:00", slot: "Sang", title: "Ăn sáng", note: "" },
+                    { startTime: "12:00", endTime: "13:00", slot: "Chieu", title: "Tắm biển", note: "" }
+                ] }
+            ]
+        };
+
+        // ================== HELPERS ==================
+        function escapeHtml(str) {
+            return (str ?? "").toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+        }
+        function normalizeText(s) { return (s ?? "").toString().trim(); }
+        function resetSelect(selectEl, placeholder) {
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = ''; opt.textContent = placeholder;
+            selectEl.appendChild(opt);
+        }
+        function fillSelect(selectEl, items, placeholder, mapFn) {
+            resetSelect(selectEl, placeholder);
+            if (!items || items.length === 0) return;
+            items.forEach(it => {
+                const { value, text } = mapFn(it);
+                const opt = document.createElement('option');
+                opt.value = value; opt.textContent = text;
+                if (selectEl.dataset.selectedValue === value) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+        async function fetchJson(url) {
+            try {
+                const res = await fetch(url);
+                return res.ok ? await res.json() : [];
+            } catch (error) { console.error('Fetch Error:', error); return []; }
+        }
+
+        // Format tiền VNĐ
+        function formatVND(num) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+        }
+
+        // ================== CASCADING (START A) ==================
+        async function loadXaByTinh(tinhSelectId, xaSelectId, ddSelectId) {
+            const tinhEl = document.getElementById(tinhSelectId);
+            const xaEl = document.getElementById(xaSelectId);
+            const ddEl = document.getElementById(ddSelectId);
+            const tinhId = tinhEl?.value?.trim();
+
+            resetSelect(xaEl, '-- Xã/Phường --');
+            resetSelect(ddEl, '-- Địa điểm --');
+            xaEl.disabled = true; ddEl.disabled = true;
+            if (!tinhId) return;
+
+            const xaList = await fetchJson(`/Tours/GetXaPhuongs?tinhThanhId=${encodeURIComponent(tinhId)}`);
+            fillSelect(xaEl, xaList, '-- Xã/Phường --', it => ({ value: it.id, text: it.name }));
+            xaEl.disabled = false;
+
+            itinerary.start.tinhId = tinhId;
+            itinerary.start.xaId = ""; itinerary.start.tenDiaDiem = "";
+            syncItineraryToHidden(); renderRoutePreview(); updateItineraryTextPreview(); applyServiceFilters();
+        }
+
+        async function loadDiaDiemByXa(xaSelectId, ddSelectId) {
+            const xaEl = document.getElementById(xaSelectId);
+            const ddEl = document.getElementById(ddSelectId);
+            const xaId = xaEl?.value?.trim();
+
+            resetSelect(ddEl, '-- Địa điểm --');
+            ddEl.disabled = true;
+            if (!xaId) return;
+
+            const ddList = await fetchJson(`/Tours/GetDiaDiems?xaPhuongId=${encodeURIComponent(xaId)}`);
+            fillSelect(ddEl, ddList, '-- Địa điểm --', it => ({ value: it.name, text: it.name }));
+            ddEl.disabled = false;
+
+            itinerary.start.xaId = xaId; itinerary.start.tenDiaDiem = "";
+            syncItineraryToHidden(); renderRoutePreview(); updateItineraryTextPreview(); applyServiceFilters();
+        }
+
+        function bindStartDiaDiemChange() {
+            const ddStart = document.getElementById('NoiKhoiHanhDiaDiem');
+            if (!ddStart) return;
+            ddStart.addEventListener('change', () => {
+                itinerary.start.tenDiaDiem = normalizeText(ddStart.value);
+                syncItineraryToHidden(); renderRoutePreview(); updateItineraryTextPreview(); applyServiceFilters();
+            });
+        }
+
+        // ================== ITINERARY LOGIC ==================
+        function addStop() {
+            itinerary.stops.push({ day: 1, tinhId: "", xaId: "", tenDiaDiem: "", activities: [] });
+            renderStops(); syncItineraryToHidden(); applyServiceFilters(); renderRoutePreview(); updateItineraryTextPreview(); syncMainDestinationFromFirstStop();
+        }
+        function removeStop(idx) {
+            if (itinerary.stops.length <= 1) return;
+            itinerary.stops.splice(idx, 1);
+            renderStops(); syncItineraryToHidden(); applyServiceFilters(); renderRoutePreview(); updateItineraryTextPreview(); syncMainDestinationFromFirstStop();
+        }
+        function addActivity(stopIdx) {
+            const stop = itinerary.stops[stopIdx];
+            stop.activities = stop.activities || [];
+            stop.activities.push({ startTime: "09:00", endTime: "10:00", slot: "Sang", title: "", note: "" });
+            renderStops(); syncItineraryToHidden(); updateItineraryTextPreview();
+        }
+        function removeActivity(stopIdx, actIdx) {
+            const stop = itinerary.stops[stopIdx];
+            if (!stop.activities) return;
+            stop.activities.splice(actIdx, 1);
+            renderStops(); syncItineraryToHidden(); updateItineraryTextPreview();
+        }
+
+        function createSelectTinh(selectedValue, onChange) {
+            const sel = document.createElement('select'); sel.className = "form-select-modern";
+            resetSelect(sel, "-- Tỉnh/TP --");
+            (TINH_OPTIONS || []).forEach(o => {
+                const opt = document.createElement('option'); opt.value = o.value; opt.textContent = o.text;
+                if (o.value === selectedValue) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            sel.addEventListener('change', onChange);
+            return sel;
+        }
+        function createSelectXa(placeholder) {
+            const sel = document.createElement('select'); sel.className = "form-select-modern";
+            resetSelect(sel, placeholder); sel.disabled = true; return sel;
+        }
+        function createSelectDiaDiem(placeholder) {
+            const sel = document.createElement('select'); sel.className = "form-select-modern";
+            resetSelect(sel, placeholder); sel.disabled = true; return sel;
+        }
+
+        async function loadXaForStop(stopIdx, tinhId, xaSelectEl, ddSelectEl) {
+            resetSelect(xaSelectEl, '-- Xã/Phường --'); resetSelect(ddSelectEl, '-- Địa điểm --');
+            xaSelectEl.disabled = true; ddSelectEl.disabled = true;
+            if (!tinhId) return;
+            const xaList = await fetchJson(`/Tours/GetXaPhuongs?tinhThanhId=${encodeURIComponent(tinhId)}`);
+            fillSelect(xaSelectEl, xaList, '-- Xã/Phường --', it => ({ value: it.id, text: it.name }));
+            xaSelectEl.disabled = false;
+        }
+        async function loadDiaDiemForStop(stopIdx, xaId, ddSelectEl) {
+            resetSelect(ddSelectEl, '-- Địa điểm --'); ddSelectEl.disabled = true;
+            if (!xaId) return;
+            const ddList = await fetchJson(`/Tours/GetDiaDiems?xaPhuongId=${encodeURIComponent(xaId)}`);
+            fillSelect(ddSelectEl, ddList, '-- Địa điểm --', it => ({ value: it.name, text: it.name }));
+            ddEl.disabled = false;
+        }
+
+        function renderStops() {
+            const container = document.getElementById('stopsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            itinerary.stops.forEach((stop, idx) => {
+                const card = document.createElement('div'); card.className = 'it-stop-card';
+
+                // Head
+                const head = document.createElement('div'); head.className = 'd-flex justify-content-between align-items-center mb-2';
+                head.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="it-badge"><i class="bi bi-geo-alt-fill"></i> Điểm #${idx + 1}</span>
+                        <div class="form-group mb-0">
+                            <label class="form-label mb-0 small text-muted">Ngày thứ</label>
+                            <input type="number" min="1" class="form-control-modern py-1" value="${stop.day || 1}" style="width: 70px;" />
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary rounded-pill py-1 px-3" style="font-size:0.75rem"><i class="bi bi-plus"></i> HĐ</button>
+                        <button type="button" class="btn btn-danger rounded-pill py-1 px-3" style="font-size:0.75rem" ${itinerary.stops.length <= 1 ? "disabled" : ""}><i class="bi bi-trash"></i></button>
+                    </div>
+                `;
+                const btnAddAct = head.querySelectorAll('button')[0]; btnAddAct.addEventListener('click', () => addActivity(idx));
+                const btnDelStop = head.querySelectorAll('button')[1]; btnDelStop.addEventListener('click', () => removeStop(idx));
+                const dayInput = head.querySelector('input[type="number"]');
+                if (dayInput) {
+                    dayInput.addEventListener('input', (e) => {
+                        stop.day = parseInt(e.target.value) || 1;
+                        syncAll();
+                    });
+                }
+                card.appendChild(head);
+
+                // Inputs
+                const row = document.createElement('div'); row.className = "row g-2 mb-3";
+                const colTinh = document.createElement('div'); colTinh.className = "col-md-4";
+                const colXa = document.createElement('div'); colXa.className = "col-md-4";
+                const colDD = document.createElement('div'); colDD.className = "col-md-4";
+
+                const tinhSel = createSelectTinh(stop.tinhId || "", async (e) => {
+                    const val = e.target.value?.trim() || "";
+                    stop.tinhId = val; stop.xaId = ""; stop.tenDiaDiem = "";
+                    await loadXaForStop(idx, val, xaSel, ddSel);
+                    syncAll();
+                });
+                const xaSel = createSelectXa('-- Xã/Phường --');
+                xaSel.addEventListener('change', async (e) => {
+                    const val = e.target.value?.trim() || "";
+                    stop.xaId = val; stop.tenDiaDiem = "";
+                    await loadDiaDiemForStop(idx, val, ddSel);
+                    syncAll();
+                });
+                const ddSel = createSelectDiaDiem('-- Địa điểm --');
+                ddSel.addEventListener('change', (e) => {
+                    stop.tenDiaDiem = normalizeText(e.target.value);
+                    syncAll();
+                });
+
+                colTinh.appendChild(tinhSel); colXa.appendChild(xaSel); colDD.appendChild(ddSel);
+                row.append(colTinh, colXa, colDD);
+                card.appendChild(row);
+
+                // Acts
+                const acts = stop.activities || [];
+                if (acts.length > 0) {
+                    acts.forEach((act, aIdx) => {
+                        const actBox = document.createElement('div'); actBox.className = "it-activity-row";
+                        actBox.innerHTML = `
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Bắt đầu</label>
+                                    <input type="time" class="form-control-modern py-1" value="${escapeHtml(act.startTime || "09:00")}" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Kết thúc</label>
+                                    <input type="time" class="form-control-modern py-1" value="${escapeHtml(act.endTime || "10:00")}" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Buổi</label>
+                                    <select class="form-select-modern py-1">
+                                        <option value="Sang">Sáng</option><option value="Chieu">Chiều</option>
+                                        <option value="Toi">Tối</option><option value="Khuya">Khuya</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label mb-1">Tên HĐ</label>
+                                    <input type="text" class="form-control-modern py-1" value="${escapeHtml(act.title || "")}" placeholder="VD: Ăn sáng..." />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Ghi chú</label>
+                                    <input type="text" class="form-control-modern py-1" value="${escapeHtml(act.note || "")}" placeholder="..." />
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger rounded-pill w-100 py-1"><i class="bi bi-x"></i></button>
+                                </div>
+                            </div>
+                        `;
+                        const inputs = actBox.querySelectorAll('input, select');
+                        const slotSel = inputs[2]; slotSel.value = act.slot || "Sang";
+
+                        inputs[0].addEventListener('input', () => { act.startTime = inputs[0].value; syncAll(); });
+                        inputs[1].addEventListener('input', () => { act.endTime = inputs[1].value; syncAll(); });
+                        inputs[2].addEventListener('change', () => { act.slot = inputs[2].value; syncAll(); });
+                        inputs[3].addEventListener('input', () => { act.title = inputs[3].value; syncAll(); });
+                        inputs[4].addEventListener('input', () => { act.note = inputs[4].value; syncAll(); });
+                        actBox.querySelector('button').addEventListener('click', () => removeActivity(idx, aIdx));
+
+                        card.appendChild(actBox);
+                    });
+                } else {
+                    card.innerHTML += `<div class="text-muted small mt-2"><i class="bi bi-info-circle"></i> Chưa có hoạt động.</div>`;
+                }
+
+                container.appendChild(card);
+
+                // Init Load (Async IIFE)
+                (async () => {
+                    if (stop.tinhId) {
+                        await loadXaForStop(idx, stop.tinhId, xaSel, ddSel);
+                        if (stop.xaId) {
+                            xaSel.value = stop.xaId;
+                            await loadDiaDiemForStop(idx, stop.xaId, ddSel);
+                            if (stop.tenDiaDiem) ddSel.value = stop.tenDiaDiem;
+                        }
+                    }
+                })();
+            });
+        }
+
+        // ================== SYNC LOGIC ==================
+        function syncAll() {
+            syncItineraryToHidden(); renderRoutePreview(); updateItineraryTextPreview();
+            applyServiceFilters(); syncMainDestinationFromFirstStop();
+        }
+
+        function syncItineraryToHidden() {
+            const hidden = document.getElementById('LichTrinhJson');
+            if (hidden) {
+                itinerary.returnToStart = !!document.getElementById('ReturnToStartSwitch')?.checked;
+                hidden.value = JSON.stringify(itinerary);
+            }
+        }
+        function syncMainDestinationFromFirstStop() {
+            const firstStop = itinerary.stops && itinerary.stops.length > 0 ? normalizeText(itinerary.stops[0].tenDiaDiem) : "";
+            const diaDiemHidden = document.getElementById('DiaDiemHidden');
+            const diaDiemDisplay = document.getElementById('DiaDiem'); // Changed from DiaDiemDisplay to DiaDiem
+            if (diaDiemHidden) diaDiemHidden.value = firstStop;
+            if (diaDiemDisplay) {
+                diaDiemDisplay.innerHTML = `<option value="${firstStop}" selected>${firstStop ? firstStop : "-- Địa điểm --"}</option>`;
+            }
+        }
+        function renderRoutePreview() {
+            const A = normalizeText(itinerary.start.tenDiaDiem) || "A";
+            const stops = (itinerary.stops || []).map(s => normalizeText(s.tenDiaDiem)).filter(x => x);
+            const route = [A, ...stops, (itinerary.returnToStart ? A : "Kết thúc")].join(" → ");
+            const el = document.getElementById('routePreview');
+            if (el) el.textContent = route;
+        }
+        function slotLabel(slot) {
+            switch(slot) { case "Sang": return "Sáng"; case "Chieu": return "Chiều"; case "Toi": return "Tối"; case "Khuya": return "Khuya"; default: return "Sáng"; }
+        }
+        function updateItineraryTextPreview() {
+            const A = normalizeText(itinerary.start.tenDiaDiem) || "Điểm khởi hành (A)";
+            const lines = [`LỘ TRÌNH: ${A}`];
+            let currentDay = 1;
+            (itinerary.stops||[]).forEach((s, idx) => {
+                if (s.day && s.day !== currentDay) {
+                    lines.push(`
+--- NGÀY THỨ ${s.day} ---`);
+                    currentDay = s.day;
+                }
+                const dd = normalizeText(s.tenDiaDiem) || `(Chưa chọn điểm #${idx + 1})`;
+                lines.push(`- Điểm #${idx + 1} (Ngày ${s.day}): ${dd}`);
+                (s.activities||[]).sort((a,b)=>(a.startTime||"").localeCompare(b.startTime||"")).forEach(a => {
+                    lines.push(`  • ${a.startTime||"00:00"} - ${a.endTime||"00:00"} (${slotLabel(a.slot)}) - ${a.title||""} ${a.note ? "| "+a.note : ""}`);
+                });
+            });
+            if(itinerary.returnToStart) lines.push(`
+Kết thúc: Về ${A}`);
+            const preview = document.getElementById('itineraryTextPreview');
+            if(preview) preview.value = lines.join("
+");
+        }
+
+        // ================== SERVICES ==================
+        function getStopLocations() {
+            return (itinerary.stops || []).map(s => normalizeText(s.tenDiaDiem)).filter(x => x);
+        }
+        function applyServiceFilters() {
+            const term = (document.getElementById('serviceSearch')?.value || "").toLowerCase().trim();
+            const locs = getStopLocations();
+            document.querySelectorAll('.service-item-wrapper').forEach(item => {
+                const text = (item.getAttribute('data-search') || "");
+                const location = normalizeText(item.getAttribute('data-location') || "__ALL__");
+                const okSearch = !term || text.includes(term);
+                const okLoc = (locs.length === 0) || (location === "__ALL__") || locs.includes(location);
+                item.style.display = (okSearch && okLoc) ? 'block' : 'none';
+            });
+            updateTotals();
+        }
+
+        // Preview ảnh mới
+        function previewImage(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('previewImg').style.display = 'block';
+                    document.getElementById('uploadPlaceholder').style.display = 'none';
+                    document.getElementById('currentImg')?.style.setProperty('display', 'none');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // ================== INIT ==================
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load điểm khởi hành
+            if (document.getElementById('NoiKhoiHanhTinh').value) {
+                await loadXaByTinh('NoiKhoiHanhTinh', 'NoiKhoiHanhXa', 'NoiKhoiHanhDiaDiem');
+                if (@Json.Serialize(Model.NoiKhoiHanhXa ?? "")) {
+                    document.getElementById('NoiKhoiHanhXa').value = @Json.Serialize(Model.NoiKhoiHanhXa ?? "");
+                    await loadDiaDiemByXa('NoiKhoiHanhXa', 'NoiKhoiHanhDiaDiem');
+                    if (@Json.Serialize(Model.NoiKhoiHanh ?? "")) {
+                        document.getElementById('NoiKhoiHanhDiaDiem').value = @Json.Serialize(Model.NoiKhoiHanh ?? "");
+                    }
+                }
+            }
+
+            // Load điểm đến
+            if (document.getElementById('DiaDiemTinh').value) {
+                await loadXaByTinh('DiaDiemTinh', 'DiaDiemXa', 'DiaDiem');
+                if (@Json.Serialize(Model.DiaDiemXa ?? "")) {
+                    document.getElementById('DiaDiemXa').value = @Json.Serialize(Model.DiaDiemXa ?? "");
+                    await loadDiaDiemByXa('DiaDiemXa', 'DiaDiem');
+                    if (@Json.Serialize(Model.DiaDiem ?? "")) {
+                        document.getElementById('DiaDiem').value = @Json.Serialize(Model.DiaDiem ?? "");
+                    }
+                }
+            }
+
+            filterServicesByDiaDiem();
+            updateTotals();
+
+            // Theo dõi thay đổi
+            document.getElementById('GiaTour')?.addEventListener('input', updateTotals);
+            document.querySelectorAll('input[name="SelectedDichVuIds"]').forEach(cb => cb.addEventListener('change', updateTotals));
+            document.getElementById('DiaDiem')?.addEventListener('change', filterServicesByDiaDiem);
+
+            // Itinerary specific initialization
+            const sw = document.getElementById('ReturnToStartSwitch');
+            if(sw) sw.addEventListener('change', syncAll);
+
+            document.getElementById('btnAddStop')?.addEventListener('click', addStop);
+            document.getElementById('btnFillMoTa')?.addEventListener('click', () => {
+                const preview = document.getElementById('itineraryTextPreview')?.value || "";
+                const moTa = document.getElementById('MoTa');
+                if(moTa) moTa.value = (moTa.value ? moTa.value + "\n\n" : "") + preview;
+            });
+            document.getElementById('serviceSearch')?.addEventListener('keyup', applyServiceFilters);
+            document.getElementById('mainEditForm')?.addEventListener('submit', () => { syncAll(); });
+
+            // Initialize itinerary if Model.LichTrinhJson is present
+            const initialLichTrinhJsonRaw = '@Html.Raw(JsonSerializer.Serialize(Model.LichTrinhJson ?? "{}"))';
+            if (initialLichTrinhJsonRaw && initialLichTrinhJsonRaw !== "{}") {
+                const parsedItinerary = JSON.parse(initialLichTrinhJsonRaw);
+                if (parsedItinerary && parsedItinerary.stops) {
+                    itinerary = parsedItinerary;
+                } else if (Array.isArray(parsedItinerary)) {
+                     // Handle legacy format if LichTrinhJson was an array of stops directly
+                    itinerary.stops = parsedItinerary.map(stop => {
+                        const newActivities = (stop.activities || []).map(act => ({
+                            startTime: act.time || "00:00",
+                            endTime: act.time ? new Date(new Date(`2000/01/01 ${act.time}`).getTime() + 60*60*1000).toTimeString().slice(0, 5) : "00:00", // Add an hour for end time
+                            slot: act.slot,
+                            title: act.title,
+                            note: act.note
+                        }));
+                        return { day: stop.day || 1, tinhId: stop.tinhId, xaId: stop.xaId, tenDiaDiem: stop.tenDiaDiem, activities: newActivities };
+                    });
+                } else {
+                    console.warn("Invalid LichTrinhJson format:", initialLichTrinhJsonRaw);
+                }
+            }
+
+            renderStops(); syncAll();
+        });
+    </script>
+}

@@ -1,0 +1,232 @@
+﻿@model Tour_2040.Models.ThongKeDichVuChiTietViewModel
+
+@{
+    ViewData["Title"] = "Báo cáo chi tiết: " + Model.LoaiDichVu;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --btn-grey: #f1f5f9;
+        --btn-grey-hover: #e2e8f0;
+        --primary-blue: #3a86ff;
+    }
+
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    /* Thẻ KPI - Modern Flat */
+    .kpi-card-flat {
+        border: var(--border-thin);
+        padding: 1.5rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        background: white;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+
+        .kpi-card-flat:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+    .icon-shape {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-system);
+        border: var(--border-thin);
+        font-size: 1.5rem;
+    }
+
+    /* Bảng Modern */
+    .table-container-flat {
+        border: var(--border-thin);
+        border-radius: 16px;
+        background: white;
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: #fcfcfd;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            letter-spacing: 0.5px;
+        }
+
+        .table-modern td {
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover {
+            background-color: #f9fafb;
+        }
+
+    /* Avatar & Badge */
+    .avatar-xs {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        border: var(--border-thin);
+        background: var(--bg-system);
+    }
+
+    .btn-grey-sm {
+        background: var(--btn-grey);
+        border: var(--border-thin);
+        color: var(--text-muted);
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .btn-grey-sm:hover {
+            background: var(--btn-grey-hover);
+            color: var(--text-main);
+        }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    @* --- HEADER SECTION --- *@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1" style="font-size: 0.75rem;">
+                    <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none">Báo cáo hiệu suất</a></li>
+                    <li class="breadcrumb-item active">@Model.LoaiDichVu</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold mb-1">Dịch vụ: <span class="text-primary">@Model.LoaiDichVu</span></h4>
+            <p class="text-muted small mb-0">
+                <i class="bi bi-calendar3 me-1"></i> Giai đoạn: @Model.FromDate.ToString("dd/MM/yyyy") - @Model.ToDate.ToString("dd/MM/yyyy")
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn-grey-sm shadow-sm">
+            <i class="bi bi-arrow-left"></i> <span>Quay lại thống kê</span>
+        </a>
+    </div>
+
+    @* --- KPI SECTION --- *@
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-primary"><i class="bi bi-receipt"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Tổng lượt sử dụng</div>
+                    <div class="h4 fw-bold mb-0">@Model.TongSoGiaoDich <span class="small fw-normal text-muted">giao dịch</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-success"><i class="bi bi-currency-dollar"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Doanh thu phát sinh</div>
+                    <div class="h4 fw-bold mb-0 text-success">@Model.TongTien.ToString("N0", culture) <small class="fs-6">đ</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- TABLE SECTION --- *@
+    <div class="table-container-flat shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom border-light">
+            <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-list-stars me-2 text-primary"></i>Danh sách giao dịch chi tiết</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Mã Giao Dịch</th>
+                        <th>Thời điểm đặt</th>
+                        <th>Lịch trình Tour</th>
+                        <th>Thông tin khách hàng</th>
+                        <th class="text-end pe-4">Giá trị đơn hàng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-primary font-monospace">#@item.MaGiaoDich</span>
+                                </td>
+                                <td class="text-muted small">
+                                    <i class="bi bi-clock me-1"></i>@item.NgayTao.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark text-truncate" style="max-width: 280px;" title="@item.TenTour">
+                                        @item.TenTour
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-xs text-secondary">
+                                            @((string.IsNullOrEmpty(item.TenKhach) ? "K" : item.TenKhach.Substring(0, 1)).ToUpper())
+                                        </div>
+                                        <span class="fw-medium">@item.TenKhach</span>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-dark">
+                                    @item.SoTien.ToString("N0") <small class="fw-normal text-muted">đ</small>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+                                <p class="mb-0">Không có dữ liệu giao dịch cho dịch vụ này trong thời gian này.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 bg-light bg-opacity-50 text-muted small border-top">
+            <i class="bi bi-info-circle me-1"></i> Hiển thị dữ liệu thực tế dựa trên các hợp đồng đã được ký kết và thanh toán.
+        </div>
+    </div>
+</div>

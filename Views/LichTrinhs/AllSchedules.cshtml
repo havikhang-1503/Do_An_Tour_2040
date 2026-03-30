@@ -1,0 +1,174 @@
+﻿@model IEnumerable<Tour_2040.Models.LichTrinh>
+@{
+    ViewData["Title"] = "Quản lý tất cả lịch trình";
+    var keyword = (ViewData["Keyword"] as string) ?? "";
+    var status = (ViewData["Status"] as string) ?? "";
+    var tourId = (ViewData["TourId"] as string) ?? "";
+    var fromDate = (ViewData["FromDate"] as string) ?? "";
+    var toDate = (ViewData["ToDate"] as string) ?? "";
+    var tourStatus = (ViewData["TourStatus"] as string) ?? "Running";
+
+    var tours = ViewBag.Tours as IEnumerable<dynamic>;
+    var today = DateTime.Now.Date;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h3 class="fw-bold mb-1">Quản lý tất cả lịch trình</h3>
+            <div class="text-muted">Admin/Staff xem tất cả. Mặc định: <b>tour đang chạy</b>.</div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Dashboard" class="btn btn-outline-primary">
+                Dashboard
+            </a>
+
+            <a class="btn btn-outline-success"
+               asp-action="ExportSchedulesCsv"
+               asp-route-keyword="@keyword"
+               asp-route-status="@status"
+               asp-route-tourId="@tourId"
+               asp-route-fromDate="@fromDate"
+               asp-route-toDate="@toDate"
+               asp-route-tourStatus="@tourStatus">
+                Export CSV
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-lg-4">
+                    <label class="form-label">Từ khóa</label>
+                    <input class="form-control" name="keyword" value="@keyword" placeholder="Mã lịch trình / tên tour / email..." />
+                </div>
+
+                <div class="col-lg-2">
+                    <label class="form-label">Trạng thái lịch trình</label>
+                    <input class="form-control" name="status" value="@status" placeholder="VD: Đã đặt" />
+                </div>
+
+                <div class="col-lg-2">
+                    <label class="form-label">Tour</label>
+                    <select class="form-select" name="tourId">
+                        <option value="">-- Tất cả --</option>
+                        @if (tours != null)
+                        {
+                            foreach (var t in tours)
+                            {
+                                <option value="@t.MaTour" selected="@(tourId == (string)t.MaTour)">
+                                    @t.MaTour - @t.TenTour
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-2">
+                    <label class="form-label">Trạng thái tour</label>
+                    <select class="form-select" name="tourStatus">
+                        <option value="Running" selected="@(tourStatus == "Running")">Đang chạy</option>
+                        <option value="Upcoming" selected="@(tourStatus == "Upcoming")">Sắp khởi hành</option>
+                        <option value="Completed" selected="@(tourStatus == "Completed")">Đã kết thúc</option>
+                        <option value="All" selected="@(tourStatus == "All")">Tất cả</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-1">
+                    <label class="form-label">Từ ngày</label>
+                    <input type="date" class="form-control" name="fromDate" value="@fromDate" />
+                </div>
+
+                <div class="col-lg-1">
+                    <label class="form-label">Đến ngày</label>
+                    <input type="date" class="form-control" name="toDate" value="@toDate" />
+                </div>
+
+                <div class="col-12 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Lọc</button>
+                    <a class="btn btn-outline-secondary" asp-action="AllSchedules">Reset</a>
+                    <a class="btn btn-outline-dark" asp-action="AllSchedules" asp-route-tourStatus="Running">Chỉ tour đang chạy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tour</th>
+                            <th>Khách</th>
+                            <th>Ngày đặt</th>
+                            <th class="text-end">Số người</th>
+                            <th class="text-end">Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Trạng thái tour</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var soNguoi = item.SoNguoiLon + item.SoTreEm;
+
+                            string tourBadge = "bg-secondary";
+                            string tourText = "Không rõ";
+                            if (item.Tour != null)
+                            {
+                                if (today < item.Tour.NgayDi) { tourBadge = "bg-warning"; tourText = "Sắp khởi hành"; }
+                                else if (today > item.Tour.NgayVe) { tourBadge = "bg-secondary"; tourText = "Đã kết thúc"; }
+                                else { tourBadge = "bg-success"; tourText = "Đang chạy"; }
+                            }
+
+                            var rowClass = soNguoi <= 0 ? "table-danger" : "";
+                            <tr class="@rowClass">
+                                <td class="fw-bold">@item.MaLichTrinh</td>
+                                <td>@(item.Tour?.TenTour ?? item.TourId)</td>
+                                <td>@(item.User?.Email ?? "---")</td>
+                                <td>@item.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    @if (soNguoi <= 0)
+                                    {
+                                        <span class="badge bg-danger">0 (Lỗi)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">@soNguoi</span>
+                                    }
+                                </td>
+                                <td class="text-end">@item.TongTien.ToString("N0")</td>
+                                <td><span class="badge bg-info text-dark">@item.TrangThai</span></td>
+                                <td><span class="badge @tourBadge">@tourText</span></td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.MaLichTrinh">
+                                        Xem
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="p-4 text-center text-muted">Không có dữ liệu phù hợp.</div>
+            }
+        </div>
+    </div>
+</div>

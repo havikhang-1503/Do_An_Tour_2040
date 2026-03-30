@@ -1,0 +1,68 @@
+﻿@model IEnumerable<Tour_2040.Models.LichTrinh>
+
+@{
+    ViewData["Title"] = "Dashboard";
+    int total = (int)(ViewData["Total"] ?? 0);
+    int pending = (int)(ViewData["Pending"] ?? 0);
+    int confirmed = (int)(ViewData["Confirmed"] ?? 0);
+    int inProgress = (int)(ViewData["InProgress"] ?? 0);
+    int completed = (int)(ViewData["Completed"] ?? 0);
+    int canceled = (int)(ViewData["Canceled"] ?? 0);
+    decimal revenueMonth = (decimal)(ViewData["RevenueMonth"] ?? 0m);
+    double avgRating = (double)(ViewData["AvgRating"] ?? 0d);
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h2 class="mb-1">Dashboard hệ thống</h2>
+        <div class="text-muted">8 KPI quan trọng, để biết hệ thống đang sống hay đang giả vờ sống.</div>
+    </div>
+    <div>
+        <a class="btn btn-outline-primary" asp-action="AdminIndex">Quản lý lịch trình</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Tổng lịch trình</div><div class="fs-3 fw-bold">@total</div></div></div>
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Chờ xác nhận</div><div class="fs-3 fw-bold">@pending</div></div></div>
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Đã xác nhận</div><div class="fs-3 fw-bold">@confirmed</div></div></div>
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Đang khởi hành</div><div class="fs-3 fw-bold">@inProgress</div></div></div>
+
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Hoàn thành</div><div class="fs-3 fw-bold">@completed</div></div></div>
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Đã hủy</div><div class="fs-3 fw-bold">@canceled</div></div></div>
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Doanh thu tháng</div><div class="fs-3 fw-bold">@revenueMonth.ToString("N0")</div></div></div>
+    <div class="col-md-3"><div class="card card-body"><div class="text-muted">Rating trung bình</div><div class="fs-3 fw-bold">@avgRating.ToString("0.0")</div></div></div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="fw-semibold mb-2">10 lịch trình gần nhất</div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã</th>
+                        <th>Tour</th>
+                        <th>Khách</th>
+                        <th>Ngày đặt</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model ?? Enumerable.Empty<Tour_2040.Models.LichTrinh>())
+                    {
+                        <tr>
+                            <td class="fw-semibold">@x.MaLichTrinh</td>
+                            <td>@(x.Tour?.TenTour ?? x.TourId)</td>
+                            <td>@(x.User?.Email ?? x.User?.UserName ?? x.UserId)</td>
+                            <td>@x.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end">@x.TongTien.ToString("N0")</td>
+                            <td>@x.TrangThai</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

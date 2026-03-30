@@ -1,0 +1,710 @@
+﻿@model IEnumerable<Tour_2040.Models.Tour>
+@using System.Linq
+
+@*
+    Folder: Views/Tours
+    File path: Views/Tours/Custom.cshtml
+    File name: Custom.cshtml
+    View: Tours/Custom
+    Labels: A(UI mock-card), B(Filter query), C(Pagination 25/page), D(Buttons pill), E(Fix clipping), F(2-cols + Edge gutter)
+    Fixes (this round):
+      - ✅ Make cards BIGGER + 2 per row (md+)
+      - ✅ Make layout closer to page edges (remove container, remove max-width 1100)
+      - ✅ Switch flex fixed-width grid -> CSS grid responsive
+      - ✅ Image ratio 16:10 for nicer 2-column layout
+*@
+
+@{
+    ViewData["Title"] = "Tour Cá Nhân Của Tôi";
+
+    var filter = (Context.Request.Query["filter"].ToString() ?? "").Trim().ToLowerInvariant();
+    IEnumerable<Tour_2040.Models.Tour> tours = Model ?? Enumerable.Empty<Tour_2040.Models.Tour>();
+
+    if (filter == "pending" || filter == "choduyet")
+    {
+        tours = tours.Where(t => t.TrangThai == "ChoDuyet");
+        ViewData["Title"] = "Tour cá nhân: Chưa duyệt";
+    }
+    else if (filter == "approved" || filter == "daduyet")
+    {
+        tours = tours.Where(t => t.TrangThai == "DaDuyet");
+        ViewData["Title"] = "Tour cá nhân: Đã duyệt";
+    }
+    else if (filter == "rejected" || filter == "tuchoi" || filter == "reject")
+    {
+        tours = tours.Where(t => t.TrangThai != "ChoDuyet" && t.TrangThai != "DaDuyet");
+        ViewData["Title"] = "Tour cá nhân: Từ chối";
+    }
+
+    var renderList = tours.ToList();
+    var total = renderList.Count;
+}
+
+<style>
+    :root {
+        --bg: #F3F5FA;
+        --text: #0b1220;
+        --muted: #6b7280;
+        --border: 1px solid rgba(226,232,240,.92);
+        --blue: #2b2af7;
+        --blue2: #1f1df2;
+        --chip-bg: rgba(255,255,255,.88);
+        --chip-br: rgba(255,255,255,.70);
+        --track: rgba(245,158,11,.45);
+        --fill: rgba(37,99,235,.88);
+        --shadow: 0 14px 34px rgba(2,6,23,.10);
+        --shadow2: 0 10px 22px rgba(2,6,23,.08);
+        /* ✅ xát lề nhưng vẫn có gutter đẹp */
+        --outer-gutter: clamp(10px, 2.2vw, 40px);
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+        font-family: Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+
+    /* ✅ PAGE SHELL: sát lề hơn container */
+    .page-shell {
+        width: 100%;
+        padding: 14px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    /* ✅ rộng hơn, không khóa 1100 nữa */
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* Header + Filter */
+    .pill-filter {
+        background: rgba(255,255,255,.92);
+        border: var(--border);
+        border-radius: 999px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 22px rgba(2,6,23,.05);
+        flex-wrap: wrap;
+        width: 100%;
+        /* ✅ kéo dài sát hơn */
+        max-width: 980px;
+    }
+
+    .search-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: .85rem;
+        min-width: 220px;
+        flex: 1 1 280px;
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 950;
+        box-shadow: 0 10px 22px rgba(2,6,23,.08);
+        white-space: nowrap;
+    }
+
+    .chip-tab {
+        border-radius: 999px;
+        font-weight: 950;
+        font-size: .78rem;
+        padding: .42rem .8rem;
+        border: 1px solid rgba(226,232,240,.9);
+        background: rgba(255,255,255,.9);
+        text-decoration: none;
+        color: var(--text);
+        box-shadow: 0 10px 18px rgba(2,6,23,.06);
+        transition: .15s;
+        white-space: nowrap;
+    }
+
+        .chip-tab:hover {
+            transform: translateY(-1px);
+            border-color: rgba(37,99,235,.35);
+        }
+
+        .chip-tab.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+    /* Empty state */
+    .empty-card {
+        background: #fff;
+        border: var(--border);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        padding: 3rem 1.5rem;
+        text-align: center;
+    }
+
+    /* ✅ GRID: 2 cột, card to đều, không width cứng */
+    .tour-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 22px;
+        align-items: stretch;
+    }
+
+    @@media (min-width: 768px) {
+        .tour-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 26px;
+        }
+    }
+
+    @@media (min-width: 1400px) {
+        /* vẫn 2 cột để card thật sự to, đúng ý "to ra" */
+        .tour-grid {
+            gap: 28px;
+        }
+    }
+
+    .tour-item {
+        min-width: 0;
+    }
+
+    /* MOCK CARD */
+    .mock-card {
+        background: #fff;
+        border: var(--border);
+        border-radius: 32px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 16px; /* ✅ nới padding chút cho “to” */
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+        .mock-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 40px rgba(2,6,23,.12);
+            border-color: rgba(37,99,235,.22);
+        }
+
+    .mock-img {
+        position: relative;
+        border-radius: 28px;
+        overflow: hidden;
+        border: 6px solid #fff;
+        box-shadow: 0 12px 28px rgba(2,6,23,.10);
+        /* ✅ ảnh rộng đẹp hơn cho layout 2 cột */
+        aspect-ratio: 16/10;
+        background: #fff;
+    }
+
+        .mock-img img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .mock-chip {
+        position: absolute;
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .52rem .92rem;
+        border-radius: 999px;
+        font-weight: 950;
+        font-size: .75rem;
+        background: var(--chip-bg);
+        border: 1px solid var(--chip-br);
+        box-shadow: var(--shadow2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        max-width: calc(100% - 18px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .chip-loc {
+        left: 12px;
+        bottom: 12px;
+    }
+
+    .chip-status {
+        right: 12px;
+        top: 12px;
+    }
+
+    .status-pending {
+        color: #b45309;
+    }
+
+    .status-approved {
+        color: #059669;
+    }
+
+    .status-rejected {
+        color: #dc2626;
+    }
+
+    .mock-body {
+        padding: 14px 8px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .mock-title {
+        font-weight: 1000;
+        font-size: 1.45rem; /* ✅ to hơn */
+        line-height: 1.15;
+        margin: 0;
+        color: var(--text);
+    }
+
+    .mock-date {
+        font-weight: 900;
+        font-size: .92rem; /* ✅ to hơn */
+        color: var(--muted);
+        margin-top: -4px;
+    }
+
+    .mock-accent {
+        height: 14px;
+        width: 52%;
+        margin-left: auto;
+        border-radius: 999px;
+        background: rgba(37,99,235,.18);
+        box-shadow: 0 10px 22px rgba(37,99,235,.12);
+    }
+
+    .mock-people {
+        font-weight: 950;
+        font-size: 1.02rem;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        flex-wrap: wrap;
+    }
+
+    .mock-progress {
+        height: 7px;
+        border-radius: 999px;
+        background: var(--track);
+        overflow: hidden;
+        box-shadow: 0 10px 16px rgba(2,6,23,.06);
+    }
+
+        .mock-progress > span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: var(--fill);
+        }
+
+    .mock-price-wrap {
+        margin-top: auto;
+        background: rgba(37,99,235,.10);
+        border: 1px solid rgba(37,99,235,.18);
+        border-radius: 30px;
+        padding: 14px; /* ✅ to hơn */
+        box-shadow: 0 16px 34px rgba(2,6,23,.10);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .mock-price-pill {
+        flex: 1;
+        min-width: 0;
+        background: #fff;
+        border-radius: 999px;
+        padding: 14px 16px;
+        border: 2px solid rgba(37,99,235,.18);
+        font-weight: 1000;
+        font-size: 1.35rem; /* ✅ to hơn */
+        color: var(--text);
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-shadow: 0 10px 18px rgba(2,6,23,.06);
+    }
+
+    .mock-go {
+        width: 60px;
+        height: 60px;
+        border-radius: 999px;
+        background: #fff;
+        border: 2px solid rgba(37,99,235,.22);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #2563eb;
+        text-decoration: none;
+        box-shadow: 0 12px 26px rgba(2,6,23,.14);
+        transition: transform .18s;
+        flex: 0 0 auto;
+    }
+
+        .mock-go:hover {
+            transform: translateX(2px);
+        }
+
+    /* extra actions (pill) */
+    .mock-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .mini-pill {
+        border-radius: 999px;
+        padding: .46rem .82rem;
+        font-weight: 950;
+        font-size: .8rem;
+        border: 1px solid rgba(226,232,240,.9);
+        background: rgba(255,255,255,.95);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.06);
+        transition: .15s;
+        white-space: nowrap;
+    }
+
+        .mini-pill:hover {
+            transform: translateY(-1px);
+        }
+
+        .mini-pill.warn {
+            border-color: rgba(245,158,11,.25);
+            color: #b45309;
+        }
+
+        .mini-pill.danger {
+            border-color: rgba(239,68,68,.25);
+            color: #dc2626;
+        }
+
+    /* Pagination */
+    .filter-hidden {
+        display: none !important;
+    }
+
+    .page-hidden {
+        display: none !important;
+    }
+
+    .pager-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 1.2rem;
+    }
+
+    .pager {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+        .pager button {
+            border: var(--border);
+            background: rgba(255,255,255,.92);
+            border-radius: 999px;
+            padding: .42rem .78rem;
+            font-weight: 950;
+            font-size: .78rem;
+            color: var(--text);
+            box-shadow: 0 10px 18px rgba(2,6,23,.06);
+            transition: .15s;
+        }
+
+            .pager button:hover {
+                transform: translateY(-1px);
+                border-color: rgba(37,99,235,.35);
+            }
+
+            .pager button.active {
+                background: #2563eb;
+                border-color: #2563eb;
+                color: #fff;
+            }
+
+            .pager button:disabled {
+                opacity: .55;
+                cursor: not-allowed;
+                transform: none;
+            }
+</style>
+
+<div class="page-shell animate__animated animate__fadeIn">
+    <div class="page-wrap">
+
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div class="text-center text-lg-start">
+                <h3 class="fw-bold mb-1">@ViewData["Title"]</h3>
+                <div class="text-muted fw-bold" style="font-size:.85rem;">
+                    Hiển thị: <span class="text-primary">2 tour/hàng</span> · <span class="text-primary">25 tour/trang</span>
+                </div>
+            </div>
+
+            <a asp-action="CreatePersonal" class="btn btn-primary btn-pill px-4 py-2 fw-bold"
+               style="background:linear-gradient(135deg,#4f46e5,#4338ca);border:none;">
+                <i class="bi bi-plus-lg me-2"></i> Thiết kế mới
+            </a>
+        </div>
+
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-4">
+            <div class="pill-filter">
+                <i class="bi bi-search text-muted small"></i>
+                <input type="text" id="mainSearch" class="search-input" placeholder="Tìm tour cá nhân...">
+
+                <div class="vr mx-1" style="height:16px;opacity:.18;"></div>
+
+                <a class="chip-tab @(string.IsNullOrEmpty(filter) ? "active" : "")"
+                   href="@Url.Action("Custom", "Tours", new { filter = "" })">Tất cả</a>
+
+                <a class="chip-tab @((filter == "pending" || filter == "choduyet") ? "active" : "")"
+                   href="@Url.Action("Custom", "Tours", new { filter = "pending" })">Chưa duyệt</a>
+
+                <a class="chip-tab @((filter == "approved" || filter == "daduyet") ? "active" : "")"
+                   href="@Url.Action("Custom", "Tours", new { filter = "approved" })">Đã duyệt</a>
+
+                <a class="chip-tab @((filter == "rejected" || filter == "tuchoi" || filter == "reject") ? "active" : "")"
+                   href="@Url.Action("Custom", "Tours", new { filter = "rejected" })">Từ chối</a>
+            </div>
+
+            <div class="small text-muted fw-bold">
+                <span id="matchCount">@total</span> kết quả
+            </div>
+        </div>
+
+        @if (!renderList.Any())
+        {
+            <div class="empty-card">
+                <div class="mb-3">
+                    <div class="d-inline-flex p-4 rounded-circle" style="background:#eef2ff;">
+                        <i class="bi bi-palette fs-1 text-primary"></i>
+                    </div>
+                </div>
+                <h4 class="fw-bold">Chưa có thiết kế nào</h4>
+                <p class="text-muted mb-4" style="max-width:520px;margin:0 auto;">
+                    Bạn chưa có tour cá nhân nào. Tạo một hành trình mới rồi để hệ thống duyệt.
+                </p>
+                <a asp-action="CreatePersonal" class="btn btn-outline-primary btn-pill px-5 fw-bold">
+                    Bắt đầu ngay
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="tour-grid" id="userGrid">
+                @foreach (var item in renderList)
+                {
+                    int totalSlots = item.SoNguoiToiDa ?? 10;
+                    int booked = item.SoNguoiHienTai ?? 0;
+
+                    if (totalSlots <= 0) totalSlots = 10;
+                    if (booked < 0) booked = 0;
+                    if (booked > totalSlots) booked = totalSlots;
+
+                    int pct = (int)Math.Round(booked * 100.0 / totalSlots);
+                    pct = Math.Max(0, Math.Min(100, pct));
+                    var pctText = $"{pct}%";
+
+                    string statusText;
+                    string statusCls;
+                    if (item.TrangThai == "ChoDuyet") { statusText = "Chờ duyệt"; statusCls = "status-pending"; }
+                    else if (item.TrangThai == "DaDuyet") { statusText = "Đã duyệt"; statusCls = "status-approved"; }
+                    else { statusText = "Từ chối"; statusCls = "status-rejected"; }
+
+                    <div class="tour-item" data-search="@item.TenTour @item.DiaDiem @item.MaTour">
+                        <div class="mock-card">
+                            <div class="mock-img">
+                                <img src="@(item.HinhAnhTourUrl ?? "/uploads/tours/no-image.jpg")" alt="@item.TenTour" />
+
+                                <span class="mock-chip chip-status @statusCls">
+                                    <i class="bi bi-shield-check"></i> @statusText
+                                </span>
+
+                                <span class="mock-chip chip-loc">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                                    <span class="text-truncate">@item.DiaDiem</span>
+                                </span>
+                            </div>
+
+                            <div class="mock-body">
+                                <div class="mock-title">@item.TenTour</div>
+                                <div class="mock-date">@item.NgayDi?.ToString("dd/MM/yyyy") - @item.NgayVe?.ToString("dd/MM/yyyy")</div>
+
+                                <div class="mock-accent"></div>
+
+                                <div class="mock-people">@booked.ToString("D2")/@totalSlots.ToString("D2") người đăng ký tour</div>
+
+                                <div class="mock-progress" aria-label="Tiến độ số lượng">
+                                    <span style="width:@pctText"></span>
+                                </div>
+
+                                <div class="mock-price-wrap">
+                                    <div class="mock-price-pill">
+                                        @(item.GiaTour > 0 ? item.GiaTour.ToString("N0") + " đ" : "Đang báo giá")
+                                    </div>
+
+                                    <a asp-action="PersonalDetails" asp-route-id="@item.MaTour" class="mock-go" title="Xem chi tiết">
+                                        <i class="bi bi-arrow-right fs-4"></i>
+                                    </a>
+                                </div>
+
+                                @if (item.TrangThai == "ChoDuyet")
+                                {
+                                    <div class="mock-actions">
+                                        <a asp-action="EditPersonal" asp-route-id="@item.MaTour" class="mini-pill warn" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil"></i> Sửa
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.MaTour" class="mini-pill danger" title="Xóa">
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="pager-wrap">
+                <div class="small text-muted fw-bold">
+                    <span id="rangeText">0–0</span> / <span id="matchCount2">@total</span>
+                </div>
+                <div class="pager" id="paginationBar"></div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const PAGE_SIZE = 25;
+            let currentPage = 1;
+
+            const mainSearch = document.getElementById('mainSearch');
+            const matchCount = document.getElementById('matchCount');
+            const matchCount2 = document.getElementById('matchCount2');
+            const rangeText = document.getElementById('rangeText');
+            const paginationBar = document.getElementById('paginationBar');
+
+            function getAllItems() { return Array.from(document.querySelectorAll('.tour-item')); }
+            function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+            function renderPager(totalPages, page) {
+                if (!paginationBar) return;
+                paginationBar.innerHTML = '';
+
+                const makeBtn = (label, targetPage, disabled, isActive) => {
+                    const b = document.createElement('button');
+                    b.type = "button";
+                    b.textContent = label;
+                    if (disabled) b.disabled = true;
+                    if (isActive) b.classList.add('active');
+                    b.addEventListener('click', () => {
+                        if (disabled) return;
+                        paginateTo(targetPage);
+                    });
+                    return b;
+                };
+
+                paginationBar.appendChild(makeBtn('‹', page - 1, page <= 1, false));
+
+                const windowSize = 7;
+                let start = Math.max(1, page - 2);
+                let end = Math.min(totalPages, start + (windowSize - 1));
+                start = Math.max(1, end - (windowSize - 1));
+
+                if (start > 1) {
+                    paginationBar.appendChild(makeBtn('1', 1, false, page === 1));
+                    if (start > 2) paginationBar.appendChild(makeBtn('…', page, true, false));
+                }
+
+                for (let p = start; p <= end; p++) {
+                    paginationBar.appendChild(makeBtn(String(p), p, false, p === page));
+                }
+
+                if (end < totalPages) {
+                    if (end < totalPages - 1) paginationBar.appendChild(makeBtn('…', page, true, false));
+                    paginationBar.appendChild(makeBtn(String(totalPages), totalPages, false, page === totalPages));
+                }
+
+                paginationBar.appendChild(makeBtn('›', page + 1, page >= totalPages, false));
+            }
+
+            function applyFilterOnly() {
+                const q = (mainSearch?.value || '').toLowerCase().trim();
+                let count = 0;
+
+                getAllItems().forEach(item => {
+                    const hay = (item.dataset.search || "").toLowerCase();
+                    const ok = !q || hay.includes(q);
+                    item.classList.toggle('filter-hidden', !ok);
+                    if (ok) count++;
+                });
+
+                if (matchCount) matchCount.textContent = count;
+                if (matchCount2) matchCount2.textContent = count;
+                return count;
+            }
+
+            function paginateTo(page) {
+                const items = getAllItems().filter(i => !i.classList.contains('filter-hidden'));
+                const totalItems = items.length;
+                const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+                currentPage = clamp(page, 1, totalPages);
+
+                const startIdx = (currentPage - 1) * PAGE_SIZE;
+                const endIdx = startIdx + PAGE_SIZE;
+
+                items.forEach((item, idx) => {
+                    const onPage = idx >= startIdx && idx < endIdx;
+                    item.classList.toggle('page-hidden', !onPage);
+                });
+
+                const from = totalItems === 0 ? 0 : (startIdx + 1);
+                const to = totalItems === 0 ? 0 : Math.min(endIdx, totalItems);
+                if (rangeText) rangeText.textContent = `${from}–${to}`;
+
+                renderPager(totalPages, currentPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function refresh(resetToFirst = true) {
+                applyFilterOnly();
+                if (resetToFirst) currentPage = 1;
+                paginateTo(currentPage);
+
+                getAllItems().forEach(i => {
+                    if (i.classList.contains('filter-hidden')) i.classList.add('page-hidden');
+                });
+            }
+
+            if (mainSearch) mainSearch.addEventListener('input', () => refresh(true));
+            refresh(true);
+        });
+    </script>
+}

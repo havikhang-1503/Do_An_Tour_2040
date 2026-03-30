@@ -1,0 +1,383 @@
+﻿@*
+Folder: Views/Vouchers
+File path: Views/Vouchers/Index.cshtml
+File name: Index.cshtml
+Label: V-Voucher-Index (A/B/C)
+Mô tả:
+- A: FIX lề ngoài ổn định khi zoom (page-shell + outer-gutter clamp), bỏ container-fluid px-lg-5
+- B: Đồng bộ UI voucher (KPI + table modern)
+- C: Thao tác Admin/Staff thành dropdown + thêm AntiForgeryToken cho forms
+*@
+
+@model IEnumerable<Tour_2040.Models.Voucher>
+
+@{
+    ViewData["Title"] = "Quản lý Voucher";
+
+    var isAdmin = User.IsInRole("Admin");
+    var isStaff = User.IsInRole("Staff");
+    var isManagement = isAdmin || isStaff;
+
+    var totalVouchers = Model?.Count() ?? 0;
+    var activeVouchers = Model?.Count(x => x.IsActive && x.TrangThaiDuyet == "Đã duyệt") ?? 0;
+    var totalUsed = Model?.Sum(x => x.DaSuDung) ?? 0;
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-thin: 1px solid rgba(226,232,240,.92);
+        --shadow-soft: 0 12px 28px rgba(2,6,23,.07);
+        --primary-blue: #3a86ff;
+        --outer-gutter: clamp(16px, 4vw, 72px);
+        --radius-lg: 18px;
+    }
+
+    body {
+        background: var(--bg-system) !important;
+        font-family: Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+        color: var(--text-main);
+    }
+
+    .page-shell {
+        width: 100%;
+        padding: 12px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    .kpi-card-flat {
+        border: var(--border-thin);
+        padding: 1.15rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #fff;
+        box-shadow: 0 8px 20px rgba(2,6,23,.05);
+        transition: transform .18s ease, border-color .18s ease;
+        height: 100%;
+    }
+
+        .kpi-card-flat:hover {
+            transform: translateY(-2px);
+            border-color: rgba(58,134,255,.35);
+        }
+
+    .icon-shape {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(248,250,252,.95);
+        border: var(--border-thin);
+        font-size: 1.1rem;
+    }
+
+    .table-container-flat {
+        border: var(--border-thin);
+        border-radius: var(--radius-lg);
+        background: #fff;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: #fcfcff;
+            font-size: 0.7rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table-modern td {
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            font-size: 0.92rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-modern tr:hover td {
+            background: #f9fafb;
+        }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 900;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+
+    .bg-active {
+        background: #ecfdf5;
+        color: #047857;
+        border-color: #6ee7b7;
+    }
+
+    .bg-pending {
+        background: #fffbeb;
+        color: #b45309;
+        border-color: #fcd34d;
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        white-space: nowrap;
+    }
+
+    /* dropdown */
+    .dropdown-glass {
+        border-radius: 16px;
+        border: var(--border-thin);
+        box-shadow: 0 18px 40px rgba(2,6,23,.12);
+        padding: 8px;
+        min-width: 230px;
+        background: rgba(255,255,255,.96);
+        backdrop-filter: blur(8px);
+    }
+
+        .dropdown-glass .dropdown-item {
+            border-radius: 12px;
+            font-weight: 900;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .dropdown-glass .dropdown-item i {
+                width: 18px;
+                text-align: center;
+            }
+
+            .dropdown-glass .dropdown-item:hover {
+                background: rgba(58,134,255,.08);
+            }
+
+        .dropdown-glass form {
+            margin: 0;
+        }
+
+            .dropdown-glass form .dropdown-item {
+                width: 100%;
+                border: 0;
+                background: transparent;
+                text-align: left;
+            }
+</style>
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <div>
+                <h4 class="fw-bold mb-1">Quản lý Voucher</h4>
+                <p class="text-muted small mb-0">Chương trình ưu đãi và mã giảm giá toàn hệ thống</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                @if (isManagement)
+                {
+                    <a asp-action="Create" class="btn btn-primary btn-sm btn-pill px-3">
+                        <i class="bi bi-plus-lg"></i> Tạo Voucher
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="kpi-card-flat">
+                    <div class="icon-shape text-primary"><i class="bi bi-ticket-perforated"></i></div>
+                    <div>
+                        <div class="small text-muted fw-bold">TỔNG PHÁT HÀNH</div>
+                        <div class="h5 fw-bold mb-0">@totalVouchers</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card-flat">
+                    <div class="icon-shape text-success"><i class="bi bi-lightning-charge"></i></div>
+                    <div>
+                        <div class="small text-muted fw-bold">ĐANG HOẠT ĐỘNG</div>
+                        <div class="h5 fw-bold mb-0">@activeVouchers</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card-flat">
+                    <div class="icon-shape text-info"><i class="bi bi-check2-all"></i></div>
+                    <div>
+                        <div class="small text-muted fw-bold">LƯỢT ĐÃ DÙNG</div>
+                        <div class="h5 fw-bold mb-0">@totalUsed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container-flat">
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Mã Voucher</th>
+                            <th>Loại & Giá trị</th>
+                            <th>Điều kiện sử dụng</th>
+                            <th class="text-center">Sử dụng</th>
+                            <th class="text-center">Trạng thái</th>
+                            @if (isManagement)
+                            {
+                                <th class="text-end pe-4">Thao tác</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var v in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-primary font-monospace">@v.MaVoucher</div>
+                                        <div class="small text-muted text-truncate" style="max-width: 180px;">@v.TenVoucher</div>
+                                    </td>
+
+                                    <td>
+                                        <div class="fw-bold">
+                                            @(v.LoaiGiam == "PhanTram" ? $"-{v.GiaTriGiam:N0}%" : $"-{v.GiaTriGiam:N0}đ")
+                                        </div>
+                                        <div class="small text-muted">
+                                            @(v.LoaiGiam == "PhanTram" ? "Theo phần trăm" : "Khấu trừ tiền mặt")
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="small">
+                                            Min đơn: <span class="fw-semibold">@(v.DonHangToiThieu?.ToString("N0") ?? "0")đ</span>
+                                        </div>
+                                        @if (v.NgayKetThuc.HasValue)
+                                        {
+                                            <div class="text-danger fw-semibold" style="font-size: .78rem;">
+                                                Hết hạn: @v.NgayKetThuc.Value.ToString("dd/MM/yyyy")
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <span class="small fw-bold">@v.DaSuDung/@(v.SoLuong?.ToString() ?? "∞")</span>
+                                            <div class="progress mt-1" style="height: 4px; width: 62px;">
+                                                @{
+                                                    var percent = v.SoLuong.HasValue && v.SoLuong > 0 ? (double)v.DaSuDung / v.SoLuong.Value * 100 : 0;
+                                                }
+                                                <div class="progress-bar bg-primary" style="width: @percent%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center">
+                                        @if (v.TrangThaiDuyet == "Đã duyệt")
+                                        {
+                                            <span class="status-badge bg-active">Hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge bg-pending">Chờ duyệt</span>
+                                        }
+                                    </td>
+
+                                    @if (isManagement)
+                                    {
+                                        <td class="text-end pe-4">
+                                            <div class="dropdown">
+                                                <button class="btn btn-light btn-pill dropdown-toggle px-3 py-2"
+                                                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots-vertical"></i> Thao tác
+                                                </button>
+
+                                                <ul class="dropdown-menu dropdown-menu-end dropdown-glass">
+
+                                                    @if (v.TrangThaiDuyet != "Đã duyệt")
+                                                    {
+                                                        <li>
+                                                            <form asp-action="Approve" method="post">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@v.MaVoucher" />
+                                                                <button type="submit" class="dropdown-item text-success">
+                                                                    <i class="bi bi-check-lg"></i> Duyệt voucher
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    }
+
+                                                    <li>
+                                                        <form asp-action="ToggleActive" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@v.MaVoucher" />
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi @(v.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                                                @(v.IsActive ? "Tắt hoạt động" : "Bật hoạt động")
+                                                            </button>
+                                                        </form>
+                                                    </li>
+
+                                                    <li><hr class="dropdown-divider" /></li>
+
+                                                    <li>
+                                                        <a asp-action="Edit" asp-route-id="@v.MaVoucher" class="dropdown-item">
+                                                            <i class="bi bi-pencil"></i> Sửa voucher
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="@(isManagement ? 6 : 5)" class="text-center py-5 text-muted">
+                                    <i class="bi bi-ticket fs-1 d-block mb-3 opacity-25"></i>
+                                    <p class="mb-0">Chưa có voucher nào.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

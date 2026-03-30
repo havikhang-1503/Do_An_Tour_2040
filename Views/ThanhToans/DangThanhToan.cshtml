@@ -1,0 +1,107 @@
+﻿@{
+    Layout = null; // Trang này nên full màn hình cho chuyên nghiệp
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Đang xử lý giao dịch...</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .processing-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 2rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .loader {
+            width: 100px;
+            height: 100px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+
+        @@keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-msg {
+            font-weight: 700;
+            color: #1e1b4b;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="processing-card">
+        <div class="loader"></div>
+        <div class="status-msg" id="msg">Đang kết nối...</div>
+        <p class="text-muted" id="sub-msg">Hệ thống đang bảo mật giao dịch của bạn.</p>
+
+        <div class="progress">
+            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 0%"></div>
+        </div>
+
+        <div class="mt-4 small text-muted">
+            <i class="bi bi-shield-lock-fill text-success"></i> Giao dịch được mã hóa 256-bit SSL
+        </div>
+    </div>
+
+    <script>
+        const msgs = [
+            "Đang xác thực thông tin...",
+            "Đang kiểm tra số dư tài khoản...",
+            "Đang gửi yêu cầu thanh toán...",
+            "Đang khởi tạo lịch trình...",
+            "Thanh toán thành công!"
+        ];
+
+        let step = 0;
+        const totalSteps = msgs.length;
+        const waitTime = Math.floor(Math.random() * 5000) + 4000; // 4-9 giây
+        const intervalTime = waitTime / totalSteps;
+
+        const timer = setInterval(() => {
+            if (step < totalSteps) {
+                document.getElementById('msg').innerText = msgs[step];
+                document.getElementById('progress-bar').style.width = ((step + 1) / totalSteps * 100) + '%';
+                step++;
+            } else {
+                clearInterval(timer);
+                // Sau khi xong thì chuyển hướng qua trang Lịch sử giao dịch
+                window.location.href = '@Url.Action("Index", "GiaoDiches")';
+            }
+        }, intervalTime);
+    </script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+﻿@using System.Globalization
+@using Tour_2040.Models
+@model Tour_2040.Models.Tour
+
+@{
+    ViewData["Title"] = "Xem tour cá nhân: " + (Model.TenTour ?? "");
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var ngayDiText = Model.NgayDi?.ToString("dd/MM/yyyy") ?? "Đang cập nhật";
+    var ngayVeText = Model.NgayVe?.ToString("dd/MM/yyyy") ?? "Đang cập nhật";
+    var soNgayText = (Model.NgayDi.HasValue && Model.NgayVe.HasValue)
+        ? (((Model.NgayVe.Value - Model.NgayDi.Value).Days + 1) + " ngày")
+        : "Đang cập nhật";
+
+    var services = Model.TourDichVus?.ToList() ?? new List<TourDichVu>();
+    var diaDiemInfo = ViewBag.DiaDiemInfo as DiaDiem;
+    var noiKhoiHanhInfo = ViewBag.NoiKhoiHanhInfo as DiaDiem;
+
+    string statusText = Model.TrangThai ?? "ChoDuyet";
+    string statusClass = statusText == "DaDuyet" ? "status-approved" : (statusText == "TuChoi" ? "status-rejected" : "status-pending");
+    string statusLabel = statusText == "DaDuyet" ? "Đã duyệt" : (statusText == "TuChoi" ? "Từ chối" : "Chờ duyệt");
+}
+
+@functions {
+    private string FormatFullLocation(DiaDiem? dd, string fallback)
+    {
+        if (dd == null) return fallback;
+
+        var parts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(dd.TenDiaDiem))
+            parts.Add(dd.TenDiaDiem);
+
+        if (dd.XaPhuong != null && !string.IsNullOrWhiteSpace(dd.XaPhuong.TenXaPhuong))
+            parts.Add(dd.XaPhuong.TenXaPhuong);
+
+        if (dd.XaPhuong?.TinhThanh != null && !string.IsNullOrWhiteSpace(dd.XaPhuong.TinhThanh.TenTinh))
+            parts.Add(dd.XaPhuong.TinhThanh.TenTinh);
+
+        return parts.Count > 0 ? string.Join(", ", parts) : fallback;
+    }
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --primary-blue: #3a86ff;
+        --primary-soft: rgba(58,134,255,.12);
+    }
+
+    body {
+        background: var(--bg-system) !important;
+        color: var(--text-main);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .sticky-header-custom {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background: rgba(248,248,255,0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: var(--border-thin);
+    }
+
+    .card-flat {
+        background: #fff;
+        border: var(--border-thin);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .label-custom {
+        font-size: .75rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .5rem;
+        display: block;
+    }
+
+    .input-pill {
+        border-radius: 999px !important;
+        border: 1px solid #e2e8f0;
+        padding: .65rem 1rem;
+        font-size: .92rem;
+        background: #fff;
+        font-weight: 900;
+    }
+
+    .textarea-soft {
+        border-radius: 16px !important;
+        border: 1px solid #e2e8f0;
+        padding: 1rem 1.1rem;
+        background: #fcfcfd;
+        font-size: .92rem;
+        min-height: 140px;
+    }
+
+    .muted-small {
+        color: var(--text-muted);
+        font-size: .85rem;
+        font-weight: 800;
+    }
+
+    .hero-img {
+        width: 100%;
+        height: 240px;
+        border-radius: 16px;
+        object-fit: cover;
+        border: var(--border-thin);
+        background: #fff;
+    }
+
+    .sticky-right {
+        position: sticky;
+        top: 100px;
+    }
+
+    .service-item-flat {
+        border: var(--border-thin);
+        border-radius: 14px;
+        padding: 10px 12px;
+        background: #fff;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+        .service-item-flat .name {
+            font-weight: 900;
+            font-size: .92rem;
+            color: var(--text-main);
+        }
+
+        .service-item-flat .loc {
+            font-size: .78rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .service-item-flat .price {
+            font-weight: 950;
+            color: var(--primary-blue);
+            white-space: nowrap;
+            font-size: .92rem;
+        }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: .78rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 18px rgba(0,0,0,.05);
+    }
+
+    .status-pending {
+        color: #d97706;
+        border-color: #fcd34d;
+    }
+
+    .status-approved {
+        color: #059669;
+        border-color: #6ee7b7;
+    }
+
+    .status-rejected {
+        color: #dc2626;
+        border-color: #fca5a5;
+    }
+
+    /* ✅ Button row giống Register */
+    .action-row {
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        margin-top: 14px;
+    }
+
+        .action-row .btn-back {
+            flex: 0 0 170px;
+            white-space: nowrap;
+        }
+
+        .action-row .btn-main {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+    @@media (max-width: 991px) {
+        .sticky-right {
+            position: static;
+            top: auto;
+        }
+
+        .hero-img {
+            height: 200px;
+        }
+    }
+    @@media (max-width: 420px) {
+        .action-row .btn-back {
+            flex-basis: 140px;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5">
+
+    <div class="sticky-header-custom py-3 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">@Model.TenTour</h4>
+                <div class="muted-small">@ngayDiText → @ngayVeText • @soNgayText</div>
+            </div>
+            <span class="status-badge @statusClass">
+                <i class="bi bi-flag-fill"></i> @statusLabel
+            </span>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning rounded-4 fw-bold">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card-flat mb-4">
+                <img class="hero-img" src="@(Model.HinhAnhTourUrl ?? "/images/default-tour.jpg")" alt="@Model.TenTour" />
+            </div>
+
+            <div class="card-flat mb-4">
+                <h6 class="fw-bold mb-3 text-dark">
+                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>Thông tin hành trình
+                </h6>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <span class="label-custom">Khởi hành</span>
+                        <div class="input-pill">@FormatFullLocation(noiKhoiHanhInfo, Model.NoiKhoiHanh ?? "Đang cập nhật")</div>
+                    </div>
+
+                    <div class="col-12">
+                        <span class="label-custom">Điểm đến</span>
+                        <div class="input-pill">@FormatFullLocation(diaDiemInfo, Model.DiaDiem ?? "Đang cập nhật")</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <span class="label-custom">Ngày đi</span>
+                        <div class="input-pill">@ngayDiText</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <span class="label-custom">Ngày về</span>
+                        <div class="input-pill">@ngayVeText</div>
+                    </div>
+
+                    <div class="col-12">
+                        <span class="label-custom">Giá dự kiến</span>
+                        <div class="input-pill" style="color:var(--primary-blue); font-weight:950;">
+                            @(Model.GiaTour > 0 ? Model.GiaTour.ToString("N0", culture) + " đ" : "Đang báo giá")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-flat mb-4">
+                <h6 class="fw-bold mb-3 text-dark">
+                    <i class="bi bi-card-text text-primary me-2"></i>Mô tả chi tiết
+                </h6>
+                <textarea class="form-control textarea-soft" readonly>@(Model.MoTa ?? "")</textarea>
+                @if (string.IsNullOrWhiteSpace(Model.MoTa))
+                {
+                    <div class="muted-small mt-2">Chưa có mô tả chi tiết.</div>
+                }
+            </div>
+
+            <div class="card-flat">
+                <h6 class="fw-bold mb-3 text-dark">
+                    <i class="bi bi-gift-fill text-primary me-2"></i>Dịch vụ đã chọn
+                    <span class="muted-small">• @services.Count mục</span>
+                </h6>
+
+                @if (services.Any())
+                {
+                    foreach (var item in services)
+                    {
+                        <div class="service-item-flat">
+                            <div style="min-width:0;">
+                                <div class="name text-truncate">@item.DichVu?.TenDichVu</div>
+                                @if (item.DichVu?.DiaDiem != null)
+                                {
+                                    <div class="loc">📍 @item.DichVu.DiaDiem.TenDiaDiem</div>
+                                }
+                                else
+                                {
+                                    <div class="loc">📍 (Không có địa điểm)</div>
+                                }
+                            </div>
+                            <div class="price">@((item.DichVu?.DonGia ?? 0).ToString("N0", culture))đ</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="muted-small">Chưa chọn dịch vụ nào.</div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card-flat sticky-right">
+                <h6 class="fw-bold mb-3 text-dark">
+                    <i class="bi bi-shield-check text-primary me-2"></i>Chế độ xem
+                </h6>
+
+                <div class="muted-small">
+                    Đây là trang xem <b>tour cá nhân</b> (không đặt tour, không thanh toán).
+                    Nếu tour được duyệt, em có thể xem trang công khai bằng “Xem công khai”.
+                </div>
+
+                <div class="action-row">
+                    <a asp-action="Custom" class="btn btn-light border rounded-pill fw-bold py-2 text-muted btn-back">
+                        ← Quay lại
+                    </a>
+
+                    @if (Model.TrangThai == "ChoDuyet")
+                    {
+                        <a asp-action="EditPersonal" asp-route-id="@Model.MaTour"
+                           class="btn btn-primary rounded-pill fw-bold py-2 shadow-sm btn-main">
+                            <i class="bi bi-pencil-fill me-2"></i>Chỉnh sửa
+                        </a>
+                    }
+                    else if (Model.TrangThai == "DaDuyet")
+                    {
+                        <a asp-action="Details" asp-route-id="@Model.MaTour"
+                           class="btn btn-primary rounded-pill fw-bold py-2 shadow-sm btn-main">
+                            <i class="bi bi-eye-fill me-2"></i>Xem công khai
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="EditPersonal" asp-route-id="@Model.MaTour"
+                           class="btn btn-primary rounded-pill fw-bold py-2 shadow-sm btn-main">
+                            <i class="bi bi-arrow-repeat me-2"></i>Chỉnh lại
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

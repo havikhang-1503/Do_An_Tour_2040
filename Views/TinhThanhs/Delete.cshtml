@@ -1,0 +1,108 @@
+﻿@model Tour_2040.Models.TinhThanh
+@{
+    ViewData["Title"] = "Xóa Tỉnh/Thành";
+}
+<style>
+    :root {
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* Thanh kính tiêu đề */
+    .glass-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    /* Card form nhập liệu */
+    .form-card-lg {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid rgba(0,0,0,0.03);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        padding: 3rem; /* Khoảng cách bên trong rộng */
+        height: 100%; /* Đảm bảo chiều cao đồng nhất nếu cần */
+    }
+
+    /* Input to rõ */
+    .form-control-lg, .form-select-lg {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+    }
+
+        .form-control-lg:focus, .form-select-lg:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    .form-label-lg {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+    }
+</style>
+<div class="container py-5 animate__animated animate__fadeIn">
+
+    <div class="card glass-bar rounded-4 mb-4 p-4">
+        <div class="d-flex align-items-center gap-4">
+            <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+                <i class="bi bi-trash3 fs-3"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Xóa Dữ Liệu</h3>
+                <p class="text-muted mb-0 fs-5">Xác nhận xóa Tỉnh/Thành khỏi hệ thống</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-card-lg text-center p-5">
+
+                <div class="mb-4">
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                        <i class="bi bi-exclamation-triangle-fill display-4"></i>
+                    </div>
+                    <h2 class="fw-bold text-danger mb-2">Cảnh báo quan trọng!</h2>
+                    <p class="text-muted fs-5">Hành động này không thể hoàn tác.</p>
+                </div>
+
+                <div class="bg-light rounded-4 p-4 text-start mb-5 border">
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                        <span class="text-muted fw-bold">Mã Tỉnh:</span>
+                        <span class="fs-5 fw-bold font-monospace text-dark">@Model.MaTinhThanh</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted fw-bold">Tên Tỉnh:</span>
+                        <span class="fs-5 fw-bold text-dark">@Model.TenTinh</span>
+                    </div>
+                </div>
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger text-start mb-4">@TempData["Error"]</div>
+                }
+
+                <form asp-action="Delete" method="post" class="d-grid gap-3">
+                    <input type="hidden" asp-for="MaTinhThanh" />
+                    <button type="submit" class="btn btn-danger btn-lg rounded-pill py-3 fw-bold shadow-sm fs-5">
+                        <i class="bi bi-trash-fill me-2"></i> Đồng ý xóa
+                    </button>
+                    <a asp-action="Index" class="btn btn-light btn-lg rounded-pill py-3 text-muted fw-medium fs-5">
+                        Quay lại
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

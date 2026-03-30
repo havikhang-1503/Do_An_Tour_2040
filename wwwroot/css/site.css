@@ -1,0 +1,595 @@
+﻿/* =======================================================================
+   ROYAL ASCEND TRAVAL - UNIFIED DESIGN SYSTEM (V3.0 Luxury Edition)
+   Theme: Modern Luxury Glassmorphism UI
+   ======================================================================= */
+
+:root {
+    /* 1. Core Brand Colors (Royal & Luxury) */
+    --royal-gold: #c5a059;
+    /* Vàng kim loại sang trọng */
+    --royal-dark: #1e293b;
+    /* Xám đen đậm (Thay cho đen tuyền) */
+    --primary-indigo: #4f46e5;
+    /* Xanh tím chủ đạo (Primary Action) */
+    --primary-soft: #eef2ff;
+    /* Nền tím siêu nhạt */
+
+    /* 2. Travel Accent Colors (For Tours/Nature) */
+    --ocean-blue: #0ea5e9;
+    /* Xanh biển (Biển đảo) */
+    --ocean-soft: rgba(14, 165, 233, 0.1);
+    --sunset-orange: #f97316;
+    /* Cam hoàng hôn (Nổi bật) */
+    --sunset-soft: rgba(249, 115, 22, 0.1);
+    --tropical-green: #059669;
+    /* Xanh nhiệt đới (Thiên nhiên/An toàn) */
+    --tropical-soft: rgba(5, 150, 105, 0.1);
+    --danger-red: #dc2626;
+    /* Đỏ cảnh báo */
+    --danger-soft: rgba(220, 38, 38, 0.1);
+
+    /* 3. Background & Gradients */
+    --bg-gradient-start: #f8fafc;
+    --bg-gradient-end: #eef2ff;
+    --bg-travel-gradient: linear-gradient(135deg, #0ea5e9 0%, #1e40af 50%, #059669 100%);
+    /* Optional full bg */
+
+    /* 4. Glassmorphism Tokens */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-bg-strong: rgba(255, 255, 255, 0.95);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+    --glass-blur: blur(25px);
+    --glass-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+
+    /* 5. Dimensions & Spacing */
+    --nav-height: 80px;
+    --radius-max: 24px;
+    /* Modern standard curve */
+    --radius-pill: 50rem;
+    /* Fully rounded */
+}
+
+/* ================== GLOBAL RESET & BASE ================== */
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    background-attachment: fixed;
+    color: var(--royal-dark);
+    padding-top: var(--nav-height);
+    min-height: 100vh;
+}
+
+body.admin-mode {
+    padding-top: 0 !important;
+}
+
+a {
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+/* ================== UTILITY CLASSES (Năng suất cao) ================== */
+
+/* 1. Surfaces & Containers */
+.glass-panel {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-max);
+    box-shadow: var(--glass-shadow);
+    padding: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    font-weight: 800;
+    color: var(--royal-dark);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.section-title i {
+    margin-right: 0.5rem;
+    font-size: 1.25rem;
+}
+
+/* 2. Buttons (Pill Style) */
+.btn-pill {
+    border-radius: var(--radius-pill);
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-pill:active {
+    transform: translateY(0);
+}
+
+.btn-pill-primary {
+    background: linear-gradient(135deg, var(--primary-indigo), #4338ca);
+    color: white;
+}
+
+.btn-pill-primary:hover {
+    color: white;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+.btn-pill-warning {
+    background: var(--sunset-soft);
+    color: var(--sunset-orange);
+}
+
+.btn-pill-warning:hover {
+    background: var(--sunset-orange);
+    color: white;
+}
+
+.btn-pill-danger {
+    background: var(--danger-soft);
+    color: var(--danger-red);
+}
+
+.btn-pill-danger:hover {
+    background: var(--danger-red);
+    color: white;
+}
+
+.btn-pill-success {
+    background: var(--tropical-soft);
+    color: var(--tropical-green);
+}
+
+.btn-pill-success:hover {
+    background: var(--tropical-green);
+    color: white;
+}
+
+/* 3. Form Elements (Modern) */
+.form-control-modern,
+.form-select-modern {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    font-size: 0.95rem;
+    color: var(--royal-dark);
+    transition: all 0.2s;
+}
+
+.form-control-modern:focus,
+.form-select-modern:focus {
+    outline: none;
+    border-color: var(--primary-indigo);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+/* 4. Badges & Labels */
+.it-badge {
+    background: var(--primary-soft);
+    color: var(--primary-indigo);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid rgba(79, 70, 229, 0.1);
+}
+
+/* ================== COMPONENTS ================== */
+
+/* Navbar (Glass) */
+.glass-nav {
+    background: rgba(255, 255, 255, 0.85);
+    /* Slightly more opaque */
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    height: var(--nav-height);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    z-index: 1000;
+}
+
+/* Nav Links */
+.navbar-nav .nav-link-user {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #64748b !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: var(--radius-pill);
+    transition: all 0.2s ease;
+}
+
+.navbar-nav .nav-link-user:hover,
+.navbar-nav .nav-link-user.active {
+    color: var(--primary-indigo) !important;
+    background: var(--primary-soft);
+}
+
+/* Avatar Circle */
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: var(--primary-indigo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Admin Sidebar Defaults */
+.admin-wrapper {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.admin-sidebar {
+    width: 280px;
+    height: 100vh;
+    background: white;
+    border-right: 1px solid #f1f5f9;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    overflow-y: hidden;
+    /* Use internal scrollable area */
+}
+
+.admin-content {
+    flex-grow: 1;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+/* User Wrapper */
+.user-main-wrapper {
+    min-height: calc(100vh - var(--nav-height));
+    padding-bottom: 2rem;
+}
+
+.nav-item-admin {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    color: #64748b;
+    font-weight: 500;
+    transition: 0.2s;
+    text-decoration: none;
+    display: flex;
+    /* Ensure icon alignment */
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-item-admin:hover,
+.nav-item-admin.active {
+    background: var(--primary-soft);
+    color: var(--primary-indigo);
+}
+
+.nav-group-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--royal-dark);
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    text-decoration: none;
+}
+
+.sidebar-brand:hover {
+    color: var(--royal-dark);
+}
+
+.custom-scroll {
+    overflow-y: auto;
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+
+/* Itinerary & Timeline Components (For Create/Edit Tour) */
+.it-stop-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: 0.2s;
+}
+
+.it-stop-card:hover {
+    border-color: var(--primary-indigo);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.it-stop-card::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary-indigo);
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--primary-soft);
+}
+
+.stops-container {
+    border-left: 2px dashed #cbd5e1;
+    margin-left: 10px;
+    padding-left: 20px;
+}
+
+/* Service Item (Grid/List) */
+.service-item-wrapper {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.service-label {
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.service-item-box {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+.form-check-input:checked+.service-label .service-item-box {
+    background: var(--primary-soft);
+    border-color: var(--primary-indigo);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Scrollbar Custom */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* ================== FEATURE: AI CHAT & SUPPORT (Migrated from Layout) ================== */
+
+/* AI Chat Button */
+.ai-chat-btn {
+    background-color: #ffffff !important;
+    border: 1px solid #dbeafe;
+    color: #3b82f6 !important;
+    transition: all 0.3s ease;
+    text-align: left;
+    width: 100%;
+    max-width: 280px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ai-chat-btn:hover {
+    background-color: #eff6ff !important;
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+}
+
+.ai-chat-btn:hover .ai-icon-box {
+    transform: scale(1.1);
+}
+
+.ai-icon-box {
+    color: #3b82f6 !important;
+    transition: transform 0.3s ease;
+}
+
+.ai-chat-btn .badge {
+    color: #3b82f6 !important;
+    border: 1px solid #dbeafe !important;
+}
+
+/* Support Dropdown */
+.nav-btn-support {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.nav-btn-support:hover {
+    border-color: var(--primary-indigo);
+    color: var(--primary-indigo);
+    background: #eef2ff;
+}
+
+.support-dropdown-menu {
+    width: 350px;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 0;
+    overflow: hidden;
+    margin-top: 15px !important;
+}
+
+.support-header {
+    background: linear-gradient(135deg, var(--primary-indigo) 0%, #6366f1 100%);
+    padding: 15px 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.support-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #334155;
+}
+
+.support-item:hover {
+    background-color: #f8fafc;
+    color: var(--primary-indigo);
+}
+
+.support-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: var(--primary-indigo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Status Badges */
+.st-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.st-pending {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fcd34d;
+}
+
+.st-done {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #6ee7b7;
+}
+
+/* Nav Icons */
+.btn-icon-nav {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #64748b;
+    background: transparent;
+    transition: 0.2s;
+}
+
+.btn-icon-nav:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.badge-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+
+.text-gold {
+    color: var(--royal-gold) !important;
+}

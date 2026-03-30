@@ -1,0 +1,107 @@
+﻿@model Tour_2040.Models.XaPhuong
+@{
+    ViewData["Title"] = "Sửa Xã/Phường";
+}
+<style>
+    :root {
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* Thanh kính tiêu đề */
+    .glass-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    /* Card form nhập liệu */
+    .form-card-lg {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid rgba(0,0,0,0.03);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        padding: 3rem; /* Khoảng cách bên trong rộng */
+        height: 100%; /* Đảm bảo chiều cao đồng nhất nếu cần */
+    }
+
+    /* Input to rõ */
+    .form-control-lg, .form-select-lg {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+    }
+
+        .form-control-lg:focus, .form-select-lg:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    .form-label-lg {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+    }
+</style>
+<div class="container py-5 animate__animated animate__fadeIn">
+
+    <div class="card glass-bar rounded-4 mb-4 p-4">
+        <div class="d-flex align-items-center gap-4">
+            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+                <i class="bi bi-pencil-fill fs-3"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Cập nhật Xã/Phường</h3>
+                <p class="text-muted mb-0 fs-5">Chỉnh sửa thông tin đơn vị hành chính</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-card-lg">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="MaXaPhuong" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
+
+                    <div class="mb-5">
+                        <label class="form-label-lg text-muted">Mã Xã (Cố định)</label>
+                        <input asp-for="MaXaPhuong" class="form-control form-control-lg bg-secondary bg-opacity-10" readonly />
+                    </div>
+
+                    <div class="mb-5">
+                        <label asp-for="TinhThanhId" class="form-label-lg">Trực thuộc Tỉnh/Thành</label>
+                        <select asp-for="TinhThanhId" class="form-select form-select-lg" asp-items="ViewBag.TinhThanhId"></select>
+                        <span asp-validation-for="TinhThanhId" class="text-danger mt-2 d-block"></span>
+                    </div>
+
+                    <div class="mb-5">
+                        <label asp-for="TenXaPhuong" class="form-label-lg">Tên Xã / Phường</label>
+                        <input asp-for="TenXaPhuong" class="form-control form-control-lg" />
+                        <span asp-validation-for="TenXaPhuong" class="text-danger mt-2 d-block"></span>
+                    </div>
+
+                    <div class="d-grid gap-3 pt-3">
+                        <button type="submit" class="btn btn-warning text-white btn-lg rounded-pill py-3 fw-bold shadow-sm fs-5">
+                            <i class="bi bi-check-circle me-2"></i> Cập nhật ngay
+                        </button>
+                        <a asp-action="Index" class="btn btn-light btn-lg rounded-pill py-3 text-muted fw-medium fs-5">
+                            Hủy bỏ
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

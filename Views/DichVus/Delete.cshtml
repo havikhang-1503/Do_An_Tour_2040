@@ -1,0 +1,294 @@
+﻿@* 
+   Folder: Views/DichVus
+   File path: Views/DichVus/Delete.cshtml
+   File name: Delete.cshtml
+   Label: V-DichVu-Delete
+   Mô tả: Xác nhận xóa dịch vụ (UI đồng bộ pill + glass).
+*@
+
+@model Tour_2040.Models.DichVu
+
+@{
+    ViewData["Title"] = "Xóa dịch vụ";
+    var isActive = (Model.TrangThai == "Active" || Model.TrangThai == "Còn");
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --shadow: 0 12px 30px rgba(2, 6, 23, .06);
+        --primary-blue: #3a86ff;
+        --danger: #ef4444;
+        --danger-soft: rgba(239, 68, 68, .10);
+        --warn: #f59e0b;
+        --warn-soft: rgba(245, 158, 11, .12);
+        --btn-grey: #f1f5f9;
+        --btn-grey-hover: #e2e8f0;
+    }
+
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    .card-glass {
+        background: rgba(255,255,255,.92);
+        border: var(--border-thin);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        padding: .55rem 1rem;
+        font-weight: 800;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+    }
+
+    .btn-grey {
+        background: var(--btn-grey);
+        border: var(--border-thin);
+        color: var(--text-muted);
+    }
+
+        .btn-grey:hover {
+            background: var(--btn-grey-hover);
+            color: var(--text-main);
+            border-color: #cbd5e1;
+        }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .35rem .75rem;
+        border-radius: 999px;
+        border: var(--border-thin);
+        background: #fff;
+        font-size: .82rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .chip-muted {
+        color: var(--text-muted);
+        font-weight: 700;
+        background: #fcfcff;
+    }
+
+    .kv {
+        border: var(--border-thin);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: #fff;
+    }
+
+        .kv .k {
+            font-size: .72rem;
+            color: var(--text-muted);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            margin-bottom: 4px;
+        }
+
+        .kv .v {
+            font-weight: 900;
+            font-size: .98rem;
+            color: var(--text-main);
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
+    .danger-box {
+        border: 1px solid rgba(239,68,68,.25);
+        background: var(--danger-soft);
+        border-radius: 16px;
+        padding: 14px 16px;
+    }
+
+        .danger-box .title {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-weight: 1000;
+            color: #b91c1c;
+            margin-bottom: 6px;
+        }
+
+        .danger-box .desc {
+            color: #7f1d1d;
+            font-size: .9rem;
+            margin: 0;
+        }
+
+    .status-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 900;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .status-ok {
+        background: rgba(34,197,94,.10);
+        color: #16a34a;
+        border-color: rgba(34,197,94,.22);
+    }
+
+    .status-bad {
+        background: rgba(239,68,68,.10);
+        color: #dc2626;
+        border-color: rgba(239,68,68,.22);
+    }
+
+    .price {
+        font-weight: 1000;
+        color: var(--primary-blue);
+        font-size: 1.1rem;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <i class="bi bi-grid"></i> Dịch vụ / <span class="fw-bold text-dark">Xóa</span>
+            </div>
+            <h3 class="mb-1 fw-bold">Xóa dịch vụ</h3>
+            <div class="text-muted">Xác nhận xóa dịch vụ này. Bấm nhầm là mất thật, không có “undo” thần kỳ đâu.</div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-pill btn-grey">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card-glass p-3 p-md-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+            <div>
+                <div class="fw-bold" style="font-size:1.2rem;">@Model.TenDichVu</div>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                    <span class="chip chip-muted">
+                        <i class="bi bi-upc"></i>
+                        <span class="font-monospace">@Model.MaDichVu</span>
+                    </span>
+
+                    <span class="chip">
+                        <i class="bi bi-tags text-primary"></i>
+                        @Model.LoaiDichVu
+                    </span>
+
+                    <span class="status-pill @(isActive ? "status-ok" : "status-bad")">
+                        <i class="bi @(isActive ? "bi-check-circle" : "bi-slash-circle")"></i>
+                        @Model.TrangThai
+                    </span>
+                </div>
+            </div>
+
+            <div class="danger-box align-self-start">
+                <div class="title">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Cảnh báo xóa
+                </div>
+                <p class="desc">
+                    Hành động này sẽ xóa dịch vụ khỏi hệ thống. Nếu dịch vụ đang được dùng ở tour/đơn đặt,
+                    em nên kiểm tra ràng buộc trước khi xóa.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="kv">
+                    <div class="k">Địa điểm liên kết</div>
+                    <div class="v">
+                        @(Model.DiaDiem?.TenDiaDiem ?? "Không gắn địa điểm")
+                    </div>
+                    @if (Model.DiaDiem?.XaPhuong != null)
+                    {
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-geo-alt"></i>
+                            @(Model.DiaDiem.XaPhuong.TenXaPhuong) , @(Model.DiaDiem.XaPhuong.TinhThanh?.TenTinh ?? "")
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="kv">
+                    <div class="k">Đơn giá</div>
+                    <div class="v price">@Model.DonGia.ToString("N0") đ</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.DonViTinh))
+                    {
+                        <div class="text-muted small mt-1">Đơn vị: @Model.DonViTinh</div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="kv">
+                    <div class="k">Trạng thái</div>
+                    <div class="v">@Model.TrangThai</div>
+                    <div class="text-muted small mt-1">
+                        @(isActive ? "Đang hoạt động" : "Không hoạt động / tạm dừng")
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.DiaChi))
+            {
+                <div class="col-12">
+                    <div class="kv">
+                        <div class="k">Địa chỉ</div>
+                        <div class="v">@Model.DiaChi</div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.MoTa))
+            {
+                <div class="col-12">
+                    <div class="kv">
+                        <div class="k">Mô tả</div>
+                        <div class="v" style="font-weight:700;">@Model.MoTa</div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+            {
+                <div class="col-12">
+                    <div class="kv">
+                        <div class="k">Ghi chú</div>
+                        <div class="v" style="font-weight:700;">@Model.GhiChu</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <form asp-action="Delete" method="post" class="mt-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="MaTenDichVu" />
+
+            <div class="d-flex flex-column flex-md-row gap-2 justify-content-end">
+                <a asp-action="Index" class="btn btn-pill btn-grey">
+                    Hủy
+                </a>
+
+                <button type="submit" class="btn btn-pill btn-danger"
+                        onclick="return confirm('Xác nhận xóa dịch vụ này?');">
+                    <i class="bi bi-trash"></i> Xóa luôn
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

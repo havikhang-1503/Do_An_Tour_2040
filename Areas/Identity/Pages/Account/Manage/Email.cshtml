@@ -1,0 +1,269 @@
+﻿@page
+@model Tour_2040.Areas.Identity.Pages.Account.Manage.EmailModel
+@{
+    ViewData["Title"] = "Định danh liên lạc";
+}
+
+@* --- CSS TÙY CHỈNH FULL MÀN --- *@
+<style>
+    :root {
+        --primary: #4f46e5;
+        --bg-body: #f8f9fa;
+    }
+
+    /* Header Card Full Width */
+    .header-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Content Sections Full Width */
+    .content-section {
+        padding: 3rem;
+        height: 100%;
+        min-height: calc(100vh - 100px); /* Đảm bảo full chiều cao nếu nội dung ngắn */
+    }
+
+    .bg-white-section {
+        background-color: white;
+    }
+
+    .bg-light-section {
+        background-color: var(--bg-body);
+        border-left: 1px solid rgba(0,0,0,0.05);
+    }
+
+    /* Status Box */
+    .status-box {
+        background-color: #f8fafc;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2.5rem;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    /* Form Elements */
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-control-soft {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 1rem 1.2rem;
+        font-size: 1rem;
+        transition: all 0.2s;
+        color: #334155;
+    }
+
+        .form-control-soft:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    /* Buttons */
+    .btn-gradient-lg {
+        background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 50rem;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
+        transition: transform 0.2s, box-shadow 0.2s;
+        width: 100%;
+    }
+
+        .btn-gradient-lg:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(79, 70, 229, 0.4);
+            color: white;
+        }
+
+    /* Back Button Style */
+    .btn-back {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 50%;
+        color: #64748b;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+        .btn-back:hover {
+            background-color: #f1f5f9;
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateX(-3px);
+        }
+
+    /* Feature Items */
+    .feature-item {
+        text-align: center;
+        padding: 1.2rem;
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid rgba(0,0,0,0.04);
+        transition: all 0.2s;
+    }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            border-color: transparent;
+        }
+
+    .feature-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+
+@* --- CONTAINER CHÍNH FULL MÀN HÌNH (P-0) --- *@
+<div class="container-fluid p-0 animate__animated animate__fadeIn">
+
+    @* --- HEADER SECTION (Phẳng, tràn viền) --- *@
+    <div class="header-section">
+        <div class="d-flex align-items-center">
+
+            @* --- NÚT QUAY LẠI (Mới thêm) --- *@
+            <a asp-page="./Index" class="btn-back me-4 shadow-sm" title="Quay lại hồ sơ">
+                <i class="bi bi-arrow-left fs-5"></i>
+            </a>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="header-icon">
+                    <i class="bi bi-envelope-check-fill"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">Định danh liên lạc</h3>
+                    <p class="text-muted mb-0">Email là chìa khóa duy nhất để nhận vé điện tử và hợp đồng</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- CONTENT SECTIONS (Row không gutter g-0) --- *@
+    <div class="row g-0">
+        @* --- CỘT TRÁI: FORM QUẢN LÝ (Nền trắng) --- *@
+        <div class="col-lg-7 col-xl-6 bg-white-section content-section">
+            <div class="mx-auto" style="max-width: 600px;">
+                <partial name="_StatusMessage" model="Model.StatusMessage" />
+
+                <div class="status-box">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="small fw-bold text-muted text-uppercase ls-1">Email hiện tại</span>
+                        @if (Model.IsEmailConfirmed)
+                        {
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25">
+                                <i class="bi bi-check-circle-fill me-1"></i> Đã xác thực
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2 border border-warning border-opacity-25">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Chưa xác thực
+                            </span>
+                        }
+                    </div>
+                    <div class="fs-4 fw-bold text-dark text-break">@Model.Email</div>
+                </div>
+
+                <form id="email-form" method="post">
+                    <div class="mb-5">
+                        <label asp-for="Input.NewEmail" class="form-label">Thay đổi Email mới</label>
+                        <div class="input-group">
+                            <input asp-for="Input.NewEmail" class="form-control form-control-soft" placeholder="Nhập địa chỉ email mới của bạn..." />
+                        </div>
+                        <span asp-validation-for="Input.NewEmail" class="text-danger small ms-1 fw-bold"></span>
+                    </div>
+
+                    <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail" class="btn-gradient-lg">
+                        GỬI YÊU CẦU THAY ĐỔI <i class="bi bi-send-fill ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @* --- CỘT PHẢI: THÔNG TIN TIỆN ÍCH (Nền xám nhẹ) --- *@
+        <div class="col-lg-5 col-xl-6 bg-light-section content-section">
+            <div class="mx-auto" style="max-width: 500px;">
+                <h6 class="fw-bold text-dark mb-4 text-uppercase ls-1" style="letter-spacing:1px; font-size:0.9rem;">Quyền lợi khi xác thực</h6>
+
+                <div class="row g-3 mb-5">
+                    <div class="col-6">
+                        <div class="feature-item">
+                            <i class="bi bi-file-earmark-pdf-fill feature-icon text-danger"></i>
+                            <div class="fw-bold text-dark">Nhận Hợp đồng</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="feature-item">
+                            <i class="bi bi-ticket-perforated-fill feature-icon text-primary"></i>
+                            <div class="fw-bold text-dark">Nhận E-Ticket</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="feature-item">
+                            <i class="bi bi-bell-fill feature-icon text-warning"></i>
+                            <div class="fw-bold text-dark">Thông báo Tour</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="feature-item">
+                            <i class="bi bi-shield-lock-fill feature-icon text-success"></i>
+                            <div class="fw-bold text-dark">Bảo mật 2FA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info border-0 rounded-4 shadow-sm p-4 d-flex gap-3 align-items-start bg-white">
+                    <i class="bi bi-info-circle-fill fs-3 text-info"></i>
+                    <div class="text-muted">
+                        <strong>Lưu ý quan trọng:</strong><br />
+                        Sau khi thay đổi, hệ thống sẽ gửi một liên kết xác nhận đến địa chỉ email mới. Bạn cần nhấp vào liên kết đó để hoàn tất quá trình cập nhật.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

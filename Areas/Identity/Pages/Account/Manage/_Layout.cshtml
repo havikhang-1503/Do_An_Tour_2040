@@ -1,0 +1,22 @@
+﻿@* 
+   Folder: Areas/Identity/Pages/Account/Manage
+   File path: Areas/Identity/Pages/Account/Manage/_Layout.cshtml
+   File name: _Layout.cshtml
+   Label: Identity-Manage-FlatLayout
+   Mô tả: Layout riêng cho vùng Manage, dùng chung layout chính của site
+          và để từng trang tự xử lý giao diện + menu.
+*@
+
+@{
+    // Dùng layout chung của web
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+@* Không bọc row / col / nav ở đây nữa, 
+   để Index/Email/Password/2FA/PersonalData tự vẽ giao diện *@
+
+@RenderBody()
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

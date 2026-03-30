@@ -1,0 +1,116 @@
+﻿@model Tour_2040.Models.ThongKeDichVuChiTietViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết dịch vụ: " + Model.LoaiDichVu;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<div class="container py-4 animate__animated animate__fadeIn">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-3 mb-2">Báo cáo chi tiết</span>
+            <h2 class="fw-bold text-dark display-6 mb-0">Dịch vụ: <span class="text-primary">@Model.LoaiDichVu</span></h2>
+            <p class="text-muted mb-0">
+                Từ ngày <strong>@Model.FromDate.ToString("dd/MM/yyyy")</strong> đến <strong>@Model.ToDate.ToString("dd/MM/yyyy")</strong>
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm">
+            <i class="bi bi-arrow-left me-2"></i> Quay lại bảng thống kê
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card bg-primary text-white border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-white-50 small text-uppercase fw-bold ls-1">Tổng số giao dịch</div>
+                        <h2 class="fw-bold mb-0">@Model.TongSoGiaoDich</h2>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                        <i class="bi bi-receipt fs-1 text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-success text-white border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-white-50 small text-uppercase fw-bold ls-1">Doanh thu liên quan</div>
+                        <h2 class="fw-bold mb-0">@Model.TongTien.ToString("N0", culture) <small class="fs-6">đ</small></h2>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle p-3">
+                        <i class="bi bi-currency-dollar fs-1 text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-list-ul me-2"></i>Danh sách giao dịch sử dụng</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-uppercase small fw-bold text-muted">
+                    <tr>
+                        <th class="ps-4 py-3">Mã Giao Dịch</th>
+                        <th>Ngày tạo</th>
+                        <th>Tour sử dụng</th>
+                        <th>Khách hàng</th>
+                        <th class="text-end pe-4">Giá trị đơn hàng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="badge bg-light text-primary border border-primary-subtle font-monospace px-2 py-1">
+                                        #@item.MaGiaoDich
+                                    </span>
+                                </td>
+                                <td class="text-muted small">
+                                    <i class="bi bi-clock me-1"></i> @item.NgayTao.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate fw-bold text-dark" style="max-width: 250px;" title="@item.TenTour">
+                                        @item.TenTour
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-light border me-2 small fw-bold d-flex align-items-center justify-content-center text-primary" style="width:32px; height:32px; border-radius:50%">
+                                            @(string.IsNullOrEmpty(item.TenKhach) ? "?" : item.TenKhach.Substring(0, 1).ToUpper())
+                                        </div>
+                                        <span class="fw-medium">@item.TenKhach</span>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-success">
+                                    @item.SoTien.ToString("N0") đ
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox display-3 opacity-25 mb-3"></i>
+                                <p class="mb-0">Không có giao dịch nào sử dụng dịch vụ này trong khoảng thời gian đã chọn.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white border-top-0 py-3 text-muted small">
+            Hiển thị <strong>@(Model.Items?.Count ?? 0)</strong> kết quả.
+        </div>
+    </div>
+</div>

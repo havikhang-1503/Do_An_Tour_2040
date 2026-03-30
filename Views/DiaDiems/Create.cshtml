@@ -1,0 +1,255 @@
+﻿@model Tour_2040.Models.DiaDiem
+
+@{
+    ViewData["Title"] = "Thêm địa điểm mới";
+    var selectedTinh = ViewBag.SelectedTinhThanhId as int?;
+}
+
+<style>
+    :root {
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .glass-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    .form-card-lg {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid rgba(0,0,0,0.03);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        padding: 3rem;
+        height: 100%;
+    }
+
+    .form-control-lg, .form-select-lg {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+    }
+
+        .form-control-lg:focus, .form-select-lg:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    .form-label-lg {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+    }
+</style>
+
+<div class="container py-5 animate__animated animate__fadeIn">
+
+    <div class="card glass-bar rounded-4 mb-4 p-4">
+        <div class="d-flex align-items-center gap-4">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+                <i class="bi bi-geo-alt-fill fs-3"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Thêm Địa Điểm Mới</h3>
+                <p class="text-muted mb-0 fs-5">Điền thông tin và lưu lại.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-card-lg">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-4 mb-4"></div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label asp-for="MaDiaDiem" class="form-label-lg">Mã Địa Điểm</label>
+                            <input asp-for="MaDiaDiem" class="form-control form-control-lg" placeholder="Tự động hoặc nhập tay..." />
+                            <span asp-validation-for="MaDiaDiem" class="text-danger mt-2 d-block"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TenDiaDiem" class="form-label-lg">Tên Địa Điểm</label>
+                            <div class="input-group">
+                                <input asp-for="TenDiaDiem" class="form-control form-control-lg border-end-0" placeholder="VD: Chợ Bến Thành..." id="TenDiaDiemInput" />
+                                <button type="button" class="btn btn-warning text-white fw-bold" id="btnMagicFill" onclick="tryMagicFill()">
+                                    <i class="bi bi-stars"></i> AI Detail
+                                </button>
+                            </div>
+                            <span asp-validation-for="TenDiaDiem" class="text-danger mt-2 d-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label class="form-label-lg">Tỉnh / Thành phố</label>
+                            <div class="d-flex gap-2">
+                                <select name="TinhThanhId" id="TinhThanhId" class="form-select form-select-lg flex-grow-1" asp-items="ViewBag.TinhThanhId">
+                                    <option value="">-- Chọn Tỉnh/Thành --</option>
+                                </select>
+                                <a asp-controller="TinhThanhs" asp-action="Create" target="_blank" class="btn btn-light btn-lg border px-3 d-flex align-items-center" title="Thêm Tỉnh">
+                                    <i class="bi bi-plus-lg text-primary"></i>
+                                </a>
+                            </div>
+                            <span class="text-danger mt-2 d-block">@Html.ValidationMessage("TinhThanhId")</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="XaPhuongId" class="form-label-lg">Xã / Phường</label>
+                            <div class="d-flex gap-2">
+                                <select asp-for="XaPhuongId" id="XaPhuongId" class="form-select form-select-lg flex-grow-1" asp-items="ViewBag.XaPhuongId">
+                                    <option value="">-- Chọn Tỉnh trước --</option>
+                                </select>
+                                <a asp-controller="XaPhuongs" asp-action="Create" target="_blank" class="btn btn-light btn-lg border px-3 d-flex align-items-center" title="Thêm Xã">
+                                    <i class="bi bi-plus-lg text-primary"></i>
+                                </a>
+                            </div>
+                            <span asp-validation-for="XaPhuongId" class="text-danger mt-2 d-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <label asp-for="DiaChiChiTiet" class="form-label-lg">Địa chỉ chi tiết</label>
+                        <input asp-for="DiaChiChiTiet" class="form-control form-control-lg" placeholder="Số nhà, tên đường..." />
+                        <span asp-validation-for="DiaChiChiTiet" class="text-danger mt-2 d-block"></span>
+                    </div>
+
+                    <div class="mb-5">
+                        <label asp-for="MoTa" class="form-label-lg">Mô tả</label>
+                        <textarea asp-for="MoTa" class="form-control form-control-lg" rows="4"></textarea>
+                        <span asp-validation-for="MoTa" class="text-danger mt-2 d-block"></span>
+                    </div>
+
+                    <div class="form-check form-switch mb-5 ps-2">
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="ConSuDung" style="transform: scale(1.5); margin-right: 15px;">
+                        <label class="form-check-label fw-bold fs-5" asp-for="ConSuDung">Đang hoạt động</label>
+                    </div>
+
+                    <div class="d-flex justify-content-end align-items-center gap-3 mt-5 pt-4 border-top">
+                        <a asp-action="Index" class="btn btn-light btn-lg rounded-pill px-4 text-muted fw-bold border shadow-sm">
+                            <i class="bi bi-arrow-left me-2"></i> Quay lại
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-lg">
+                            <i class="bi bi-save2 me-2"></i> Lưu Địa Điểm
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tinhSelect = document.getElementById("TinhThanhId");
+            const xaSelect = document.getElementById("XaPhuongId");
+            const apiUrl = '@Url.Action("GetXaPhuongs", "DiaDiems")';
+
+            async function loadXaByTinh(tinhId, selectedXa = null) {
+                if (!tinhId) {
+                    xaSelect.innerHTML = '<option value="">-- Chọn Tỉnh trước --</option>';
+                    return [];
+                }
+
+                xaSelect.innerHTML = '<option>Đang tải...</option>';
+                xaSelect.disabled = true;
+
+                try {
+                    const res = await fetch(`${apiUrl}?tinhThanhId=${encodeURIComponent(tinhId)}`);
+                    if(res.ok) {
+                        const data = await res.json();
+                        xaSelect.innerHTML = '<option value="">-- Chọn Xã/Phường --</option>';
+                        for (const item of data) {
+                            const opt = document.createElement("option");
+                            opt.value = item.id;
+                            opt.textContent = item.name;
+                            if (selectedXa && String(selectedXa) === String(item.id)) opt.selected = true;
+                            xaSelect.appendChild(opt);
+                        }
+                        xaSelect.disabled = false;
+                        return data;
+                    }
+                } catch (e) { console.error(e); xaSelect.innerHTML = '<option>Lỗi tải dữ liệu</option>'; }
+                return [];
+            }
+
+            tinhSelect.addEventListener("change", () => loadXaByTinh(tinhSelect.value));
+
+            const serverSelectedTinh = "@(selectedTinh?.ToString() ?? "")";
+            const serverSelectedXa = "@(Model?.XaPhuongId)";
+
+            if (serverSelectedTinh) {
+                tinhSelect.value = serverSelectedTinh;
+                loadXaByTinh(serverSelectedTinh, serverSelectedXa);
+            }
+
+            // === AI MAGIC FILL ===
+            window.tryMagicFill = async function() {
+                const name = document.getElementById('TenDiaDiemInput')?.value;
+                if(!name) { alert("Vui lòng nhập tên địa điểm!"); return; }
+
+                const btn = document.getElementById('btnMagicFill');
+                const oldContent = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`/DiaDiems/SuggestLocationInfo?locationName=${encodeURIComponent(name)}`);
+                    const data = await res.json(); // { moTa, diaChi, tinhThanh, xaPhuong }
+
+                    if(data.moTa) document.getElementById('MoTa').value = data.moTa;
+                    if(data.diaChi) document.getElementById('DiaChiChiTiet').value = data.diaChi;
+
+                    // Match Province
+                    if(data.tinhThanh) {
+                        const tName = data.tinhThanh.toLowerCase();
+                        let foundTinhId = null;
+                        for(let i=0; i<tinhSelect.options.length; i++) {
+                             const optText = tinhSelect.options[i].text.toLowerCase();
+                             if(optText.includes(tName) || tName.includes(optText)) {
+                                 tinhSelect.selectedIndex = i;
+                                 foundTinhId = tinhSelect.options[i].value;
+                                 break;
+                             }
+                        }
+
+                        if(foundTinhId) {
+                             // Load Xa and match
+                             await loadXaByTinh(foundTinhId);
+                             
+                             if(data.xaPhuong) {
+                                 const xName = data.xaPhuong.toLowerCase();
+                                 for(let j=0; j<xaSelect.options.length; j++) {
+                                     const optText = xaSelect.options[j].text.toLowerCase();
+                                     if(optText.includes(xName) || xName.includes(optText)) {
+                                         xaSelect.selectedIndex = j;
+                                         break;
+                                     }
+                                 }
+                             }
+                        }
+                    }
+
+                    alert("Đã điền thông tin mô tả và địa lý (nếu tìm thấy)!");
+
+                } catch(e) { console.error(e); alert("Có lỗi khi gọi AI."); } 
+                finally { btn.innerHTML = oldContent; btn.disabled = false; }
+            };
+        });
+    </script>
+}

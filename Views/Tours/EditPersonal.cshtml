@@ -1,0 +1,671 @@
+﻿@model Tour_2040.Models.Tour
+@{
+    ViewData["Title"] = "Chỉnh sửa Tour riêng";
+
+    // Preselect ids (đổ dropdown tỉnh/xã/địa điểm)
+    int? startTinhId = ViewBag.StartTinhId != null ? Convert.ToInt32(ViewBag.StartTinhId) : (int?)null;
+    int? startXaId = ViewBag.StartXaId != null ? Convert.ToInt32(ViewBag.StartXaId) : (int?)null;
+    string startDiaDiem = ViewBag.StartDiaDiem as string ?? Model.NoiKhoiHanh ?? "";
+
+    int? destTinhId = ViewBag.DestTinhId != null ? Convert.ToInt32(ViewBag.DestTinhId) : (int?)null;
+    int? destXaId = ViewBag.DestXaId != null ? Convert.ToInt32(ViewBag.DestXaId) : (int?)null;
+    string destDiaDiem = ViewBag.DestDiaDiem as string ?? Model.DiaDiem ?? "";
+
+    var selectedDichVus = ViewBag.SelectedDichVus as List<Tour_2040.Models.DichVu> ?? new List<Tour_2040.Models.DichVu>();
+
+    // Map loại dịch vụ -> label UI
+    var serviceTypes = new[]
+    {
+        "Phương tiện",
+        "Nhà hàng",
+        "Khách sạn",
+        "Khu vui chơi",
+        "Bảo hiểm",
+        "Hướng dẫn viên",
+        "Vé tham quan"
+    };
+}
+
+<style>
+    :root{
+        --primary:#3a86ff;
+        --primary-soft:rgba(58,134,255,.10);
+        --text:#0f172a;
+        --muted:#64748b;
+        --card:#ffffff;
+        --border:rgba(15,23,42,.08);
+        --shadow:0 10px 30px rgba(15,23,42,.08);
+        --radius:18px;
+    }
+
+    .page-wrap{
+        background: radial-gradient(1200px 500px at 50% -100px, rgba(58,134,255,.12), transparent 60%),
+                    linear-gradient(#f7f9ff, #ffffff);
+        min-height: calc(100vh - 72px);
+        padding: 28px 0 40px;
+    }
+
+    .title-row{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:16px;
+        margin-bottom:18px;
+    }
+    .page-title{
+        font-weight:800;
+        letter-spacing:-.02em;
+        color:var(--text);
+        margin:0;
+    }
+    .page-sub{
+        color:var(--muted);
+        margin-top:6px;
+        margin-bottom:0;
+        font-size:.95rem;
+    }
+
+    .grid{
+        display:grid;
+        grid-template-columns: 1.25fr .85fr;
+        gap: 18px;
+    }
+
+    @@media (max-width: 992px){
+        .grid{ grid-template-columns: 1fr; }
+    }
+
+    .cardx{
+        background:var(--card);
+        border:1px solid var(--border);
+        border-radius:var(--radius);
+        box-shadow:var(--shadow);
+        overflow:hidden;
+    }
+
+    .cardx-header{
+        padding:16px 18px;
+        border-bottom:1px solid var(--border);
+        display:flex;
+        align-items:center;
+        gap:10px;
+    }
+    .badge-dot{
+        width:10px;height:10px;border-radius:999px;
+        background:var(--primary);
+        box-shadow:0 0 0 6px var(--primary-soft);
+        margin-left:2px;
+    }
+    .cardx-title{
+        margin:0;
+        font-weight:800;
+        color:var(--text);
+        font-size:1.05rem;
+    }
+
+    .cardx-body{ padding: 16px 18px 18px; }
+
+    .label{
+        font-size:.75rem;
+        font-weight:800;
+        color:var(--muted);
+        letter-spacing:.08em;
+        text-transform:uppercase;
+        margin-bottom:8px;
+    }
+
+    .row3{
+        display:grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap:10px;
+    }
+    @@media (max-width: 576px){
+        .row3{ grid-template-columns: 1fr; }
+    }
+
+    .form-select, .form-control, textarea{
+        border-radius:999px;
+        border:1px solid rgba(148,163,184,.5);
+        padding:.65rem .9rem;
+        box-shadow:none !important;
+    }
+    textarea.form-control{
+        border-radius:16px;
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .service-box{
+        border:1px solid var(--border);
+        border-radius:16px;
+        padding:14px;
+        background:linear-gradient(#fff, #fff), radial-gradient(900px 300px at 20% 0%, rgba(58,134,255,.08), transparent 60%);
+        box-shadow: 0 8px 20px rgba(15,23,42,.05);
+        margin-bottom:12px;
+    }
+    .svc-top{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+        margin-bottom:8px;
+    }
+    .svc-name{
+        font-size:.78rem;
+        font-weight:900;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+        color:var(--muted);
+        margin:0;
+    }
+    .svc-count{
+        font-size:.85rem;
+        color:var(--muted);
+        white-space:nowrap;
+    }
+    .svc-hint{
+        font-size:.82rem;
+        color:var(--muted);
+        margin-top:8px;
+    }
+    .pill-list{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        margin-top:10px;
+    }
+    .pill{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:7px 10px;
+        border-radius:999px;
+        background: var(--primary-soft);
+        color:var(--text);
+        border:1px solid rgba(58,134,255,.22);
+        font-weight:700;
+        font-size:.88rem;
+    }
+    .pill .x{
+        width:18px;height:18px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:999px;
+        border:1px solid rgba(15,23,42,.12);
+        background:#fff;
+        color:#111827;
+        cursor:pointer;
+        line-height:1;
+        font-weight:900;
+    }
+
+    .budget-box{
+        border-top:1px solid var(--border);
+        padding-top:14px;
+        margin-top:10px;
+    }
+    .money-hint{
+        font-size:.85rem;
+        color:var(--muted);
+    }
+    .money-big{
+        font-weight:900;
+        color:var(--text);
+        font-size:1.25rem;
+    }
+
+    .action-row{
+        display:flex;
+        gap:12px;
+        margin-top:14px;
+    }
+    .action-row .btn{
+        border-radius:999px;
+        padding:.78rem 1rem;
+        font-weight:900;
+        box-shadow:0 10px 24px rgba(15,23,42,.10);
+    }
+    .btn-back{ flex:1; }
+    .btn-save{ flex:2; }
+
+    .field-error{
+        margin-top:6px;
+        font-size:.85rem;
+        font-weight:700;
+    }
+</style>
+
+<div class="page-wrap">
+    <div class="container">
+        <div class="title-row">
+            <div>
+                <h2 class="page-title">Chỉnh sửa Tour riêng</h2>
+                <p class="page-sub">Sửa lại điểm đến và dịch vụ cho hợp lý, đỡ để hệ thống “đoán mò” 🤝</p>
+            </div>
+            <a asp-action="Custom" class="btn btn-light border rounded-pill fw-bold px-4 py-2">
+                ← Quay lại danh sách
+            </a>
+        </div>
+
+        <form asp-action="EditPersonal" asp-route-id="@Model.MaTour" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="MaTour" />
+
+            <div class="grid">
+                <!-- LEFT: THÔNG TIN HÀNH TRÌNH -->
+                <div class="cardx">
+                    <div class="cardx-header">
+                        <span class="badge-dot"></span>
+                        <h5 class="cardx-title mb-0">Thông tin hành trình</h5>
+                    </div>
+
+                    <div class="cardx-body">
+                        <div class="label">Điểm khởi hành</div>
+                        <div class="row3 mb-2">
+                            <select id="startTinh" class="form-select">
+                                <option value="">-- Tỉnh/TP --</option>
+                                @if (ViewData["TinhThanhList"] is SelectList tinhStart)
+                                {
+                                    foreach (var item in tinhStart)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+
+                            <select id="startXa" class="form-select" disabled>
+                                <option value="">-- Xã/Phường --</option>
+                            </select>
+
+                            <select asp-for="NoiKhoiHanh" id="startDiaDiem" class="form-select" disabled>
+                                <option value="">-- Địa điểm --</option>
+                            </select>
+                        </div>
+                        <span asp-validation-for="NoiKhoiHanh" class="text-danger field-error"></span>
+
+                        <div class="label mt-3">Điểm đến mong muốn</div>
+                        <div class="row3 mb-2">
+                            <select id="destTinh" class="form-select">
+                                <option value="">-- Tỉnh/TP --</option>
+                                @if (ViewData["TinhThanhList"] is SelectList tinhDest)
+                                {
+                                    foreach (var item in tinhDest)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+
+                            <select id="destXa" class="form-select" disabled>
+                                <option value="">-- Xã/Phường --</option>
+                            </select>
+
+                            <select asp-for="DiaDiem" id="destDiaDiem" class="form-select" disabled>
+                                <option value="">-- Địa điểm --</option>
+                            </select>
+                        </div>
+                        <span asp-validation-for="DiaDiem" class="text-danger field-error"></span>
+
+                        <div class="label mt-4">Tên chuyến đi của bạn</div>
+                        <input asp-for="TenTour" class="form-control" placeholder="Đặt tên cho hành trình..." />
+                        <span asp-validation-for="TenTour" class="text-danger field-error"></span>
+
+                        <div class="row3 mt-3">
+                            <div>
+                                <div class="label">Ngày đi dự kiến</div>
+                                <input asp-for="NgayDi" type="date" class="form-control" />
+                                <span asp-validation-for="NgayDi" class="text-danger field-error"></span>
+                            </div>
+                            <div>
+                                <div class="label">Ngày về dự kiến</div>
+                                <input asp-for="NgayVe" type="date" class="form-control" />
+                                <span asp-validation-for="NgayVe" class="text-danger field-error"></span>
+                            </div>
+                            <div>
+                                <div class="label">Ngân sách (VND)</div>
+                                <input asp-for="GiaTour" type="number" min="0" step="1000" class="form-control" />
+                                <span asp-validation-for="GiaTour" class="text-danger field-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="label mt-3">Mô tả chi tiết yêu cầu</div>
+                        <textarea asp-for="MoTa" class="form-control" placeholder="Hãy cho chúng tôi biết thêm về yêu cầu đặc biệt, số lượng người, sở hữu khách sạn..."></textarea>
+                        <span asp-validation-for="MoTa" class="text-danger field-error"></span>
+                    </div>
+                </div>
+
+                <!-- RIGHT: DỊCH VỤ & NGÂN SÁCH -->
+                <div class="cardx">
+                    <div class="cardx-header">
+                        <i class="bi bi-bag-check-fill text-primary"></i>
+                        <h5 class="cardx-title mb-0">Dịch vụ & Ngân sách</h5>
+                    </div>
+
+                    <div class="cardx-body">
+                        <div id="serviceBoxes">
+                            @foreach (var loai in serviceTypes)
+                            {
+                                var key = loai.Replace(" ", "").Replace("/", "");
+                                <div class="service-box" data-loai="@loai">
+                                    <div class="svc-top">
+                                        <p class="svc-name">@loai</p>
+                                        <div class="svc-count"><span id="count-@key">0</span> chọn</div>
+                                    </div>
+
+                                    <select id="sel-@key" class="form-select">
+                                        <option value="">Chọn @loai...</option>
+                                    </select>
+
+                                    <div class="svc-hint">Chọn 1 mục để thêm vào danh sách, bấm <b>X</b> để bỏ.</div>
+                                    <div class="pill-list" id="list-@key"></div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="budget-box">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="money-hint">Gợi ý từ dịch vụ đã chọn:</div>
+                                <div class="money-big" id="totalSuggestion">0 đ</div>
+                            </div>
+                            <div class="money-hint mt-1">Ngân sách bạn nhập vẫn là ưu tiên, số này chỉ để tham khảo.</div>
+                        </div>
+
+                        <!-- Hidden inputs for SelectedServices -->
+                        <div id="SelectedServicesContainer"></div>
+
+                        <div class="action-row">
+                            <a asp-action="Custom" class="btn btn-light border btn-back">
+                                ← Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-save">
+                                <i class="bi bi-save2-fill me-2"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Tắt các “bảng thông báo ⚠️ …” kiểu summary: không dùng asp-validation-summary *@
+        </form>
+    </div>
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // ====== Endpoints ======
+        const apiXa = '@Url.Action("GetXaPhuongs","Tours")';
+        const apiDiaDiem = '@Url.Action("GetDiaDiems","Tours")';
+        const apiDichVu = '@Url.Action("GetDichVus","Tours")';
+
+        const serviceTypes = @Html.Raw(Json.Serialize(serviceTypes));
+        const preSelected = @Html.Raw(Json.Serialize(selectedDichVus.Select(d => new {
+            id = d.MaTenDichVu,
+            name = d.TenDichVu,
+            loai = d.LoaiDichVu,
+            donGia = d.DonGia
+        })));
+
+        const preLocation = {
+            startTinhId: @(startTinhId?.ToString() ?? "null"),
+            startXaId: @(startXaId?.ToString() ?? "null"),
+            startDia: @Html.Raw(Json.Serialize(startDiaDiem)),
+            destTinhId: @(destTinhId?.ToString() ?? "null"),
+            destXaId: @(destXaId?.ToString() ?? "null"),
+            destDia: @Html.Raw(Json.Serialize(destDiaDiem))
+        };
+
+        // ====== Utils ======
+        const vnd = (n) => {
+            const x = Number(n || 0);
+            return x.toLocaleString('vi-VN') + ' đ';
+        };
+
+        const normalizeKey = (loai) => (loai || '').replaceAll(' ', '').replaceAll('/', '');
+
+        // ====== Cascading dropdown helpers ======
+        async function fetchJson(url){
+            const res = await fetch(url);
+            if(!res.ok) return [];
+            return await res.json();
+        }
+
+        async function loadXa(tinhId, xaSelect, diaSelect){
+            xaSelect.innerHTML = '<option value="">-- Xã/Phường --</option>';
+            diaSelect.innerHTML = '<option value="">-- Địa điểm --</option>';
+            xaSelect.disabled = true;
+            diaSelect.disabled = true;
+
+            if(!tinhId) return;
+
+            const list = await fetchJson(`${apiXa}?tinhThanhId=${encodeURIComponent(tinhId)}`);
+            for(const x of list){
+                const opt = document.createElement('option');
+                opt.value = x.id;
+                opt.textContent = x.name;
+                xaSelect.appendChild(opt);
+            }
+            xaSelect.disabled = false;
+        }
+
+        async function loadDia(xaId, diaSelect, selectedDiaName){
+            diaSelect.innerHTML = '<option value="">-- Địa điểm --</option>';
+            diaSelect.disabled = true;
+
+            if(!xaId) return;
+
+            const list = await fetchJson(`${apiDiaDiem}?xaPhuongId=${encodeURIComponent(xaId)}`);
+            for(const d of list){
+                const opt = document.createElement('option');
+                // UI/DB hiện đang lưu TenDiaDiem vào Tour.NoiKhoiHanh / Tour.DiaDiem
+                opt.value = d.name;
+                opt.textContent = d.name;
+                diaSelect.appendChild(opt);
+            }
+
+            if(selectedDiaName){
+                diaSelect.value = selectedDiaName;
+            }
+            diaSelect.disabled = false;
+        }
+
+        // ====== Service picker ======
+        const selectedMap = new Map(); // id -> {id,name,loai,donGia}
+        const containerHidden = document.getElementById('SelectedServicesContainer');
+
+        function refreshHiddenInputs(){
+            containerHidden.innerHTML = '';
+            for(const [id] of selectedMap){
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'SelectedServices';
+                input.value = id;
+                containerHidden.appendChild(input);
+            }
+        }
+
+        function refreshTotal(){
+            let sum = 0;
+            for(const [,v] of selectedMap){
+                sum += Number(v.donGia || 0);
+            }
+            document.getElementById('totalSuggestion').textContent = vnd(sum);
+        }
+
+        function refreshCounts(){
+            for(const loai of serviceTypes){
+                const key = normalizeKey(loai);
+                const count = [...selectedMap.values()].filter(x => (x.loai || '') === loai).length;
+                const el = document.getElementById(`count-${key}`);
+                if(el) el.textContent = count;
+            }
+        }
+
+        function addPill(item){
+            if(!item || !item.id) return;
+            if(selectedMap.has(item.id)) return;
+
+            selectedMap.set(item.id, item);
+
+            const key = normalizeKey(item.loai || '');
+            const list = document.getElementById(`list-${key}`);
+            if(!list) return;
+
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.dataset.id = item.id;
+            pill.innerHTML = `
+                <span>${item.name} <span class="text-muted fw-bold">(${vnd(item.donGia)})</span></span>
+                <span class="x" title="Bỏ">×</span>
+            `;
+
+            pill.querySelector('.x').addEventListener('click', () => {
+                selectedMap.delete(item.id);
+                pill.remove();
+                refreshHiddenInputs();
+                refreshTotal();
+                refreshCounts();
+            });
+
+            list.appendChild(pill);
+
+            refreshHiddenInputs();
+            refreshTotal();
+            refreshCounts();
+        }
+
+        async function reloadOptionsForLoai(loai){
+            const destXa = document.getElementById('destXa').value;
+            const destDia = document.getElementById('destDiaDiem').value;
+
+            const key = normalizeKey(loai);
+            const sel = document.getElementById(`sel-${key}`);
+            if(!sel) return;
+
+            sel.innerHTML = `<option value="">Chọn ${loai}...</option>`;
+
+            if(!destXa || !destDia){
+                return;
+            }
+
+            const list = await fetchJson(`${apiDichVu}?xaPhuongId=${encodeURIComponent(destXa)}&loaiDichVu=${encodeURIComponent(loai)}`);
+
+            // UI hiển thị: chỉ dịch vụ thuộc đúng địa điểm đang chọn + dịch vụ gợi ý (MaDiaDiem == null)
+            const available = list.filter(x => x.isSuggested || (x.diaDiem === destDia));
+
+            const groupAvail = document.createElement('optgroup');
+            groupAvail.label = 'Dịch vụ có sẵn';
+
+            const groupSug = document.createElement('optgroup');
+            groupSug.label = 'Dịch vụ gợi ý';
+
+            for(const dv of available){
+                const opt = document.createElement('option');
+                opt.value = dv.id;
+                opt.textContent = `${dv.name} (${vnd(dv.donGia)})`;
+                opt.dataset.name = dv.name;
+                opt.dataset.loai = dv.loai;
+                opt.dataset.dongia = dv.donGia ?? 0;
+
+                if(dv.isSuggested) groupSug.appendChild(opt);
+                else groupAvail.appendChild(opt);
+            }
+
+            if(groupAvail.children.length) sel.appendChild(groupAvail);
+            if(groupSug.children.length) sel.appendChild(groupSug);
+        }
+
+        async function reloadAllServiceOptions(){
+            for(const loai of serviceTypes){
+                await reloadOptionsForLoai(loai);
+            }
+        }
+
+        function wireServiceSelects(){
+            for(const loai of serviceTypes){
+                const key = normalizeKey(loai);
+                const sel = document.getElementById(`sel-${key}`);
+                if(!sel) continue;
+
+                sel.addEventListener('change', () => {
+                    const id = sel.value;
+                    if(!id) return;
+
+                    const opt = sel.options[sel.selectedIndex];
+                    addPill({
+                        id,
+                        name: opt.dataset.name || opt.textContent,
+                        loai: opt.dataset.loai || loai,
+                        donGia: Number(opt.dataset.dongia || 0)
+                    });
+
+                    sel.value = '';
+                });
+            }
+        }
+
+        // ====== Boot ======
+        document.addEventListener('DOMContentLoaded', async () => {
+            const startTinh = document.getElementById('startTinh');
+            const startXa = document.getElementById('startXa');
+            const startDia = document.getElementById('startDiaDiem');
+
+            const destTinh = document.getElementById('destTinh');
+            const destXa = document.getElementById('destXa');
+            const destDia = document.getElementById('destDiaDiem');
+
+            // Wire cascading
+            startTinh.addEventListener('change', async () => {
+                await loadXa(startTinh.value, startXa, startDia);
+            });
+            startXa.addEventListener('change', async () => {
+                await loadDia(startXa.value, startDia, '');
+            });
+
+            destTinh.addEventListener('change', async () => {
+                await loadXa(destTinh.value, destXa, destDia);
+                await reloadAllServiceOptions();
+            });
+            destXa.addEventListener('change', async () => {
+                await loadDia(destXa.value, destDia, '');
+                await reloadAllServiceOptions();
+            });
+            destDia.addEventListener('change', async () => {
+                await reloadAllServiceOptions();
+            });
+
+            // Init preselect location
+            if(preLocation.startTinhId){
+                startTinh.value = String(preLocation.startTinhId);
+                await loadXa(startTinh.value, startXa, startDia);
+                if(preLocation.startXaId){
+                    startXa.value = String(preLocation.startXaId);
+                    await loadDia(startXa.value, startDia, preLocation.startDia);
+                }
+            }
+
+            if(preLocation.destTinhId){
+                destTinh.value = String(preLocation.destTinhId);
+                await loadXa(destTinh.value, destXa, destDia);
+                if(preLocation.destXaId){
+                    destXa.value = String(preLocation.destXaId);
+                    await loadDia(destXa.value, destDia, preLocation.destDia);
+                }
+            }
+
+            // Service selects
+            wireServiceSelects();
+
+            // Load options based on current destination
+            await reloadAllServiceOptions();
+
+            // Render preselected services
+            for(const item of preSelected){
+                // item.loai có thể null -> bỏ qua nếu không map được
+                if(!item || !item.id || !item.loai) continue;
+                addPill(item);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,65 @@
+﻿@* Folder: Views/DanhGiaTours
+   File path: Views/DanhGiaTours/Delete.cshtml
+   File name: Delete.cshtml
+   Labels: A(User delete), B(Soft theme)
+   Mô tả: Xoá đánh giá (owner).
+*@
+@model Tour_2040.Models.DanhGiaTourItemViewModel
+@{
+    ViewData["Title"] = "Xoá đánh giá";
+}
+<style>
+    :root {
+        --outer-gutter: clamp(10px, 2vw, 28px);
+        --bd: 1px solid rgba(226,232,240,.9);
+        --shadow: 0 18px 40px rgba(2,6,23,.08);
+        --r: 18px;
+    }
+
+    .page-shell {
+        padding: 12px var(--outer-gutter);
+    }
+
+    .cardx {
+        background: rgba(255,255,255,.9);
+        backdrop-filter: blur(12px);
+        border: var(--bd);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+    }
+</style>
+
+<div class="page-shell">
+    <div class="cardx p-4 mx-auto" style="max-width: 720px;">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                 style="width:54px;height:54px;background:rgba(220,53,69,.12);border:1px solid rgba(220,53,69,.22);">
+                <i class="bi bi-exclamation-triangle text-danger fs-3"></i>
+            </div>
+            <div>
+                <div class="fw-bold fs-4">Xác nhận xoá</div>
+                <div class="text-muted">Hành động này không thể hoàn tác.</div>
+            </div>
+        </div>
+
+        <div class="p-3 rounded-4" style="border:var(--bd); background: rgba(248,250,252,.75);">
+            Bạn có chắc muốn xoá đánh giá của <strong>@Model.TenNguoiDung</strong>?
+        </div>
+
+        <form asp-action="DeleteConfirmed" method="post" class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+            <input type="hidden" name="maDanhGia" value="@Model.MaDanhGia" />
+            <a asp-action="Create" class="btn btn-warning btn-pill">
+                <i class="bi bi-arrow-left"></i> Huỷ
+            </a>
+            <button type="submit" class="btn btn-danger btn-pill">
+                <i class="bi bi-trash3"></i> Xoá
+            </button>
+        </form>
+    </div>
+</div>

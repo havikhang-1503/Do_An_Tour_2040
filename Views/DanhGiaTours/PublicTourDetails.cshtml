@@ -1,0 +1,387 @@
+﻿@* Folder: Views/DanhGiaTours
+   File path: Views/DanhGiaTours/PublicTourDetails.cshtml
+   File name: PublicTourDetails.cshtml
+   Labels: A(Public details), B(Stats 1-5 sao - NEW UI), C(Soft theme), D(Star bar polished)
+   Mô tả: Trang xem chi tiết đánh giá theo tour (ai cũng xem) + thanh sao đẹp hơn.
+*@
+@model Tour_2040.Models.DanhGiaTourAdminTourDetailsViewModel
+@{
+    ViewData["Title"] = "Chi tiết đánh giá";
+}
+
+<style>
+    :root {
+        --outer-gutter: clamp(10px, 2vw, 28px);
+        --bd: 1px solid rgba(226,232,240,.92);
+        --shadow: 0 18px 40px rgba(2,6,23,.08);
+        --r: 18px;
+        --text: #0f172a;
+        --muted: #64748b;
+        --blue: #2563eb;
+        --amber: #f59e0b;
+        --amber2: #fb923c;
+        --soft: rgba(248,250,252,.86);
+    }
+
+    .page-shell {
+        padding: 12px var(--outer-gutter);
+    }
+
+    .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .cardx {
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(12px);
+        border: var(--bd);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ava {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: rgba(37,99,235,.12);
+        border: 1px solid rgba(37,99,235,.22);
+    }
+
+    .thumb {
+        width: 96px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 14px;
+        border: var(--bd);
+        background: #fff;
+    }
+
+    /* ========== NEW: Rating summary + star bars ========== */
+    .rating-grid {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 12px;
+    }
+    @@media (max-width: 992px) {
+        .rating-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .sum-box {
+        border: var(--bd);
+        border-radius: 18px;
+        background: var(--soft);
+        padding: 14px;
+        height: 100%;
+    }
+
+    .sum-title {
+        font-weight: 950;
+        letter-spacing: -.02em;
+        margin: 0 0 6px;
+        color: var(--text);
+    }
+
+    .sum-sub {
+        color: var(--muted);
+        font-weight: 700;
+        font-size: .92rem;
+        margin: 0 0 10px;
+    }
+
+    .avg-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px dashed rgba(148,163,184,.55);
+        padding-top: 12px;
+        margin-top: 10px;
+    }
+
+    .avg-num {
+        font-weight: 1000;
+        font-size: 2.1rem;
+        line-height: 1;
+        color: var(--text);
+        letter-spacing: -.02em;
+        white-space: nowrap;
+    }
+
+    .stars-visual {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+        .stars-visual i {
+            font-size: 1.08rem;
+            color: rgba(148,163,184,.65);
+        }
+
+            .stars-visual i.on {
+                color: var(--amber);
+            }
+
+            .stars-visual i.half {
+                color: rgba(245,158,11,.55);
+            }
+
+    .sum-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: #fff;
+        border: var(--bd);
+        font-weight: 900;
+        color: var(--text);
+        box-shadow: 0 10px 18px rgba(2,6,23,.06);
+    }
+
+        .sum-pill .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: rgba(37,99,235,.85);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+        }
+
+    .bars-box {
+        border: var(--bd);
+        border-radius: 18px;
+        background: #fff;
+        padding: 14px;
+    }
+
+    .bar-row {
+        display: grid;
+        grid-template-columns: 58px 1fr 64px;
+        gap: 10px;
+        align-items: center;
+        padding: 6px 0;
+    }
+
+    .bar-lb {
+        font-weight: 950;
+        color: var(--text);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .bar-lb i {
+            color: var(--amber);
+        }
+
+    .bar-track {
+        height: 10px;
+        background: rgba(226,232,240,.75);
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bar-fill {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        width: 0;
+        background: linear-gradient(90deg, rgba(245,158,11,.92), rgba(251,146,60,.92));
+        box-shadow: 0 10px 14px rgba(245,158,11,.18);
+        transition: width .45s ease;
+    }
+
+    .bar-meta {
+        text-align: right;
+        color: var(--muted);
+        font-weight: 900;
+        font-size: .9rem;
+        white-space: nowrap;
+    }
+
+    .mini {
+        font-size: .85rem;
+        color: var(--muted);
+        font-weight: 800;
+    }
+</style>
+
+@{
+    var totalDanhGia = Math.Max(0, Model.TongDanhGia);
+    var totalForPct = Math.Max(1, Model.TongDanhGia);
+
+    Func<int, int> pctInt = (n) => (int)Math.Round(n * 100.0 / totalForPct);
+    Func<int, string> pctTxt = (n) => pctInt(n).ToString() + "%";
+
+    // sao trung bình để vẽ icon
+    var avg = Model.DiemTrungBinh;
+    var fullStars = (int)Math.Floor(avg);
+    var hasHalf = (avg - fullStars) >= 0.5;
+}
+
+<div class="page-shell">
+    <div class="wrap">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <div class="text-muted small mb-1">
+                    <i class="bi bi-star-fill text-warning"></i>
+                    Đánh giá / <b class="text-dark">@Model.TenTour</b>
+                </div>
+                <div class="text-muted small">@Model.DiaDiem • @Model.GiaTour.ToString("N0") đ</div>
+            </div>
+            <a asp-action="Public" class="btn btn-warning btn-pill">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <div class="cardx p-3 p-md-4 mb-3">
+            <div class="rating-grid">
+
+                <!-- LEFT: Summary -->
+                <div class="sum-box">
+                    <h5 class="sum-title mb-0">Tổng quan đánh giá</h5>
+                    <p class="sum-sub">Tổng: <b class="text-primary">@Model.TongDanhGia</b> đánh giá</p>
+
+                    <div class="sum-pill">
+                        <span class="dot"></span>
+                        <span>Tour: <span class="dg-mono">#@Model.MaTour</span></span>
+                    </div>
+
+                    <div class="avg-row">
+                        <div>
+                            <div class="mini mb-1">Điểm trung bình</div>
+                            <div class="avg-num">@avg.ToString("0.00")</div>
+                        </div>
+
+                        <div class="text-end">
+                            <div class="stars-visual" title="Đánh giá trung bình">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var isOn = i <= fullStars;
+                                    var isHalf = (!isOn && hasHalf && i == fullStars + 1);
+
+                                    if (isOn)
+                                    {
+                                        <i class="bi bi-star-fill on"></i>
+                                    }
+                                    else if (isHalf)
+                                    {
+                                        <i class="bi bi-star-half half"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                            </div>
+                            <div class="mini mt-1">Dựa trên @totalDanhGia đánh giá</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Bars -->
+                <div class="bars-box">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold">Phân bố sao</div>
+                        <div class="mini">Hiển thị tỷ lệ theo tổng đánh giá</div>
+                    </div>
+
+                    <div class="bar-row">
+                        <div class="bar-lb"><i class="bi bi-star-fill"></i> 5</div>
+                        <div class="bar-track"><span class="bar-fill" style="width:@pctTxt(Model.Sao5)"></span></div>
+                        <div class="bar-meta">@pctTxt(Model.Sao5) • @Model.Sao5</div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-lb"><i class="bi bi-star-fill"></i> 4</div>
+                        <div class="bar-track"><span class="bar-fill" style="width:@pctTxt(Model.Sao4)"></span></div>
+                        <div class="bar-meta">@pctTxt(Model.Sao4) • @Model.Sao4</div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-lb"><i class="bi bi-star-fill"></i> 3</div>
+                        <div class="bar-track"><span class="bar-fill" style="width:@pctTxt(Model.Sao3)"></span></div>
+                        <div class="bar-meta">@pctTxt(Model.Sao3) • @Model.Sao3</div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-lb"><i class="bi bi-star-fill"></i> 2</div>
+                        <div class="bar-track"><span class="bar-fill" style="width:@pctTxt(Model.Sao2)"></span></div>
+                        <div class="bar-meta">@pctTxt(Model.Sao2) • @Model.Sao2</div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-lb"><i class="bi bi-star-fill"></i> 1</div>
+                        <div class="bar-track"><span class="bar-fill" style="width:@pctTxt(Model.Sao1)"></span></div>
+                        <div class="bar-meta">@pctTxt(Model.Sao1) • @Model.Sao1</div>
+                    </div>
+
+                    @if (Model.TongDanhGia <= 0)
+                    {
+                        <div class="mini mt-2">Chưa có đánh giá nên tỷ lệ sẽ là 0% hết.</div>
+                    }
+                </div>
+
+            </div>
+        </div>
+
+        <div class="cardx p-3 p-md-4">
+            @if (Model.DanhSachDanhGia == null || Model.DanhSachDanhGia.Count == 0)
+            {
+                <div class="text-muted fw-bold">Chưa có đánh giá nào cho tour này.</div>
+            }
+            else
+            {
+                <div class="vstack gap-3">
+                    @foreach (var d in Model.DanhSachDanhGia)
+                    {
+                        <div class="p-3 rounded-4" style="border:var(--bd); background: rgba(248,250,252,.72);">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="ava"><i class="bi bi-person-fill text-primary"></i></div>
+                                    <div>
+                                        <div class="fw-bold">@d.TenNguoiDung</div>
+                                        <div class="text-muted small">@d.NgayDanhGia.ToString("dd/MM/yyyy")</div>
+                                    </div>
+                                </div>
+
+                                <div class="fw-bold" style="color:#b45309; white-space:nowrap;">
+                                    <i class="bi bi-star-fill"></i> @d.SoSao
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(d.BinhLuan))
+                            {
+                                <div class="mt-2 fw-semibold">@d.BinhLuan</div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(d.HinhAnhUrl))
+                            {
+                                <div class="mt-2">
+                                    <a href="@d.HinhAnhUrl" target="_blank" class="text-decoration-none">
+                                        <img class="thumb" src="@d.HinhAnhUrl" alt="Ảnh đánh giá" />
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+</div>

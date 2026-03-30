@@ -1,0 +1,106 @@
+﻿@* 
+   Folder: Views/Vouchers
+   File path: Views/Vouchers/Create.cshtml
+   File name: Create.cshtml
+   Label: V-Voucher-Create-Admin
+   Mô tả: Form tạo voucher mới cho Admin/Staff, có min/max số tiền giảm.
+*@
+
+@model Tour_2040.Models.Voucher
+
+@{
+    ViewData["Title"] = "Tạo voucher mới";
+}
+
+<h2 class="mb-3">Tạo voucher mới</h2>
+
+<div class="card-glass p-4">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="MaVoucher" class="form-label"></label>
+                <input asp-for="MaVoucher" class="form-control" />
+                <span asp-validation-for="MaVoucher" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="TenVoucher" class="form-label"></label>
+                <input asp-for="TenVoucher" class="form-control" />
+                <span asp-validation-for="TenVoucher" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="LoaiGiam" class="form-label"></label>
+                <select asp-for="LoaiGiam" class="form-select">
+                    <option value="SoTien">Giảm số tiền (VNĐ)</option>
+                    <option value="PhanTram">Giảm theo %</option>
+                </select>
+                <span asp-validation-for="LoaiGiam" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="GiaTriGiam" class="form-label"></label>
+                <input asp-for="GiaTriGiam" class="form-control" />
+                <span asp-validation-for="GiaTriGiam" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="DonHangToiThieu" class="form-label"></label>
+                <input asp-for="DonHangToiThieu" class="form-control" />
+                <span class="form-text">Để trống nếu không yêu cầu đơn hàng tối thiểu.</span>
+                <span asp-validation-for="DonHangToiThieu" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="SoTienGiamToiThieu" class="form-label"></label>
+                <input asp-for="SoTienGiamToiThieu" class="form-control" />
+                <span class="form-text">Để trống nếu không yêu cầu số tiền giảm tối thiểu.</span>
+                <span asp-validation-for="SoTienGiamToiThieu" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="SoTienGiamToiDa" class="form-label"></label>
+                <input asp-for="SoTienGiamToiDa" class="form-control" />
+                <span class="form-text">Đối với giảm %, đây là số tiền giảm tối đa.</span>
+                <span asp-validation-for="SoTienGiamToiDa" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="NgayBatDau" class="form-label"></label>
+                <input asp-for="NgayBatDau" class="form-control" type="date" />
+                <span asp-validation-for="NgayBatDau" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="NgayKetThuc" class="form-label"></label>
+                <input asp-for="NgayKetThuc" class="form-control" type="date" />
+                <span asp-validation-for="NgayKetThuc" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="SoLuong" class="form-label"></label>
+                <input asp-for="SoLuong" class="form-control" />
+                <span class="form-text">Để trống = không giới hạn số lần dùng.</span>
+                <span asp-validation-for="SoLuong" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="MoTa" class="form-label"></label>
+                <textarea asp-for="MoTa" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="MoTa" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                Quay lại
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Lưu voucher
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

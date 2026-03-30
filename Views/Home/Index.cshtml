@@ -1,0 +1,358 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ - Royal Ascend Travel";
+    bool isManager = User.IsInRole("Admin") || User.IsInRole("Staff");
+}
+
+<div class="main-wrapper overflow-hidden">
+
+    @* --- NOTIFICATION --- *@
+    @if (TempData["StatusMessage"] is string status && !string.IsNullOrWhiteSpace(status))
+    {
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+            <div class="glass-panel p-3 d-flex align-items-center gap-3 animate__animated animate__slideInRight">
+                <div class="bg-success text-white rounded-circle p-1"><i class="bi bi-check"></i></div>
+                <span class="fw-medium text-dark">@status</span>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+
+    @* --- ADMIN QUICK ADD (Simplified) --- *@
+    @* "Chỉ có mục thêm ảnh cho admin thêm" interpreted as a quick "Add New Tour" fab/section *@
+    @if (isManager)
+    {
+        <div class="container mt-4 mb-n4 position-relative z-2 reveal-down">
+            <div class="d-flex justify-content-end">
+                <a asp-controller="Tours" asp-action="Create" class="btn-glass-glow d-inline-flex align-items-center gap-3 px-4 py-3 rounded-4 text-decoration-none group-hover-effect">
+                    <div class="bg-primary text-white p-2 rounded-circle fs-5 shadow-sm group-hover-rotate">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark lh-1">Thêm Tour / Ảnh Mới</div>
+                        <small class="text-muted" style="font-size: 0.75rem;">Đăng tải hành trình mới</small>
+                    </div>
+                    <i class="bi bi-arrow-right text-primary ms-2 opacity-0 group-hover-opacity transition-base"></i>
+                </a>
+            </div>
+        </div>
+    }
+
+    @* --- HERO SECTION --- *@
+    <section class="hero-wrapper position-relative py-5" style="min-height: 85vh; display: flex; align-items: center;">
+        <!-- Decoration -->
+        <div class="position-absolute top-0 start-0 translate-middle rounded-circle bg-primary opacity-10 blur-3xl animate-pulse-slow" style="width: 700px; height: 700px;"></div>
+        <div class="position-absolute bottom-0 end-0 translate-middle rounded-circle bg-warning opacity-10 blur-3xl animate-pulse-slow delay-1s" style="width: 600px; height: 600px;"></div>
+
+        <div class="container position-relative z-1">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <div class="reveal-right">
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white border shadow-sm mb-4">
+                            <span class="badge bg-gradient-primary border-0 rounded-pill px-3">New 2025</span>
+                            <span class="small text-muted fw-bold">Du lịch thông minh 4.0</span>
+                        </div>
+
+                        <h1 class="display-3 fw-black text-dark mb-4 lh-tight">
+                            Khám phá <span class="text-gradient-primary">Thế Giới</span> <br>
+                            Trong Tầm Tay
+                        </h1>
+
+                        <p class="lead text-muted mb-5" style="font-size: 1.15rem; max-width: 500px;">
+                            Kết nối mọi trải nghiệm du lịch với một mã định danh duy nhất. 
+                            Đặt tour, khách sạn và dịch vụ chưa bao giờ dễ dàng như thế.
+                        </p>
+
+                        @* Search Bar *@
+                        <div class="glass-panel p-2 rounded-pill d-flex align-items-center shadow-lg mb-5 transition-transform hover-scale-sm" style="max-width: 550px;">
+                            <span class="ps-4 text-primary fs-5"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-0 bg-transparent shadow-none fs-5 py-2" 
+                                   placeholder="Bạn muốn đi đâu hôm nay?" 
+                                   onclick="location.href='@Url.Action("Index", "Tours")'" style="cursor: text;">
+                            <button class="btn-pill btn-pill-primary px-5 py-3 fs-6 fw-bold shadow-sm" onclick="location.href='@Url.Action("Index", "Tours")'">
+                                Khám Phá
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-5 pt-2 reveal-up delay-200">
+                        <div class="text-center">
+                            <h3 class="fw-bold text-dark m-0">100%</h3>
+                            <small class="text-muted text-uppercase fw-bold">An toàn</small>
+                        </div>
+                        <div class="text-center border-start ps-5">
+                            <h3 class="fw-bold text-dark m-0">4.9/5</h3>
+                            <small class="text-muted text-uppercase fw-bold">Đánh giá</small>
+                        </div>
+                        <div class="text-center border-start ps-5">
+                            <h3 class="fw-bold text-dark m-0">24/7</h3>
+                            <small class="text-muted text-uppercase fw-bold">Hỗ trợ</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="position-relative perspective-1000 reveal-left delay-200">
+                        <div class="hero-card-3d bg-white p-2 rotate-y-n5 transition-transform hover-rotate-0 shadow-2xl">
+                            <img src="~/images/home/poster-tour-2040.jpg"
+                                 class="w-100 rounded-4 object-fit-cover"
+                                 style="min-height: 550px;"
+                                 alt="Royal Ascend Travel"
+                                 onerror="this.src='https://placehold.co/600x650?text=Travel+Experience';" />
+                        </div>
+
+                        <!-- Floating Badge -->
+                        <div class="glass-panel p-3 rounded-4 position-absolute top-50 start-0 translate-middle-y ms-n4 shadow-xl animate-float-y delay-200" style="max-width: 260px;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-white p-2 rounded-circle shadow-sm">
+                                    <img src="https://ui-avatars.com/api/?name=User&background=random" class="rounded-circle" width="30">
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block lh-1 mb-1 fw-bold" style="font-size:0.65rem;">MỚI ĐẶT 5 PHÚT TRƯỚC</small>
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 150px;">Tour Phú Quốc 4N3Đ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- FEATURES SECTION --- *@
+    <section class="py-5 bg-white position-relative">
+         <div class="position-absolute start-0 top-50 translate-middle-y bg-info opacity-05 blur-3xl w-50 h-50 rounded-circle" style="z-index:0;"></div>
+         
+         <div class="container position-relative z-1">
+            <div class="text-center mb-5 reveal-up">
+                <span class="text-primary fw-bold text-uppercase tracking-wider">Tại sao chọn chúng tôi?</span>
+                <h2 class="display-5 fw-bold mt-2">Nâng Tầm Trải Nghiệm</h2>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="glass-panel p-5 h-100 reveal-up delay-100 hover-elevate">
+                        <i class="bi bi-qr-code-scan fs-1 text-primary mb-4 d-block"></i>
+                        <h4 class="fw-bold mb-3">One-Touch ID</h4>
+                        <p class="text-muted mb-0">Chỉ một mã QR duy nhất cho tất cả dịch vụ. Không cần giấy tờ, không lo thất lạc.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-panel p-5 h-100 reveal-up delay-200 hover-elevate bg-primary text-white" style="transform: scale(1.05);">
+                        <i class="bi bi-stars fs-1 text-warning mb-4 d-block"></i>
+                        <h4 class="fw-bold mb-3">AI Personalize</h4>
+                        <p class="text-white-50 mb-0">Công nghệ AI phân tích sở thích để gợi ý những hành trình "đo ni đóng giày" cho riêng bạn.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-panel p-5 h-100 reveal-up delay-300 hover-elevate">
+                        <i class="bi bi-shield-check fs-1 text-primary mb-4 d-block"></i>
+                        <h4 class="fw-bold mb-3">Bảo Hiểm 100%</h4>
+                        <p class="text-muted mb-0">Cam kết hoàn tiền và hỗ trợ y tế toàn cầu 24/7. An tâm tuyệt đối trên mọi nẻo đường.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- FEATURED TOURS (Parallax / Reveal) --- *@
+    <section class="py-5 position-relative overflow-hidden">
+        <div class="container py-5">
+            <div class="d-flex align-items-end justify-content-between mb-5 reveal-right">
+                <div>
+                    <h2 class="display-4 fw-bold">Điểm Đến <span class="text-stroke">Nổi Bật</span></h2>
+                </div>
+                <a asp-controller="Tours" asp-action="Index" class="btn btn-outline-dark rounded-pill px-4 fw-bold">Xem Tất Cả</a>
+            </div>
+
+            <div class="row g-5">
+                <!-- Tour 1 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-tour-modern reveal-up">
+                        <div class="card-img-wrap">
+                            <img src="~/images/home/tour-phuquoc.jpg" alt="PQ" onerror="this.src='https://placehold.co/600x800?text=Phu+Quoc';">
+                            <div class="card-overlay">
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold">7.990.000đ</span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <small class="text-uppercase text-primary fw-bold mb-2 d-block">RESORT 5 SAO</small>
+                            <h3 class="fw-bold mb-3"><a href="/Tours/Details/1" class="text-dark text-decoration-none">Phú Quốc Paradise</a></h3>
+                            <div class="d-flex gap-4 text-muted small fw-bold">
+                                <span><i class="bi bi-clock"></i> 4 Ngày</span>
+                                <span><i class="bi bi-geo-alt"></i> Kiên Giang</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tour 2 (Offset Layout) -->
+                <div class="col-lg-4 col-md-6 mt-lg-5">
+                    <div class="card-tour-modern reveal-up delay-200">
+                        <div class="card-img-wrap">
+                            <img src="~/images/home/tour-dalat.jpg" alt="DL" onerror="this.src='https://placehold.co/600x800?text=Da+Lat';">
+                            <div class="card-overlay">
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold">4.490.000đ</span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <small class="text-uppercase text-primary fw-bold mb-2 d-block">SĂN MÂY</small>
+                            <h3 class="fw-bold mb-3"><a href="/Tours/Details/2" class="text-dark text-decoration-none">Đà Lạt Mộng Mơ</a></h3>
+                            <div class="d-flex gap-4 text-muted small fw-bold">
+                                <span><i class="bi bi-clock"></i> 3 Ngày</span>
+                                <span><i class="bi bi-geo-alt"></i> Lâm Đồng</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tour 3 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card-tour-modern reveal-up delay-400">
+                        <div class="card-img-wrap">
+                            <img src="~/images/home/tour-halong.jpg" alt="HL" onerror="this.src='https://placehold.co/600x800?text=Ha+Long';">
+                            <div class="card-overlay">
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold">5.990.000đ</span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <small class="text-uppercase text-primary fw-bold mb-2 d-block">DU THUYỀN</small>
+                            <h3 class="fw-bold mb-3"><a href="/Tours/Details/3" class="text-dark text-decoration-none">Hạ Long Bay</a></h3>
+                            <div class="d-flex gap-4 text-muted small fw-bold">
+                                <span><i class="bi bi-clock"></i> 2 Ngày</span>
+                                <span><i class="bi bi-geo-alt"></i> Quảng Ninh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- VOUCHER BANNER (Scale Reveal) --- *@
+    <section class="py-5 reveal-zoom">
+        <div class="container">
+            <div class="rounded-5 overflow-hidden position-relative shadow-2xl bg-dark text-white p-5 text-center">
+                 <div class="position-absolute top-0 start-0 w-100 h-100 opacity-20" 
+                      style="background: url('https://placehold.co/1200x400/png?text=Pattern') center/cover;"></div>
+                 
+                 <div class="position-relative z-1 py-4">
+                     <span class="d-inline-block border border-white border-opacity-25 rounded-pill px-3 py-1 text-white-50 mb-3 small fw-bold tracking-widest">LIMITED OFFER</span>
+                     <h2 class="display-4 fw-black mb-4">Nhận Ngay Voucher <br> <span class="text-warning">Giảm Đến 50%</span></h2>
+                     <p class="lead opacity-75 mb-5 mx-auto" style="max-width: 600px;">Đăng ký thành viên mới ngay hôm nay để nhận gói quà tặng trị giá 1.000.000đ.</p>
+                     
+                     <a asp-controller="Vouchers" asp-action="Index" class="btn btn-light rounded-pill px-5 py-3 fw-bold text-dark hover-scale">
+                         Săn Voucher Ngay
+                     </a>
+                 </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- FOOTER SIMPLIFIED --- *@
+    <footer class="bg-white border-top pt-5 pb-4 mt-5 reveal-up">
+        <div class="container text-center">
+             <h4 class="fw-black mb-3">Royal Ascend</h4>
+             <p class="text-muted small mb-4">Trải nghiệm sự khác biệt trong từng hành trình.</p>
+             <div class="d-flex justify-content-center gap-3 mb-4">
+                 <a href="#" class="btn btn-sm btn-light rounded-circle"><i class="bi bi-facebook"></i></a>
+                 <a href="#" class="btn btn-sm btn-light rounded-circle"><i class="bi bi-instagram"></i></a>
+                 <a href="#" class="btn btn-sm btn-light rounded-circle"><i class="bi bi-tiktok"></i></a>
+             </div>
+             <small class="text-muted opacity-50">&copy; @DateTime.Now.Year All rights reserved.</small>
+        </div>
+    </footer>
+
+</div>
+
+<style>
+    /* ================= SCROLL REVEAL ANIMATIONS ================= */
+    .reveal-up { opacity: 0; transform: translateY(50px); transition: all 1s ease; }
+    .reveal-down { opacity: 0; transform: translateY(-50px); transition: all 1s ease; }
+    .reveal-left { opacity: 0; transform: translateX(50px); transition: all 1s ease; }
+    .reveal-right { opacity: 0; transform: translateX(-50px); transition: all 1s ease; }
+    .reveal-zoom { opacity: 0; transform: scale(0.9); transition: all 1s ease; }
+
+    .active-reveal { opacity: 1; transform: translate(0) scale(1); }
+
+    .delay-100 { transition-delay: 0.1s; }
+    .delay-200 { transition-delay: 0.2s; }
+    .delay-300 { transition-delay: 0.3s; }
+    .delay-400 { transition-delay: 0.4s; }
+    .delay-1s  { transition-delay: 1s; }
+
+    /* ================= CUSTOM COMPONENTS ================= */
+    .btn-glass-glow {
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.8);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .btn-glass-glow:hover {
+        background: white;
+        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.2);
+    }
+    .group-hover-effect:hover .group-hover-rotate { transform: rotate(15deg); }
+    .group-hover-effect:hover .group-hover-opacity { opacity: 1 !important; transform: translateX(5px); }
+    
+    .card-tour-modern {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .card-tour-modern:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .card-img-wrap {
+        height: 400px;
+        position: relative;
+        overflow: hidden;
+    }
+    .card-img-wrap img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .card-tour-modern:hover .card-img-wrap img { transform: scale(1.1); }
+    .card-overlay {
+        position: absolute; bottom: 20px; left: 20px;
+    }
+    .card-content { padding: 1.5rem; }
+
+    .text-stroke {
+        -webkit-text-stroke: 1px var(--text-dark);
+        color: transparent;
+    }
+    .text-gradient-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .bg-gradient-soft { background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%); }
+    .blur-3xl { filter: blur(80px); }
+    .animate-pulse-slow { animation: pulseSlow 8s infinite alternate; }
+    @@keyframes pulseSlow { 0% { opacity: 0.05; transform: scale(1); } 100% { opacity: 0.15; transform: scale(1.1); } }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("active-reveal");
+                    // Optional: Stop observing once revealed
+                    // observer.unobserve(entry.target); 
+                }
+            });
+        }, observerOptions);
+
+        const elements = document.querySelectorAll('.reveal-up, .reveal-down, .reveal-left, .reveal-right, .reveal-zoom');
+        elements.forEach(el => observer.observe(el));
+    });
+</script>

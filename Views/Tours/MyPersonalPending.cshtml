@@ -1,0 +1,55 @@
+﻿@model IEnumerable<Tour_2040.Models.Tour>
+
+@{
+    ViewData["Title"] = "Hành trình chờ duyệt";
+}
+
+<div class="container py-5">
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark"><i class="bi bi-clock-history me-2 text-warning"></i>Hành trình em đã tạo</h2>
+        <p class="text-muted">Danh sách các tour cá nhân đang đợi nhân viên Royal Ascend kiểm duyệt và liên hệ tư vấn.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card-glass p-5 text-center">
+            <i class="bi bi-journal-x display-1 text-muted opacity-25"></i>
+            <p class="mt-3 fs-5">Em chưa gửi yêu cầu tạo tour cá nhân nào.</p>
+            <a asp-action="CreatePersonal" class="btn btn-primary rounded-pill px-4">Tạo tour ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card-glass h-100 shadow-sm border-0 position-relative" style="border-radius: 1.5rem; overflow: hidden;">
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <span class="badge bg-warning text-dark rounded-pill px-3">@item.TrangThai</span>
+                                <small class="text-muted">#@item.MaTour</small>
+                            </div>
+
+                            <h5 class="fw-bold text-dark mb-3">@item.TenTour</h5>
+
+                            <div class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt me-1"></i> Điểm đến: <b>@item.DiaDiem</b>
+                            </div>
+                            <div class="small text-muted mb-3">
+                                <i class="bi bi-calendar-event me-1"></i> Ngày đi: @(item.NgayDi?.ToString("dd/MM/yyyy") ?? "Chưa chốt")
+                            </div>
+
+                            <hr class="opacity-10">
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a asp-action="Details" asp-route-id="@item.MaTour" class="btn btn-sm btn-outline-primary rounded-pill px-3">Xem chi tiết</a>
+                                <span class="text-primary fw-bold">@item.GiaTour.ToString("N0") đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

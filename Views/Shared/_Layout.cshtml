@@ -1,0 +1,448 @@
+﻿@* Folder: Views/Shared | File: _Layout.cshtml | Method: Layout | A: Thêm nút "Tour chưa duyệt (Custom)" trong dropdown Dịch vụ Tour *@
+@using Microsoft.AspNetCore.Identity
+@using Tour_2040.Models
+@using Tour_2040.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext _context
+@{
+    // 1. KIỂM TRA ĐĂNG NHẬP & QUYỀN
+    bool isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    bool isAdmin = isAuthenticated && User.IsInRole("Admin");
+    bool isStaff = isAuthenticated && User.IsInRole("Staff");
+    bool isManager = isAdmin || isStaff;
+
+    // 2. LẤY THÔNG TIN USER
+    string displayUser = "Khách";
+    string avatarChar = "K";
+    string? profilePicUrl = null;
+
+    // [MỚI] Biến chứa danh sách hỗ trợ nhanh cho User
+    var recentTickets = new List<YeuCauHoTro>();
+
+    if (isAuthenticated)
+    {
+        var user = await UserManager.GetUserAsync(User);
+        if (user != null)
+        {
+            string fullName = !string.IsNullOrWhiteSpace(user.HoTen) ? user.HoTen.Trim() : (user.UserName ?? "User");
+            displayUser = fullName;
+
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 0)
+                {
+                    avatarChar = parts[^1].Substring(0, 1).ToUpper();
+                }
+            }
+            profilePicUrl = user.ProfilePictureUrl;
+
+            // [MỚI] Lấy 5 phiếu gần nhất nếu là User thường
+            if (!isManager)
+            {
+                try
+                {
+                    recentTickets = _context.YeuCauHoTros
+                        .Where(x => x.UserId == user.Id)
+                        .OrderByDescending(x => x.NgayGui)
+                        .Take(5)
+                        .ToList();
+                }
+                catch { /* Bỏ qua nếu chưa update DB */ }
+            }
+        }
+    }
+
+    // Helper: Active Menu
+    string ActiveClass(string controller, string action = "")
+    {
+        var routeCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
+        var routeAct = ViewContext.RouteData.Values["action"]?.ToString();
+        if (string.IsNullOrEmpty(action))
+        {
+            return string.Equals(routeCtrl, controller, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+        }
+        return (string.Equals(routeCtrl, controller, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(routeAct, action, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+    }
+
+
+    // 3. URL nhanh (Tour Custom chờ duyệt)
+    string customPendingUrl = Url.Action("Custom", "Tours", new { status = "ChoDuyet" }) ?? "/Tours/Custom?status=ChoDuyet";
+    string loginCustomPendingUrl = "/Identity/Account/Login?ReturnUrl=" + System.Net.WebUtility.UrlEncode(customPendingUrl);
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Royal Ascend Travel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Custom Styles are now centralized in wwwroot/css/site.css -->
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="@(isManager ? "admin-mode" : "")">
+    @if (isManager)
+    {
+        /* ===== GIAO DIỆN ADMIN / STAFF ===== */
+        <div class="admin-wrapper">
+            <aside class="admin-sidebar">
+                <a class="sidebar-brand" asp-controller="Home" asp-action="Index">
+                    <div class="bg-primary text-white rounded-3 p-1 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="bi bi-airplane-engines-fill"></i>
+                    </div>
+                    <span>Royal Ascend <span class="text-gold">TRAVAL</span></span>
+                </a>
+                <div class="d-flex flex-column flex-grow-1 overflow-auto pe-2 custom-scroll">
+                    <div class="nav-group-label">Tổng quan</div>
+                    @if (isAdmin)
+                    {
+                        <a class="nav-item-admin @ActiveClass("ThongKe")" asp-controller="ThongKe" asp-action="Index"><i class="bi bi-bar-chart-fill"></i> Thống kê</a>
+                    }
+
+                    <a class="nav-item-admin @ActiveClass("YeuCauHoTros")" asp-controller="YeuCauHoTros" asp-action="Index"><i class="bi bi-headset"></i> Hỗ trợ khách hàng</a>
+
+                    <a class="nav-item-admin @ActiveClass("HopDongs")" asp-controller="HopDongs" asp-action="Index"><i class="bi bi-file-earmark-text-fill"></i> Hợp đồng</a>
+                    <a class="nav-item-admin @ActiveClass("GiaoDiches")" asp-controller="GiaoDiches" asp-action="Index"><i class="bi bi-receipt-cutoff"></i> Giao dịch</a>
+                    <a class="nav-item-admin @ActiveClass("LichTrinhs")" asp-controller="LichTrinhs" asp-action="Index"><i class="bi bi-calendar-range-fill"></i> Lịch trình</a>
+
+                    <div class="nav-group-label">Quản lý</div>
+                    <a class="nav-item-admin @ActiveClass("Tours")" asp-controller="Tours" asp-action="Index"><i class="bi bi-map-fill"></i> Tour du lịch</a>
+
+                    @* ✅ [ĐÃ THÊM] Button quản lý Đánh giá Tour cho Admin/Staff *@
+                    <a class="nav-item-admin @ActiveClass("DanhGiaTours")" asp-controller="DanhGiaTours" asp-action="Index">
+                        <i class="bi bi-star-fill"></i> Đánh giá Tour
+                    </a>
+
+                    <a class="nav-item-admin @ActiveClass("KhachHangs")" asp-controller="KhachHangs" asp-action="Index"><i class="bi bi-people-fill"></i> Khách hàng</a>
+                    <a class="nav-item-admin @ActiveClass("Vouchers")" asp-controller="Vouchers" asp-action="Index"><i class="bi bi-ticket-perforated-fill"></i> Voucher</a>
+
+                    <div class="nav-group-label">Hệ thống</div>
+                    <a class="nav-item-admin @ActiveClass("DiaDiems")" asp-controller="DiaDiems" asp-action="Index"><i class="bi bi-geo-alt-fill"></i> Địa điểm</a>
+                    <a class="nav-item-admin @ActiveClass("DichVus")" asp-controller="DichVus" asp-action="Index"><i class="bi bi-hdd-stack-fill"></i> Dịch vụ</a>
+                    @if (isAdmin)
+                    {
+                        <a class="nav-item-admin @ActiveClass("NhanViens")" asp-controller="NhanViens" asp-action="Index"><i class="bi bi-person-badge-fill"></i> Nhân sự</a>
+                    }
+                </div>
+
+                <div class="mt-3 pt-3 border-top">
+                    <div class="btn-group dropup w-100">
+                        <div class="d-flex align-items-center gap-3 w-100 p-2 rounded-3 hover-bg-light cursor-pointer" data-bs-toggle="dropdown">
+                            <div class="avatar-circle">
+                                @if (!string.IsNullOrEmpty(profilePicUrl))
+                                {
+                                    <img src="@profilePicUrl" alt="Avatar" />
+                                }
+                                else
+                                {
+
+                                    <span>@avatarChar</span>
+                                }
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-bold text-dark text-truncate small">@displayUser</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">@(isAdmin ? "Administrator" : "Staff")</div>
+                            </div>
+                            <i class="bi bi-three-dots-vertical text-muted"></i>
+                        </div>
+                        <ul class="dropdown-menu border-0 shadow-lg p-2 rounded-4 mb-2 w-100">
+                            <li><a class="dropdown-item rounded-3" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-person-gear me-2"></i>Hồ sơ</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form class="m-0" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button type="submit" class="dropdown-item rounded-3 text-danger fw-bold"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+            <main class="admin-content">@RenderBody()</main>
+        </div>
+    }
+    else
+    {
+
+        @* --- PHẦN NAVBAR DÀNH CHO USER --- *@
+        @* --- PHẦN NAVBAR DÀNH CHO USER ĐÃ TỐI ƯU --- *@
+        <header>
+            <nav class="navbar navbar-expand-lg fixed-top glass-nav">
+                <div class="container-fluid px-4 px-lg-5">
+                    @* --- LOGO --- *@
+                    <a class="navbar-brand d-flex align-items-center gap-2 me-xl-4 me-lg-2" asp-controller="Home" asp-action="Index">
+                        <div class="text-primary fs-3"><i class="bi bi-airplane-engines-fill"></i></div>
+                        <div class="lh-1 d-none d-sm-block">
+                            <span class="fw-bolder fs-4 text-dark d-block" style="letter-spacing: -0.5px;">Royal Ascend</span>
+                            <small class="text-gold fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 2px;">Travel</small>
+                        </div>
+                    </a>
+
+                    <button class="navbar-toggler border-0 shadow-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#userNav">
+                        <div class="btn-icon-nav bg-light"><i class="bi bi-list fs-4"></i></div>
+                    </button>
+
+                    <div class="collapse navbar-collapse justify-content-between" id="userNav">
+                        <ul class="navbar-nav align-items-center gap-1 mb-2 mb-lg-0">
+                            <li class="nav-item"><a class="nav-link-user @ActiveClass("Home")" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+
+                            @* --- MENU TOUR: KHÁM PHÁ & THIẾT KẾ --- *@
+                            <li class="nav-item dropdown">
+                                <a class="nav-link-user dropdown-toggle @ActiveClass("Tours")" href="#" data-bs-toggle="dropdown">Dịch vụ Tour</a>
+                                <ul class="dropdown-menu border-0 shadow-lg rounded-4 p-2 mt-2 animate__animated animate__fadeIn">
+                                    <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="Tours" asp-action="Index"><i class="bi bi-compass me-2 text-primary"></i>Khám phá Tour</a></li>
+                                    <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="Tours" asp-action="CreatePersonal"><i class="bi bi-magic me-2 text-purple"></i>Thiết kế riêng</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2 fw-medium" href="@(isAuthenticated? customPendingUrl : loginCustomPendingUrl)">
+                                            <i class="bi bi-hourglass-split me-2 text-warning"></i>Tour chưa duyệt (Custom)
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            @* --- MENU TIỆN ÍCH: ĐÃ BỔ SUNG MỤC HỢP ĐỒNG --- *@
+                            @if (isAuthenticated)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link-user dropdown-toggle" href="#" data-bs-toggle="dropdown">Tiện ích</a>
+                                    <ul class="dropdown-menu border-0 shadow-lg rounded-4 p-2 mt-2 animate__animated animate__fadeIn" style="min-width: 250px;">
+                                        @* Mục Hợp đồng mới thêm *@
+                                        <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="HopDongs" asp-action="Index"><i class="bi bi-file-earmark-check me-2 text-primary"></i>Hợp đồng của tôi</a></li>
+
+                                        <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="LichTrinhs" asp-action="Index"><i class="bi bi-calendar-range me-2 text-success"></i>Lịch trình của tôi</a></li>
+                                        <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="GiaoDiches" asp-action="Index"><i class="bi bi-receipt me-2 text-info"></i>Lịch sử giao dịch</a></li>
+                                        <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="Vouchers" asp-action="My"><i class="bi bi-wallet2 me-2 text-warning"></i>Ví Voucher của tôi</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="Vouchers" asp-action="Available"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Săn Voucher ưu đãi</a></li>
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+
+                        @* --- THANH TRỢ LÝ AI (GIỮ NGUYÊN VỊ TRÍ TRUNG TÂM) --- *@
+                        <div class="flex-grow-1 d-flex justify-content-center px-3 my-2 my-lg-0">
+                            <button class="btn ai-chat-btn rounded-pill py-2 px-3 d-flex align-items-center justify-content-between shadow-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#aiChatModal">
+                                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                    @* Icon ngôi sao xanh *@
+                                    <i class="bi bi-stars fs-5 ai-icon-box flex-shrink-0"></i>
+                                    @* Chữ xanh *@
+                                    <span class="fw-bold text-truncate">AI hỗ trợ tư vấn</span>
+                                </div>
+                                <span class="badge bg-white rounded-pill px-2 ms-2" style="font-size: 0.65rem;">Beta</span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 justify-content-end">
+                            @if (isAuthenticated)
+                            {
+                                @* --- MENU USER: HỒ SƠ & HỖ TRỢ --- *@
+                                <div class="dropdown ms-1">
+                                    <div class="d-flex align-items-center gap-2 cursor-pointer p-1 ps-1 rounded-pill bg-light border pe-3" data-bs-toggle="dropdown">
+                                        <div class="avatar-circle border-0 bg-white shadow-sm">
+                                            @if (!string.IsNullOrEmpty(profilePicUrl))
+                                            {
+                                                <img src="@profilePicUrl" alt="Avatar" />
+                                            }
+                                            else
+                                            {
+                                                <span>@avatarChar</span>
+                                            }
+                                        </div>
+                                        <div class="fw-bold text-dark small d-none d-xl-block text-truncate" style="max-width: 100px;">@displayUser</div>
+                                        <i class="bi bi-chevron-down ms-1 text-muted" style="font-size: 0.7rem;"></i>
+                                    </div>
+                                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-3 rounded-4 p-2 animate__animated animate__fadeIn" style="min-width: 220px;">
+                                        <li><div class="dropdown-header text-uppercase small fw-bold text-muted my-1">Tài khoản</div></li>
+                                        <li><a class="dropdown-item rounded-3 py-2 mb-1 fw-bold text-primary" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-person-circle me-2"></i>Hồ sơ của tôi</a></li>
+
+                                        @* Đưa Trung tâm hỗ trợ vào Menu Cá nhân *@
+                                        <li><a class="dropdown-item rounded-3 py-2 mb-1 fw-medium" asp-controller="YeuCauHoTros" asp-action="Index"><i class="bi bi-headset me-2 text-danger"></i>Trung tâm hỗ trợ</a></li>
+
+                                        <li><hr class="dropdown-divider my-2"></li>
+                                        <li>
+                                            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                                <button type="submit" class="dropdown-item rounded-3 py-2 text-danger fw-bold"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="vr mx-2 h-25 my-auto d-none d-lg-block"></div>
+                                <a class="btn btn-sm btn-outline-custom text-nowrap" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a>
+                                <a class="btn btn-sm btn-gradient text-nowrap" asp-area="Identity" asp-page="/Account/Register">Đăng ký</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <div class="user-main-wrapper">
+            <main role="main">@RenderBody()</main>
+        </div>
+    }
+
+    <div class="modal fade" id="aiChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-header border-bottom-0 bg-light py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-stars text-primary"></i> Trợ lý du lịch AI
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        @if (isAuthenticated && !isManager)
+                        {
+                            <a asp-controller="YeuCauHoTros" asp-action="Create" class="btn btn-sm btn-outline-primary rounded-pill fw-bold" title="Gặp nhân viên">
+                                <i class="bi bi-person-raised-hand me-1"></i>Gặp nhân viên
+                            </a>
+                        }
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-4" style="height: 400px; background: #f8fafc; overflow-y: auto;" id="chatContent">
+                    <!-- Content injected by JS -->
+                </div>
+                <div class="modal-footer border-top-0 bg-white p-2">
+                    <div class="input-group">
+                        <input type="text" id="userPrompt" class="form-control border-0 bg-light rounded-pill ps-4" placeholder="Nhập yêu cầu của bạn..." autofocus>
+                        <button class="btn btn-primary rounded-pill px-4 ms-2" id="btnSendAi"><i class="bi bi-send-fill"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Make function global so inline onclick works
+        window.handleAiAction = function(action) {
+            if (action.startsWith('/')) {
+                window.location.href = action;
+            } else {
+                console.log("Action: " + action);
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnSend = document.getElementById("btnSendAi");
+            const inputPrompt = document.getElementById("userPrompt");
+            const chatContent = document.getElementById("chatContent");
+
+            // Initial Welcome Message with Buttons
+            const welcomeHtml = `
+                <div class="d-flex align-items-start justify-content-start mb-3 animate__animated animate__fadeIn">
+                    <div class="bg-white p-2 rounded-circle shadow-sm text-primary me-2 flex-shrink-0"><i class="bi bi-robot fs-5"></i></div>
+                    <div class="bg-white text-dark shadow-sm border p-3 rounded-4" style="max-width: 85%; font-size: 0.95rem;">
+                        Xin chào! Bạn cần tìm hiểu thông tin gì về du lịch hôm nay?
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 ms-5 animate__animated animate__fadeIn">
+                    <button onclick="handleAiAction('/Tours')" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Khám phá tất cả Tour</button>
+                    <button onclick="handleAiAction('/Vouchers/Available')" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Săn Voucher</button>
+                    <button onclick="handleAiAction('/Identity/Account/Register')" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Đăng ký</button>
+                    <button onclick="handleAiAction('/Identity/Account/Login')" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Đăng nhập</button>
+                </div>
+            `;
+            
+            // Allow re-initialization if empty
+            if (chatContent && chatContent.innerHTML.trim() === "") { 
+                 chatContent.innerHTML = welcomeHtml;
+            }
+
+            async function sendMessage() {
+                const message = inputPrompt.value.trim();
+                if (!message) return;
+
+                appendMessage("user", message);
+                inputPrompt.value = "";
+                const loadingId = appendLoading();
+                scrollToBottom();
+
+                try {
+                    const response = await fetch('/AiSupport/Ask', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    document.getElementById(loadingId)?.remove();
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        try {
+                            const aiResponse = JSON.parse(data.answer);
+                            appendMessage("ai", aiResponse.text);
+
+                            if (aiResponse.buttons && aiResponse.buttons.length > 0) {
+                                let btnHtml = '<div class="d-flex flex-wrap gap-2 mt-2 animate__animated animate__fadeInUp ms-5">';
+                                aiResponse.buttons.forEach(btn => {
+                                    btnHtml += `<button onclick="handleAiAction('${btn.action}')" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">${btn.label}</button>`;
+                                });
+                                btnHtml += '</div>';
+                                document.getElementById("chatContent").insertAdjacentHTML('beforeend', btnHtml);
+                            }
+                        } catch (e) {
+                            appendMessage("ai", data.answer);
+                        }
+                    } else {
+                        appendMessage("ai", "Lỗi kết nối hệ thống.");
+                    }
+                } catch (error) {
+                    document.getElementById(loadingId)?.remove();
+                    appendMessage("ai", "Mất kết nối mạng.");
+                }
+                scrollToBottom();
+            }
+
+            function appendMessage(role, text) {
+                const isUser = role === "user";
+                const align = isUser ? "justify-content-end" : "justify-content-start";
+                const bgClass = isUser ? "bg-primary text-white" : "bg-white text-dark shadow-sm border";
+                const icon = isUser ? "" : `<div class="bg-white p-2 rounded-circle shadow-sm text-primary me-2 flex-shrink-0"><i class="bi bi-robot fs-5"></i></div>`;
+                const formattedText = text.replace(/\n/g, '<br>');
+
+                const html = `
+                    <div class="d-flex align-items-start ${align} mb-3 animate__animated animate__fadeIn">
+                        ${icon}
+                        <div class="${bgClass} p-3 rounded-4" style="max-width: 85%; font-size: 0.95rem; word-wrap: break-word;">
+                            ${formattedText}
+                        </div>
+                    </div>
+                `;
+                chatContent.insertAdjacentHTML('beforeend', html);
+            }
+
+            function appendLoading() {
+                const id = "loading-" + Date.now();
+                const html = `<div id="${id}" class="d-flex align-items-center gap-2 mb-3 ms-2 text-muted small">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                <span>AI đang suy nghĩ...</span>
+                              </div>`;
+                chatContent.insertAdjacentHTML('beforeend', html);
+                return id;
+            }
+
+            function scrollToBottom() {
+                if(chatContent) chatContent.scrollTop = chatContent.scrollHeight;
+            }
+
+            if(btnSend) btnSend.addEventListener("click", sendMessage);
+            if(inputPrompt) inputPrompt.addEventListener("keypress", (e) => { if(e.key==="Enter") sendMessage(); });
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

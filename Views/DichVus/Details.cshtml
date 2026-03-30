@@ -1,0 +1,200 @@
+﻿@* 
+   Folder: Views/DichVus
+   File path: Views/DichVus/Details.cshtml
+   File name: Details.cshtml
+   Label: V-DichVu-Details
+   Mô tả: Chi tiết dịch vụ - UI glass + pill.
+*@
+
+@model Tour_2040.Models.DichVu
+
+@{
+    ViewData["Title"] = "Chi tiết dịch vụ";
+    var ok = (Model.TrangThai == "Active" || Model.TrangThai == "Còn");
+}
+
+<style>
+    :root {
+        --bg: #F8F8FF;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: 1px solid #e2e8f0;
+        --shadow: 0 12px 30px rgba(2,6,23,.06);
+        --blue: #2563eb;
+        --green: #16a34a;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+        font-family: Inter,system-ui;
+    }
+
+    .card-glass {
+        background: rgba(255,255,255,.92);
+        border: var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg,var(--yellow),#fbbf24);
+        border: none;
+        color: #111827;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg,var(--blue),#4f46e5);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dangerx {
+        background: linear-gradient(135deg,var(--red),#fb7185);
+        border: none;
+        color: #fff;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: var(--border);
+        background: #fff;
+        font-weight: 900;
+        font-size: .8rem;
+    }
+
+    .badge-ok {
+        background: rgba(34,197,94,.10);
+        border-color: rgba(34,197,94,.22);
+        color: var(--green);
+    }
+
+    .badge-bad {
+        background: rgba(239,68,68,.10);
+        border-color: rgba(239,68,68,.22);
+        color: #dc2626;
+    }
+
+    .kv {
+        border: var(--border);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: #fff;
+    }
+
+        .kv .k {
+            font-size: .72rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .35px;
+            font-weight: 1000;
+            margin-bottom: 4px;
+        }
+
+        .kv .v {
+            font-weight: 1000;
+        }
+
+    .money {
+        font-weight: 1000;
+        color: var(--blue);
+        font-size: 1.2rem;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-3">
+        <div>
+            <div class="text-muted small mb-1"><i class="bi bi-grid"></i> Dịch vụ / <b class="text-dark">Chi tiết</b></div>
+            <h3 class="fw-bold mb-1">@Model.TenDichVu</h3>
+            <div class="text-muted">Thông tin chi tiết dịch vụ và liên kết địa điểm.</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" class="btn-pill btn-back"><i class="bi bi-arrow-left"></i> Quay lại</a>
+            <a asp-action="Edit" asp-route-id="@Model.MaTenDichVu" class="btn-pill btn-confirm"><i class="bi bi-pencil-square"></i> Sửa</a>
+            <a asp-action="Delete" asp-route-id="@Model.MaTenDichVu" class="btn-pill btn-dangerx"><i class="bi bi-trash"></i> Xóa</a>
+        </div>
+    </div>
+
+    <div class="card-glass p-3 p-md-4">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="chip"><i class="bi bi-upc"></i> <span class="font-monospace">@Model.MaDichVu</span></span>
+            <span class="chip"><i class="bi bi-tags text-primary"></i> @Model.LoaiDichVu</span>
+            <span class="chip @(ok ? "badge-ok" : "badge-bad")">
+                <i class="bi @(ok ? "bi-check2-circle" : "bi-slash-circle")"></i> @Model.TrangThai
+            </span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="kv">
+                    <div class="k">Địa điểm</div>
+                    <div class="v">@(Model.DiaDiem?.TenDiaDiem ?? "Không gắn địa điểm")</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="kv">
+                    <div class="k">Đơn giá</div>
+                    <div class="v money">@Model.DonGia.ToString("N0") đ</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="kv">
+                    <div class="k">Đơn vị</div>
+                    <div class="v">@(!string.IsNullOrWhiteSpace(Model.DonViTinh) ? Model.DonViTinh : "--")</div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.DiaChi))
+            {
+                <div class="col-12">
+                    <div class="kv">
+                        <div class="k">Địa chỉ</div>
+                        <div class="v" style="font-weight:800;">@Model.DiaChi</div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.MoTa))
+            {
+                <div class="col-12">
+                    <div class="kv">
+                        <div class="k">Mô tả</div>
+                        <div class="v" style="font-weight:800;">@Model.MoTa</div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+            {
+                <div class="col-12">
+                    <div class="kv">
+                        <div class="k">Ghi chú</div>
+                        <div class="v" style="font-weight:800;">@Model.GhiChu</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,283 @@
+﻿@* 
+   Folder: Views/NhanViens
+   File path: Views/NhanViens/ChonUser.cshtml
+   File name: ChonUser.cshtml
+   Label: V-NhanVien-ChonUser
+   Mô tả: Danh sách tài khoản User (User-only, chưa là NV),
+          có nút duyệt làm nhân viên.
+   FIX: Hiển thị "Tài khoản" là UserName (không phải email).
+   UI: pill + bo tròn đồng bộ admin.
+*@
+
+@model IEnumerable<Tour_2040.Models.CandidateNhanVienVM>
+
+@{
+    ViewData["Title"] = "Chọn tài khoản User";
+
+    string PickAccount(dynamic u)
+    {
+        // ưu tiên UserName, fallback DisplayName/HoTen, cuối cùng Email
+        try
+        {
+            if (!string.IsNullOrWhiteSpace((string)u.UserName)) return (string)u.UserName;
+        }
+        catch { }
+        try
+        {
+            if (!string.IsNullOrWhiteSpace((string)u.DisplayName)) return (string)u.DisplayName;
+        }
+        catch { }
+        try
+        {
+            if (!string.IsNullOrWhiteSpace((string)u.HoTen)) return (string)u.HoTen;
+        }
+        catch { }
+        try
+        {
+            if (!string.IsNullOrWhiteSpace((string)u.Email)) return (string)u.Email;
+        }
+        catch { }
+        return "User";
+    }
+
+    string AvatarLetter(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "U";
+        var t = s.Trim();
+        return t.Substring(0, 1).ToUpper();
+    }
+}
+
+<style>
+    :root {
+        --bg: #f5f7fb;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: 1px solid #e2e8f0;
+        --shadow: 0 10px 28px rgba(2,6,23,.06);
+        --blue: #2563eb;
+        --blue2: #4f46e5;
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+    }
+
+    .page-title {
+        font-weight: 1000;
+        letter-spacing: .2px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .page-sub {
+        color: var(--muted);
+        margin-bottom: 18px;
+    }
+
+    .card-soft {
+        background: var(--card);
+        border: var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .topbar {
+        padding: 16px 18px;
+        border-bottom: var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .pill-search {
+        background: #fff;
+        border: var(--border);
+        border-radius: 999px;
+        padding: 7px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 18px rgba(2,6,23,.05);
+        min-width: 300px;
+    }
+
+        .pill-search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: .88rem;
+        }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: #fcfcff;
+            border-bottom: var(--border);
+            padding: 14px 18px;
+            font-size: .72rem;
+            font-weight: 1000;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .35px;
+            white-space: nowrap;
+        }
+
+        .table-modern td {
+            border-bottom: var(--border);
+            padding: 14px 18px;
+            vertical-align: middle;
+            font-size: .92rem;
+        }
+
+        .table-modern tr:hover {
+            background: #f8fafc;
+        }
+
+    .acc {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 280px;
+    }
+
+    .ava {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 1000;
+        color: #fff;
+        background: linear-gradient(135deg,var(--blue),var(--blue2));
+        box-shadow: 0 12px 20px rgba(37,99,235,.22);
+        flex: 0 0 auto;
+    }
+
+    .acc-name {
+        font-weight: 1000;
+    }
+
+    .acc-sub {
+        color: var(--muted);
+        font-size: .78rem;
+        margin-top: 2px;
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .45rem .9rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+    }
+
+        .btn-pill.btn-primary {
+            background: linear-gradient(135deg,var(--blue),var(--blue2));
+            border: none;
+        }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+    <div class="page-title">
+        <i class="bi bi-person-badge text-primary fs-3"></i>
+        <span>Chọn tài khoản User để duyệt làm nhân viên</span>
+    </div>
+    <div class="page-sub">
+        Chỉ hiển thị tài khoản đang có role <b>User</b>, chưa là nhân viên và chưa là Admin/Staff.
+    </div>
+
+    <div class="card-soft">
+        <div class="topbar">
+            <div class="fw-bold">Danh sách tài khoản</div>
+            <div class="pill-search">
+                <i class="bi bi-search text-muted"></i>
+                <input id="qUser" type="text" placeholder="Tìm theo tài khoản, email, SĐT...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table-modern" id="tbUser">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Tài khoản</th>
+                        <th>Email</th>
+                        <th>Số điện thoại</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                Không còn tài khoản User nào để duyệt thành nhân viên.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var u in Model)
+                        {
+                            var account = PickAccount(u);
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="acc">
+                                        <div class="ava">@AvatarLetter(account)</div>
+                                        <div>
+                                            <div class="acc-name">@account</div>
+                                            <div class="acc-sub">ID: @u.UserId</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(u.Email) ? "--" : u.Email)</td>
+                                <td>@(string.IsNullOrWhiteSpace(u.PhoneNumber) ? "--" : u.PhoneNumber)</td>
+                                <td class="text-end pe-4">
+                                    <form asp-action="ApproveFromUser" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@u.UserId" />
+                                        <button type="submit"
+                                                class="btn btn-pill btn-primary btn-sm"
+                                                onclick="return confirm('Duyệt tài khoản này thành nhân viên?');">
+                                            <i class="bi bi-check2-circle me-1"></i> Duyệt làm nhân viên
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function(){
+            const input = document.getElementById("qUser");
+            const tb = document.getElementById("tbUser");
+            if(!input || !tb) return;
+
+            input.addEventListener("keyup", function(){
+                const q = input.value.toLowerCase().trim();
+                const rows = tb.querySelectorAll("tbody tr");
+                rows.forEach(r=>{
+                    const txt = r.textContent.toLowerCase();
+                    r.style.display = txt.includes(q) ? "" : "none";
+                });
+            });
+        });
+    </script>
+}

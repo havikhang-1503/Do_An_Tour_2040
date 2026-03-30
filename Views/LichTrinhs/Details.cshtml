@@ -1,0 +1,355 @@
+﻿@*
+   Folder: Views/LichTrinhs
+   File path: Views/LichTrinhs/Details.cshtml
+   File name: Details.cshtml
+   Label: V-LichTrinh-Details (A/B/C)
+   Mô tả:
+   - A: UI glass + pill + print
+   - B: Timeline đẹp, time-pill
+   - C: Giữ cancel/rate logic như cũ
+*@
+
+@model Tour_2040.Models.LichTrinh
+
+@{
+    ViewData["Title"] = "Chi tiết lịch trình";
+    var canCancel = (bool?)ViewData["CanCancel"] ?? false;
+    var canRate = (bool?)ViewData["CanRate"] ?? false;
+    var hasRated = (bool?)ViewData["HasRated"] ?? false;
+
+    var details = Model.LichTrinhChiTiets?
+        .OrderBy(x => x.NgayThu)
+        .ThenBy(x => x.ThuTu)
+        .ThenBy(x => x.Gio)
+        .ToList() ?? new List<Tour_2040.Models.LichTrinhChiTiet>();
+}
+
+<style>
+    :root {
+        --bg: #F8F8FF;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: 1px solid #e2e8f0;
+        --shadow: 0 12px 30px rgba(2,6,23,.06);
+        --blue: #2563eb;
+        --green: #16a34a;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+        --card: #ffffffee;
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+        font-family: Inter,system-ui;
+    }
+
+    .card-glass {
+        background: var(--card);
+        border: var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg,var(--blue),#4f46e5);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-successx {
+        background: linear-gradient(135deg,var(--green),#22c55e);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dangerx {
+        background: linear-gradient(135deg,var(--red),#f97316);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg,var(--yellow),#fbbf24);
+        border: none;
+        color: #111827;
+    }
+
+    .sub {
+        color: var(--muted);
+        font-size: .92rem;
+    }
+
+    .time-pill {
+        font-size: .85rem;
+        padding: .25rem .55rem;
+        border-radius: 999px;
+        background: #f1f5f9;
+        font-weight: 900;
+        color: #0f172a;
+        border: 1px solid rgba(15,23,42,.06);
+    }
+
+    .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+
+        body {
+            background: white !important;
+        }
+
+        .card-glass {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+        }
+    }
+
+    .kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: .45rem 0;
+        border-bottom: 1px dashed #e5e7eb;
+    }
+
+        .kv:last-child {
+            border-bottom: none;
+        }
+
+    .k {
+        color: var(--muted);
+        font-weight: 800;
+    }
+
+    .v {
+        font-weight: 900;
+    }
+
+    .badge-status {
+        padding: .35rem .7rem;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: .82rem;
+        border: 1px solid rgba(15,23,42,.08);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .st-pending {
+        background: #fff7ed;
+        color: #9a3412;
+    }
+
+    .st-confirmed {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .st-progress {
+        background: #ecfeff;
+        color: #0e7490;
+    }
+
+    .st-completed {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .st-canceled {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3 no-print">
+        <div>
+            <div class="text-muted small mb-1"><i class="bi bi-receipt"></i> Lịch trình / <b class="text-dark">Chi tiết</b></div>
+            <h3 class="fw-bold mb-1">Chi tiết lịch trình</h3>
+            <div class="sub">Mã: <span class="mono fw-bold">@Model.MaLichTrinh</span></div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-pill btn-back" type="button" onclick="window.print()">
+                <i class="bi bi-printer"></i> In lịch trình
+            </button>
+            <a class="btn btn-pill btn-confirm" asp-action="Index">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success rounded-4 no-print">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 no-print">@TempData["Error"]</div>
+    }
+
+    @{
+        var st = (Model.TrangThai ?? "").Trim();
+        var cls = st == "Chờ xác nhận" ? "st-pending"
+        : st == "Đã xác nhận" ? "st-confirmed"
+        : st == "Đang khởi hành" ? "st-progress"
+        : st == "Hoàn thành" ? "st-completed"
+        : "st-canceled";
+    }
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card-glass p-3 p-md-4">
+                <div class="fw-bold mb-2"><i class="bi bi-info-circle"></i> Thông tin</div>
+
+                <div class="kv"><div class="k">Tour</div><div class="v text-end">@(Model.Tour?.TenTour ?? Model.TourId)</div></div>
+                <div class="kv"><div class="k">Ngày đặt</div><div class="v text-end">@Model.NgayDat.ToString("dd/MM/yyyy HH:mm")</div></div>
+                <div class="kv"><div class="k">Số người</div><div class="v text-end">@(Model.SoNguoiLon + Model.SoTreEm)</div></div>
+                <div class="kv"><div class="k">Tổng tiền</div><div class="v text-end">@Model.TongTien.ToString("N0")</div></div>
+                <div class="kv">
+                    <div class="k">Trạng thái</div>
+                    <div class="v text-end">
+                        <span class="badge-status @cls"><i class="bi bi-dot"></i> @Model.TrangThai</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.GhiChuTrangThai))
+                {
+                    <div class="mt-3 p-3 rounded-4" style="background:#f1f5f9;">
+                        <div class="fw-bold mb-1">Ghi chú</div>
+                        <div class="text-muted">@Model.GhiChuTrangThai</div>
+                    </div>
+                }
+
+                @if (Model.TrangThai == "Đã hủy")
+                {
+                    <div class="mt-3 p-3 rounded-4" style="background:#fef2f2;">
+                        <div class="fw-bold mb-1">Thông tin hủy</div>
+                        <div class="text-muted">Ngày hủy: @(Model.NgayHuy?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                        <div class="text-muted">Lý do: @(Model.LyDoHuy ?? "-")</div>
+                    </div>
+                }
+            </div>
+
+            @if (canCancel)
+            {
+                <div class="card-glass p-3 p-md-4 mt-3 no-print">
+                    <div class="fw-bold mb-2"><i class="bi bi-x-circle"></i> Hủy lịch trình</div>
+                    <form asp-action="Cancel" method="post">
+                        <input type="hidden" name="id" value="@Model.MaLichTrinh" />
+                        <div class="mb-2">
+                            <textarea class="form-control" name="reason" rows="3" placeholder="Lý do hủy (không bắt buộc)"></textarea>
+                        </div>
+                        <button class="btn btn-pill btn-dangerx" type="submit"
+                                onclick="return confirm('Bạn chắc chắn muốn hủy lịch trình này?');">
+                            <i class="bi bi-trash"></i> Hủy lịch
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card-glass p-3 p-md-4">
+                <div class="fw-bold mb-2"><i class="bi bi-list-check"></i> Lịch trình chi tiết</div>
+
+                @if (details.Any())
+                {
+                    var currentDay = -1;
+
+                    foreach (var d in details)
+                    {
+                        if (d.NgayThu != currentDay)
+                        {
+                            currentDay = d.NgayThu;
+                            <div class="mt-3 mb-2">
+                                <div class="fw-bold">Ngày @currentDay</div>
+                                <hr class="my-2" />
+                            </div>
+                        }
+
+                        <div class="d-flex align-items-start gap-3 py-2">
+                            <div class="time-pill">@d.Gio.ToString(@"hh\:mm")</div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">@(!string.IsNullOrWhiteSpace(d.NoiDung) ? d.NoiDung : "(Chưa có nội dung)")</div>
+                                <div class="text-muted small">
+                                    Địa điểm: @(d.DiaDiem?.TenDiaDiem ?? d.DiaDiemId ?? "-")
+                                    @if (!string.IsNullOrWhiteSpace(d.LoaiHoatDong))
+                                    {
+                                        <span> | Loại: @d.LoaiHoatDong</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(d.GhiChu))
+                                {
+                                    <div class="small mt-1">Ghi chú: @d.GhiChu</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted">Chưa có chi tiết lịch trình.</div>
+                }
+            </div>
+
+            <div class="card-glass p-3 p-md-4 mt-3 no-print">
+                <div class="fw-bold mb-2"><i class="bi bi-star"></i> Đánh giá tour</div>
+
+                @if (hasRated)
+                {
+                    <div class="text-muted">Bạn đã đánh giá tour này rồi.</div>
+                }
+                else if (canRate)
+                {
+                    <form asp-action="Rate" method="post" class="row g-2">
+                        <input type="hidden" name="id" value="@Model.MaLichTrinh" />
+
+                        <div class="col-md-4">
+                            <label class="form-label">Số sao</label>
+                            <select class="form-select" name="rating" required>
+                                <option value="5">5 - Rất tốt</option>
+                                <option value="4">4 - Tốt</option>
+                                <option value="3">3 - Ổn</option>
+                                <option value="2">2 - Chưa ổn</option>
+                                <option value="1">1 - Tệ</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Nhận xét</label>
+                            <textarea class="form-control" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <button class="btn btn-pill btn-successx" type="submit">
+                                <i class="bi bi-send-check"></i> Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-muted">Chỉ được đánh giá sau khi tour hoàn thành.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

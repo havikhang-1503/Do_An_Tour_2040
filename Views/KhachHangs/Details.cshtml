@@ -1,0 +1,436 @@
+﻿@model Tour_2040.Models.KhachHang
+@using System.Globalization
+@using Tour_2040.Models
+
+@{
+    ViewData["Title"] = "Chi tiết Khách hàng";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    decimal totalSpend = ViewBag.TotalSpend != null ? (decimal)ViewBag.TotalSpend : 0m;
+    int totalTrips = ViewBag.TotalTrips != null ? (int)ViewBag.TotalTrips : 0;
+    string hienTrang = ViewBag.HienTrang?.ToString() ?? "---";
+    var bookings = ViewBag.Bookings as List<GiaoDich> ?? new List<GiaoDich>();
+
+    string ShortName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "K";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? "K" : parts[^1].Substring(0, 1).ToUpperInvariant();
+    }
+
+    // đọc property “mơ hồ” để tránh lỗi compile nếu model thiếu cột
+    string GetProp(object obj, params string[] names)
+    {
+        var t = obj.GetType();
+        foreach (var n in names)
+        {
+            var p = t.GetProperty(n);
+            if (p == null) continue;
+            var v = p.GetValue(obj);
+            if (v == null) continue;
+            var s = v.ToString();
+            if (!string.IsNullOrWhiteSpace(s)) return s!;
+        }
+        return "--";
+    }
+
+    string BadgeClass(string? trangThai, decimal tongTien, decimal daThanhToan)
+    {
+        var conLai = tongTien - daThanhToan;
+        if (trangThai == "Huy") return "bg-danger bg-opacity-10 text-danger border border-danger-subtle";
+        if (conLai <= 0 && tongTien > 0) return "bg-success bg-opacity-10 text-success border border-success-subtle";
+        return "bg-warning bg-opacity-10 text-warning border border-warning-subtle";
+    }
+
+    string BadgeText(string? trangThai, decimal tongTien, decimal daThanhToan)
+    {
+        var conLai = tongTien - daThanhToan;
+        if (trangThai == "Huy") return "Đã hủy";
+        if (conLai <= 0 && tongTien > 0) return "Hoàn tất";
+        return "Chờ thanh toán";
+    }
+}
+
+@* 
+    Folder: Views/KhachHangs
+    File path: Views/KhachHangs/Details.cshtml
+    File name: Details.cshtml
+    View: KhachHangs/Details
+    Labels: A(UI), B(KPI), C(Table bookings), D(Search), E(Pill buttons)
+    Fixes:
+      - Display KPI (TotalSpend/TotalTrips/HienTrang) from ViewBag.
+      - Render booking history table (GiaoDich list) on customer details.
+*@
+<style>
+    :root {
+        --bg: #f5f7fb;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: 1px solid #e2e8f0;
+        --shadow: 0 10px 28px rgba(2,6,23,.06);
+        --blue: #2563eb;
+    }
+
+    body {
+        background: var(--bg) !important;
+        color: var(--text);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+    }
+
+    .card-soft {
+        background: var(--card);
+        border: var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+    }
+
+    .avatar {
+        width: 86px;
+        height: 86px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg,#2563eb,#4f46e5);
+        color: #fff;
+        font-weight: 1000;
+        font-size: 2rem;
+        box-shadow: 0 16px 30px rgba(37,99,235,.25);
+        margin: 0 auto 10px;
+        position: relative;
+    }
+
+    .rank-pill {
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        border: var(--border);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: .72rem;
+        font-weight: 900;
+        color: #334155;
+        box-shadow: 0 10px 18px rgba(2,6,23,.08);
+        white-space: nowrap;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 0;
+        border-bottom: var(--border);
+        font-size: .9rem;
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .info-label {
+        color: var(--muted);
+        font-weight: 900;
+        font-size: .72rem;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .info-value {
+        font-weight: 900;
+        color: #0b1220;
+        text-align: right;
+        max-width: 58%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .kpi {
+        padding: 18px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 86px;
+        border-radius: 18px;
+        border: var(--border);
+        background: #fff;
+        box-shadow: 0 8px 18px rgba(2,6,23,.04);
+        text-align: center;
+    }
+
+        .kpi .val {
+            font-size: 1.25rem;
+            font-weight: 1000;
+        }
+
+        .kpi .lab {
+            font-size: .72rem;
+            font-weight: 900;
+            color: var(--muted);
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+    .section-title {
+        font-weight: 1000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        border-bottom: var(--border);
+    }
+
+    .pill-filter {
+        background: #fff;
+        border: var(--border);
+        border-radius: 999px;
+        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 18px rgba(2,6,23,.05);
+        min-width: 260px;
+    }
+
+        .pill-filter input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: .85rem;
+        }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern th {
+            font-size: .72rem;
+            font-weight: 1000;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            padding: 14px 18px;
+            border-bottom: var(--border);
+            background: #fcfcff;
+            white-space: nowrap;
+        }
+
+        .table-modern td {
+            padding: 14px 18px;
+            border-bottom: var(--border);
+            font-size: .9rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover {
+            background: #f8fafc;
+        }
+
+    .badge-pill {
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: .75rem;
+        font-weight: 900;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a asp-action="Index" class="text-decoration-none fw-bold text-muted">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Delete" asp-route-id="@Model.MaKhachHang" class="btn btn-outline-danger btn-pill px-4">
+                <i class="bi bi-trash me-1"></i> Xóa
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.MaKhachHang" class="btn btn-primary btn-pill px-4">
+                <i class="bi bi-pencil-square me-1"></i> Cập nhật
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT PROFILE -->
+        <div class="col-xl-4">
+            <div class="card-soft p-4">
+                <div class="avatar">
+                    @ShortName(Model.HoTen)
+                    <div class="rank-pill">
+                        <i class="bi bi-person-badge me-1"></i> @hienTrang
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <h4 class="fw-bold mb-1">@Model.HoTen</h4>
+                    <div class="text-muted fw-bold mono">#@Model.MaKhachHang</div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-envelope"></i> Email</div>
+                        <div class="info-value">@(!string.IsNullOrWhiteSpace(Model.Email) ? Model.Email : "---")</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-telephone"></i> Điện thoại</div>
+                        <div class="info-value">@(!string.IsNullOrWhiteSpace(Model.SoDienThoai) ? Model.SoDienThoai : "---")</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-geo-alt"></i> Địa chỉ</div>
+                        <div class="info-value">@(!string.IsNullOrWhiteSpace(Model.DiaChi) ? Model.DiaChi : "---")</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="bi bi-calendar2-week"></i> Ngày tham gia</div>
+                        <div class="info-value">@Model.NgayTao.ToString("dd/MM/yyyy")</div>
+                    </div>
+
+                    <div class="mt-4 p-3 rounded-4" style="border:1px dashed #f59e0b; background:#fff7ed;">
+                        <div class="fw-bold text-warning mb-1"><i class="bi bi-sticky me-1"></i> Ghi chú:</div>
+                        <div class="text-muted small fst-italic">
+                            @(string.IsNullOrWhiteSpace(Model.GhiChu) ? "Không có ghi chú." : Model.GhiChu)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT CONTENT -->
+        <div class="col-xl-8">
+            <!-- KPI -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="kpi">
+                        <div>
+                            <div class="val text-primary">@totalSpend.ToString("N0", culture) đ</div>
+                            <div class="lab">Tổng chi tiêu</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="kpi">
+                        <div>
+                            <div class="val">@totalTrips</div>
+                            <div class="lab">Tổng chuyến đi</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="kpi">
+                        <div>
+                            <div class="val">@hienTrang</div>
+                            <div class="lab">Hiện trạng</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking table -->
+            <div class="card-soft">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="section-title">
+                        <i class="bi bi-clock-history text-primary"></i> Lịch sử đặt Tour
+                    </div>
+
+                    <div class="pe-3 pb-2">
+                        <div class="pill-filter">
+                            <i class="bi bi-search text-muted"></i>
+                            <input id="bookingSearch" type="text" placeholder="Tìm mã GD, tên tour...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-modern" id="bookingTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Mã GD</th>
+                                <th>Tour</th>
+                                <th class="text-center">Số khách</th>
+                                <th class="text-end">Tổng tiền</th>
+                                <th class="text-center">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (bookings.Any())
+                            {
+                                foreach (var gd in bookings)
+                                {
+                                    var daThanhToan = gd.ThanhToans?.Sum(t => t.SoTien) ?? 0m;
+                                    var badgeCls = BadgeClass(gd.TrangThai, gd.TongTien, daThanhToan);
+                                    var badgeText = BadgeText(gd.TrangThai, gd.TongTien, daThanhToan);
+
+                                    // cố gắng đọc số khách từ nhiều tên field khác nhau (đỡ lỗi thiếu cột)
+                                    var soKhachText = GetProp(gd, "SoKhach", "SoLuongKhach", "SoNguoi", "TongSoNguoi", "SoKhachDangKy");
+
+                                    <tr>
+                                        <td class="ps-4">
+                                            <span class="fw-bold text-primary mono">#@gd.MaGiaoDich</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@(gd.Tour?.TenTour ?? "Tour tùy chỉnh")</div>
+                                            <div class="text-muted small"><i class="bi bi-calendar-event me-1"></i>@gd.NgayTao.ToString("dd/MM/yyyy")</div>
+                                        </td>
+                                        <td class="text-center fw-bold">@soKhachText</td>
+                                        <td class="text-end fw-bold">@gd.TongTien.ToString("N0", culture) đ</td>
+                                        <td class="text-center">
+                                            <span class="badge-pill @badgeCls">@badgeText</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        Chưa có dữ liệu
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const input = document.getElementById("bookingSearch");
+            const table = document.getElementById("bookingTable");
+            if (!input || !table) return;
+
+            input.addEventListener("keyup", function () {
+                const q = input.value.toLowerCase().trim();
+                const rows = table.querySelectorAll("tbody tr");
+                rows.forEach(r => {
+                    const txt = r.textContent.toLowerCase();
+                    r.style.display = txt.includes(q) ? "" : "none";
+                });
+            });
+        });
+    </script>
+}

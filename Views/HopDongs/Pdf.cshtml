@@ -1,0 +1,316 @@
+﻿@model Tour_2040.Models.HopDong
+
+@{
+    Layout = null;
+
+    var gd   = Model.GiaoDich;
+    var tour = Model.Tour ?? gd?.Tour;
+
+    decimal tongTien    = gd?.TongTien ?? 0m;
+    decimal daThanhToan = gd?.ThanhToans?.Sum(t => t.SoTien) ?? 0m;
+    decimal conLai      = tongTien - daThanhToan;
+    if (conLai < 0) conLai = 0;
+
+    var tenKhach = gd?.User?.Email ?? "Khách hàng";
+
+    string ngayLapChu =
+        string.Format("Ngày {0:dd} tháng {0:MM} năm {0:yyyy}", Model.NgayTao);
+
+    // ✅ Ngày đi / ngày về: NgayDi, NgayVe là DateTime? nên phải HasValue + Value
+    string ngayDiStr = (tour != null && tour.NgayDi.HasValue)
+        ? tour.NgayDi.Value.ToString("dd/MM/yyyy")
+        : "......";
+
+    string ngayVeStr = (tour != null && tour.NgayVe.HasValue)
+        ? tour.NgayVe.Value.ToString("dd/MM/yyyy")
+        : "......";
+
+    // Lấy dịch vụ đi kèm tour
+    var dichVus = tour?.TourDichVus?
+        .Where(td => td.DichVu != null)
+        .Select(td => td.DichVu!)
+        .ToList() ?? new List<Tour_2040.Models.DichVu>();
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Hợp đồng @Model.MaHopDong</title>
+
+    <style>
+    
+        @@page {
+            size: A4;
+            margin: 15mm 15mm 20mm 15mm;
+        }
+
+        body {
+            font-family: "Times New Roman", "Roboto", system-ui, sans-serif;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #000;
+        }
+
+        .country {
+            text-align: center;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .motto {
+            text-align: center;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+
+        .hr-small {
+            width: 160px;
+            margin: 4px auto 12px auto;
+            border: none;
+            border-top: 1px solid #000;
+        }
+
+        .title-block {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .title-block h1 {
+            font-size: 18px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .contract-no {
+            margin-top: 4px;
+        }
+
+        .contract-meta {
+            text-align: right;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .indent {
+            text-indent: 24px;
+        }
+
+        table.dichvu {
+            width: 100%;
+            border-collapse: collapse;
+            margin-left: 24px;
+            font-size: 12px;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+
+        table.dichvu th,
+        table.dichvu td {
+            padding: 3px 4px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        table.dichvu th {
+            text-align: left;
+        }
+
+        table.dichvu th:nth-child(3),
+        table.dichvu td:nth-child(3) {
+            text-align: right;
+        }
+
+        .sign-row {
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .sign-row td {
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .sign-note {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CỘNG HÒA / ĐỘC LẬP - TỰ DO - HẠNH PHÚC -->
+    <div class="country">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+    <div class="motto">Độc lập - Tự do - Hạnh phúc</div>
+    <hr class="hr-small" />
+
+    <!-- TIÊU ĐỀ HỢP ĐỒNG -->
+    <div class="title-block">
+        <h1>HỢP ĐỒNG DỊCH VỤ DU LỊCH</h1>
+        <div class="contract-no">
+            Số:
+            @(string.IsNullOrWhiteSpace(Model.MaHopDong)
+                ? "............................."
+                : Model.MaHopDong)
+        </div>
+    </div>
+
+    <!-- NGÀY LẬP -->
+    <div class="contract-meta">@ngayLapChu</div>
+
+    <!-- Điều 1 -->
+    <div class="section-title">Điều 1. Thông tin các bên</div>
+
+    <p><strong>Bên A (Bên cung cấp dịch vụ):</strong></p>
+    <p class="indent">
+        Tên đơn vị: Hệ thống Tour_2040<br />
+        Địa chỉ: ...............................................................<br />
+        Điện thoại: 0999 666 88<br />
+        Đại diện: .............................................................
+    </p>
+
+    <p><strong>Bên B (Khách hàng):</strong></p>
+    <p class="indent">
+        Tài khoản đăng ký trên hệ thống:
+        <strong>@tenKhach</strong><br />
+        Các thông tin của Bên B được lưu đầy đủ trong hồ sơ khách hàng.
+    </p>
+
+    <!-- Điều 2 -->
+    <div class="section-title">Điều 2. Nội dung dịch vụ du lịch</div>
+
+    @if (tour == null)
+    {
+        <p class="indent">Hợp đồng chưa gắn với tour cụ thể.</p>
+    }
+    else
+    {
+        <p class="indent">
+            Bên A cung cấp dịch vụ tour với thông tin như sau:
+        </p>
+
+        <p class="indent">
+            Tên tour:
+            <strong>@tour.TenTour</strong>
+            (Mã tour: @tour.MaTour)<br />
+            Địa điểm: @tour.DiaDiem<br />
+            Thời gian dự kiến: @ngayDiStr đến @ngayVeStr
+        </p>
+
+        @if (dichVus.Any())
+        {
+            <p class="indent"><strong>Các dịch vụ bao gồm trong tour:</strong></p>
+
+            <table class="dichvu">
+                <thead>
+                    <tr>
+                        <th>Tên dịch vụ</th>
+                        <th>Loại</th>
+                        <th>Đơn giá</th>
+                        <th>Đơn vị tính</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dv in dichVus)
+                    {
+                        <tr>
+                            <td>@dv.TenDichVu</td>
+                            <td>@dv.LoaiDichVu</td>
+                            <td>@dv.DonGia.ToString("N0") VNĐ</td>
+                            <td>@dv.DonViTinh</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+
+    <!-- Điều 3 -->
+    <div class="section-title">Điều 3. Giá trị hợp đồng và thanh toán</div>
+
+    @if (gd == null)
+    {
+        <p class="indent">Thông tin giao dịch chưa được ghi nhận.</p>
+    }
+    else
+    {
+        <p class="indent">
+            1. Giá trị hợp đồng:
+            <strong>@tongTien.ToString("N0") đ.</strong>
+        </p>
+        <p class="indent">
+            2. Đã thanh toán:
+            <strong>@daThanhToan.ToString("N0") đ.</strong>
+        </p>
+        <p class="indent">
+            3. Còn lại:
+            <strong>@conLai.ToString("N0") đ.</strong>
+        </p>
+        <p class="indent">
+            4. Lịch sử thanh toán được lưu tại mã giao dịch:
+            <strong>@gd.MaGiaoDich</strong>.
+        </p>
+    }
+
+    <!-- Điều 4 -->
+    <div class="section-title">Điều 4. Quyền và nghĩa vụ các bên</div>
+
+    <p class="indent">
+        1. Bên A cung cấp dịch vụ đúng nội dung tour và tuân thủ pháp luật.
+    </p>
+    <p class="indent">
+        2. Bên B cung cấp thông tin trung thực và thanh toán đúng hạn.
+    </p>
+    <p class="indent">
+        3. Các quyền và nghĩa vụ khác được quy định tại phụ lục hợp đồng.
+    </p>
+
+    <!-- Điều 5 -->
+    <div class="section-title">Điều 5. Ghi chú và thỏa thuận bổ sung</div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+    {
+        <p class="indent" style="white-space:pre-line;">
+            @Model.GhiChu
+        </p>
+    }
+    else if (!string.IsNullOrWhiteSpace(Model.NoiDung))
+    {
+        <p class="indent" style="white-space:pre-line;">
+            @Model.NoiDung
+        </p>
+    }
+    else
+    {
+        <p class="indent">
+            Các thỏa thuận bổ sung (nếu có) sẽ được ghi tại phụ lục hợp đồng.
+        </p>
+    }
+
+    <p class="indent">
+        Hợp đồng được lập điện tử trên hệ thống Tour_2040 và có giá trị pháp lý tương đương bản giấy.
+    </p>
+
+    <!-- CHỮ KÝ -->
+    <table class="sign-row">
+        <tr>
+            <td>
+                <strong>ĐẠI DIỆN BÊN A</strong><br />
+                <span class="sign-note">(Ký và ghi rõ họ tên)</span>
+            </td>
+            <td>
+                <strong>ĐẠI DIỆN BÊN B</strong><br />
+                <span class="sign-note">(Ký và ghi rõ họ tên)</span><br />
+                <span class="sign-note">Tài khoản: @tenKhach</span>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

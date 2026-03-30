@@ -1,0 +1,641 @@
+﻿@model Tour_2040.Models.StartThanhToanViewModel
+
+@{
+    ViewData["Title"] = "Thanh toán: " + Model.TenTour;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    var tongTamTinh = Model.TongTienDuKien;
+    var totalGuests = (Model.SoNguoiLon + Model.SoTreEm);
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --primary-blue: #3a86ff;
+        --primary-soft: rgba(58,134,255,.12);
+    }
+
+    body {
+        background: var(--bg-system) !important;
+        color: var(--text-main);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* Sticky Header (giống Register/CreatePersonal) */
+    .sticky-header-custom {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background: rgba(248,248,255,0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: var(--border-thin);
+    }
+
+    /* Card phẳng đồng bộ */
+    .card-flat {
+        background: #fff;
+        border: var(--border-thin);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .section-title {
+        font-weight: 950;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: 1rem;
+    }
+
+    .label-custom {
+        font-size: .75rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: .4rem;
+        display: block;
+    }
+
+    .input-pill {
+        border-radius: 999px !important;
+        border: 1px solid #e2e8f0;
+        padding: .65rem 1rem;
+        font-size: .92rem;
+        background: #fff;
+        font-weight: 900;
+        color: var(--text-main);
+    }
+
+    .muted-small {
+        color: var(--text-muted);
+        font-size: .88rem;
+        font-weight: 800;
+    }
+
+    /* Payment Method item */
+    .pm-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        transition: .18s;
+        cursor: pointer;
+        gap: 12px;
+        margin-bottom: .8rem;
+    }
+
+        .pm-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0,0,0,0.05);
+            border-color: rgba(58,134,255,.35);
+        }
+
+    .pm-name {
+        font-weight: 950;
+        color: var(--text-main);
+        margin-bottom: .15rem;
+    }
+
+    .pm-desc {
+        font-size: .9rem;
+        color: var(--text-muted);
+        font-weight: 800;
+    }
+
+    .pm-radio {
+        width: 22px;
+        height: 22px;
+        accent-color: var(--primary-blue);
+        cursor: pointer;
+    }
+
+    /* Voucher */
+    .voucher-select {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: .9rem 1rem;
+        font-weight: 900;
+        background: #fff;
+        cursor: pointer;
+    }
+
+        .voucher-select:focus {
+            outline: none;
+            border-color: rgba(58,134,255,.55);
+            box-shadow: 0 0 0 4px rgba(58,134,255,0.12);
+        }
+
+    .voucher-msg {
+        margin-top: .75rem;
+        padding: .9rem 1rem;
+        border-radius: 14px;
+        font-weight: 900;
+        font-size: .92rem;
+        display: none;
+        border: 1px solid transparent;
+    }
+
+        .voucher-msg.show {
+            display: block;
+        }
+
+        .voucher-msg.success {
+            background: rgba(16,185,129,0.10);
+            color: #065f46;
+            border-color: rgba(16,185,129,0.20);
+        }
+
+        .voucher-msg.error {
+            background: rgba(239,68,68,0.10);
+            color: #991b1b;
+            border-color: rgba(239,68,68,0.20);
+        }
+
+    /* Summary (sticky right) */
+    .sticky-right {
+        position: sticky;
+        top: 110px;
+    }
+
+    .summary-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: .65rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-weight: 900;
+    }
+
+        .summary-line:last-child {
+            border-bottom: none;
+        }
+
+    .summary-label {
+        color: var(--text-muted);
+        font-weight: 900;
+    }
+
+    .summary-value {
+        color: var(--text-main);
+        font-weight: 950;
+    }
+
+    .total-box {
+        margin-top: 12px;
+        border-radius: 16px;
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .total-amount {
+        font-size: 1.25rem;
+        font-weight: 950;
+        color: var(--primary-blue);
+        white-space: nowrap;
+    }
+
+    /* Buttons row: cùng hàng, nút submit dài hơn */
+    .btn-row {
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        margin-top: 14px;
+    }
+
+    .btn-back {
+        flex: 0 0 34%;
+        max-width: 190px;
+        min-width: 150px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: var(--text-muted);
+        font-weight: 950;
+        border-radius: 999px;
+        padding: .75rem 1rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        transition: .18s;
+    }
+
+        .btn-back:hover {
+            transform: translateY(-1px);
+            color: var(--text-main);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+        }
+
+    .btn-primary-wide {
+        flex: 1 1 auto;
+        border: none;
+        background: var(--primary-blue);
+        color: #fff;
+        font-weight: 950;
+        border-radius: 999px;
+        padding: .75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        white-space: nowrap;
+        transition: .18s;
+        box-shadow: 0 10px 22px rgba(58,134,255,0.22);
+        cursor: pointer;
+    }
+
+        .btn-primary-wide:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(58,134,255,0.28);
+        }
+
+    /* Mobile paybar */
+    .mobile-paybar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(0,0,0,0.08);
+        padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+        display: none;
+    }
+
+    .paybar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .paybar-total small {
+        color: var(--text-muted);
+        font-weight: 900;
+    }
+
+    .paybar-total strong {
+        color: var(--primary-blue);
+        font-weight: 950;
+        font-size: 1.05rem;
+        white-space: nowrap;
+    }
+
+    .paybar-btn {
+        border: none;
+        background: var(--primary-blue);
+        color: #fff;
+        font-weight: 950;
+        border-radius: 999px;
+        padding: .7rem 1.1rem;
+        white-space: nowrap;
+        box-shadow: 0 10px 22px rgba(58,134,255,0.22);
+        cursor: pointer;
+    }
+
+    .page-bottom-spacer {
+        height: 92px;
+        display: none;
+    }
+
+    @@media (max-width: 991px) {
+        .sticky-right {
+            position: static;
+            top: auto;
+        }
+
+        .mobile-paybar {
+            display: block;
+        }
+
+        .page-bottom-spacer {
+            display: block;
+        }
+
+        .btn-back {
+            min-width: 130px;
+        }
+    }
+    @@media (max-width: 420px) {
+        .btn-back {
+            min-width: 120px;
+            padding: .7rem .9rem;
+        }
+
+        .btn-primary-wide {
+            padding: .7rem .9rem;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5">
+
+    <!-- ✅ TOP HEADER đồng bộ Register/CreatePersonal -->
+    <div class="sticky-header-custom py-3 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">Xác nhận thanh toán</h4>
+                <div class="muted-small">
+                    @Model.TenTour • #@Model.MaTour • @totalGuests khách
+                </div>
+            </div>
+
+            <!-- Submit từ header -->
+            <button type="submit" form="paymentForm" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="bi bi-shield-lock-fill me-2"></i> Hoàn tất thanh toán
+            </button>
+        </div>
+    </div>
+
+    <form asp-action="ThanhToan" method="post" id="paymentForm">
+        @Html.AntiForgeryToken()
+
+        <!-- Hidden Inputs (giữ nguyên backend) -->
+        <input type="hidden" asp-for="MaTour" />
+        <input type="hidden" asp-for="SoNguoiLon" />
+        <input type="hidden" asp-for="SoTreEm" />
+        <input type="hidden" asp-for="TongTienDuKien" />
+        <input type="hidden" asp-for="HoTenNguoiDaiDien" />
+        <input type="hidden" asp-for="SoDienThoai" />
+        <input type="hidden" asp-for="Email" />
+        <input type="hidden" asp-for="DiaChiLienHe" />
+        <input type="hidden" asp-for="CCCD" />
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger rounded-4 border shadow-sm mb-4">
+                <strong>⚠️</strong> Vui lòng kiểm tra lại thông tin thanh toán.
+            </div>
+        }
+
+        <div class="row g-4">
+
+            <!-- LEFT -->
+            <div class="col-lg-7">
+
+                <!-- 1) Thông tin liên hệ -->
+                <div class="card-flat mb-4">
+                    <div class="section-title">
+                        <i class="bi bi-person-circle text-primary"></i> Thông tin liên hệ
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <span class="label-custom">Họ tên</span>
+                            <div class="input-pill">@(Model.HoTenNguoiDaiDien ?? "Chưa cập nhật")</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <span class="label-custom">Số điện thoại</span>
+                            <div class="input-pill">@(Model.SoDienThoai ?? "---")</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <span class="label-custom">Email</span>
+                            <div class="input-pill">@(Model.Email ?? "---")</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <span class="label-custom">CCCD</span>
+                            <div class="input-pill">@(Model.CCCD ?? "---")</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <span class="label-custom">Địa chỉ</span>
+                            <div class="input-pill">@(Model.DiaChiLienHe ?? "Chưa cập nhật")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2) Phương thức thanh toán -->
+                <div class="card-flat mb-4">
+                    <div class="section-title">
+                        <i class="bi bi-credit-card-2-front-fill text-primary"></i> Phương thức thanh toán
+                    </div>
+
+                    <div class="pm-item" data-radio="pt_tienmat">
+                        <div style="min-width:0;">
+                            <div class="pm-name">Tiền mặt</div>
+                            <div class="pm-desc">Thanh toán tại quầy / khi nhận vé</div>
+                        </div>
+                        <input type="radio" name="PhuongThucThanhToan" value="Tiền mặt" id="pt_tienmat" checked class="pm-radio" />
+                    </div>
+
+                    <div class="pm-item" data-radio="pt_ck">
+                        <div style="min-width:0;">
+                            <div class="pm-name">Chuyển khoản</div>
+                            <div class="pm-desc">VietQR / Napas 247</div>
+                        </div>
+                        <input type="radio" name="PhuongThucThanhToan" value="Chuyển khoản" id="pt_ck" class="pm-radio" />
+                    </div>
+
+                    <div class="pm-item" data-radio="pt_momo">
+                        <div style="min-width:0;">
+                            <div class="pm-name">Ví điện tử / QR Pay</div>
+                            <div class="pm-desc">MoMo / ZaloPay / ShopeePay</div>
+                        </div>
+                        <input type="radio" name="PhuongThucThanhToan" value="Ví điện tử" id="pt_momo" class="pm-radio" />
+                    </div>
+
+                    <span asp-validation-for="PhuongThucThanhToan" class="d-block mt-2" style="color:#991b1b; font-weight:800;"></span>
+                </div>
+
+                <!-- 3) Voucher -->
+                <div class="card-flat mb-4">
+                    <div class="section-title">
+                        <i class="bi bi-gift-fill text-primary"></i> Ưu đãi
+                    </div>
+
+                    <label class="label-custom">Chọn voucher (nếu có)</label>
+
+                    <select asp-for="SelectedUserVoucherId" class="voucher-select" id="voucherSelect">
+                        <option value="">-- Chọn ưu đãi của bạn --</option>
+                        @if (ViewBag.MyVouchers != null)
+                        {
+                            foreach (var v in (IEnumerable<dynamic>)ViewBag.MyVouchers)
+                            {
+                        <option value="@v.MaUserVoucher"
+                                data-loaigiam="@v.Voucher.LoaiGiam"
+                                data-giatri="@v.Voucher.GiaTriGiam"
+                                data-min="@(v.Voucher.DonHangToiThieu ?? 0)"
+                                data-max="@(v.Voucher.SoTienGiamToiDa ?? 999999999)">
+                            @v.Voucher.MaVoucher (@(v.Voucher.LoaiGiam == "PhanTram"
+                                                        ? $"-{v.Voucher.GiaTriGiam}%"
+                                                        : $"-{v.Voucher.GiaTriGiam:N0}đ"))
+                                </option>
+                            }
+                        }
+                    </select>
+
+                    <div id="voucher-msg" class="voucher-msg"></div>
+                </div>
+
+                <div class="page-bottom-spacer"></div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-lg-5">
+                <div class="card-flat sticky-right">
+                    <div class="section-title">
+                        <i class="bi bi-receipt-cutoff text-primary"></i> Tóm tắt thanh toán
+                    </div>
+
+                    <div class="summary-line">
+                        <span class="summary-label">Tour</span>
+                        <span class="summary-value text-truncate" style="max-width: 240px;">@Model.TenTour</span>
+                    </div>
+
+                    <div class="summary-line">
+                        <span class="summary-label">Số khách</span>
+                        <span class="summary-value">@totalGuests (NL: @Model.SoNguoiLon, TE: @Model.SoTreEm)</span>
+                    </div>
+
+                    <div class="summary-line">
+                        <span class="summary-label">Tạm tính</span>
+                        <span class="summary-value">@tongTamTinh.ToString("N0", culture) đ</span>
+                    </div>
+
+                    <div class="summary-line">
+                        <span class="summary-label">Giảm giá</span>
+                        <span class="summary-value" style="color:#10b981;" id="discount-amount">- 0 đ</span>
+                    </div>
+
+                    <div class="total-box">
+                        <div>
+                            <div class="label-custom mb-1">Tổng cộng</div>
+                            <div class="muted-small">Đã trừ ưu đãi (nếu có)</div>
+                        </div>
+                        <div class="total-amount" id="final-total">@tongTamTinh.ToString("N0", culture) đ</div>
+                    </div>
+
+                    <div class="btn-row">
+                        <a href="javascript:history.back()" class="btn-back">← Quay lại</a>
+                        <button type="submit" class="btn-primary-wide">
+                            <i class="bi bi-shield-lock-fill"></i> Hoàn tất thanh toán
+                        </button>
+                    </div>
+
+                    <div class="muted-small text-center mt-3">
+                        🔒 Giao dịch mã hóa • An toàn 100% • Hỗ trợ 24/7
+                    </div>
+
+                    <div asp-validation-summary="ModelOnly" class="mt-3" style="color:#991b1b; font-weight:800;"></div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<!-- Mobile sticky bar -->
+<div class="mobile-paybar" id="mobilePaybar">
+    <div class="paybar-inner">
+        <div class="paybar-total">
+            <small>Tổng cộng</small><br />
+            <strong id="stickyTotal">@tongTamTinh.ToString("N0", culture) đ</strong>
+        </div>
+        <button type="submit" form="paymentForm" class="paybar-btn">
+            Thanh toán
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            // ===== Voucher calc: giữ nguyên id để không vỡ logic =====
+            const tongGoc = Number(@Model.TongTienDuKien.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            const select = document.getElementById("voucherSelect");
+            const elDiscount = document.getElementById("discount-amount");
+            const elTotal = document.getElementById("final-total");
+            const elSticky = document.getElementById("stickyTotal");
+            const elMsg = document.getElementById("voucher-msg");
+
+            function formatMoney(n) {
+                return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+            }
+
+            function calc() {
+                let giam = 0;
+                let msgText = "";
+                let msgClass = "";
+
+                if (select && select.value) {
+                    const opt = select.options[select.selectedIndex];
+                    const loai = opt.getAttribute("data-loaigiam");
+                    const val = parseFloat(opt.getAttribute("data-giatri") || 0);
+                    const minOrder = parseFloat(opt.getAttribute("data-min") || 0);
+                    const maxGiam = parseFloat(opt.getAttribute("data-max") || 0);
+
+                    if (tongGoc < minOrder) {
+                        msgText = "⚠️ Đơn hàng chưa đủ điều kiện áp dụng voucher này";
+                        msgClass = "error";
+                        giam = 0;
+                    } else {
+                        if (loai === "PhanTram") {
+                            giam = tongGoc * (val / 100);
+                            if (giam > maxGiam) giam = maxGiam;
+                        } else {
+                            giam = val;
+                        }
+
+                        if (giam > tongGoc) giam = tongGoc;
+
+                        msgText = "✓ Áp dụng ưu đãi thành công!";
+                        msgClass = "success";
+                    }
+                }
+
+                const finalPay = tongGoc - giam;
+
+                elDiscount.innerText = "- " + formatMoney(giam);
+                elTotal.innerText = formatMoney(finalPay);
+                if (elSticky) elSticky.innerText = formatMoney(finalPay);
+
+                if (elMsg) {
+                    elMsg.innerHTML = msgText;
+                    elMsg.className = "voucher-msg " + (msgText ? ("show " + msgClass) : "");
+                }
+            }
+
+            // ===== UX: click cả block payment method => check radio =====
+            document.querySelectorAll(".pm-item").forEach(item => {
+                item.addEventListener("click", (e) => {
+                    const id = item.getAttribute("data-radio");
+                    if (!id) return;
+                    const r = document.getElementById(id);
+                    if (r) r.checked = true;
+                });
+            });
+
+            if (select) {
+                select.addEventListener("change", calc);
+                calc();
+            } else {
+                // vẫn set tổng cho sticky mobile
+                if (elSticky) elSticky.innerText = formatMoney(tongGoc);
+            }
+        })();
+    </script>
+}

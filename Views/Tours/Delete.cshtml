@@ -1,0 +1,166 @@
+﻿@*
+    Folder: Views/Tours
+    File path: Views/Tours/Delete.cshtml
+    File name: Delete.cshtml
+    View: Tours/Delete
+    Labels: E(Delete Tour View), A(UI pill buttons)
+    Notes:
+      - Confirm delete page (optional, dùng khi muốn có trang riêng thay vì modal)
+      - POST về asp-action="Delete" (tương thích scaffold: [HttpPost, ActionName("Delete")] DeleteConfirmed)
+*@
+@model Tour_2040.Models.Tour
+
+@{
+    ViewData["Title"] = "Xóa Tour";
+    var returnUrl = (ViewData["ReturnUrl"] as string) ?? (Context.Request.Query["returnUrl"].ToString());
+    if (string.IsNullOrWhiteSpace(returnUrl))
+    {
+        returnUrl = Url.Action("Index", "Tours") ?? "/Tours";
+    }
+}
+
+<style>
+    .pg-wrap {
+        max-width: 980px;
+        margin: 0 auto;
+    }
+
+    .card-glass {
+        background: rgba(255,255,255,.92);
+        border: 1px solid rgba(226,232,240,.9);
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(2,6,23,.08);
+        overflow: hidden;
+    }
+
+    .hero-warn {
+        border-radius: 18px;
+        background: rgba(220,38,38,.06);
+        border: 1px solid rgba(220,38,38,.20);
+        padding: 14px 16px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .thumb {
+        width: 96px;
+        height: 72px;
+        border-radius: 14px;
+        object-fit: cover;
+        border: 1px solid rgba(226,232,240,.9);
+        box-shadow: 0 10px 22px rgba(2,6,23,.08);
+        flex: 0 0 auto;
+    }
+
+    .kv {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 10px 16px;
+        font-size: .92rem;
+    }
+
+        .kv .k {
+            color: #64748b;
+            font-weight: 800;
+        }
+
+        .kv .v {
+            font-weight: 900;
+            color: #0f172a;
+            word-break: break-word;
+        }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        box-shadow: 0 10px 22px rgba(2,6,23,.08);
+        padding: .55rem 1rem;
+    }
+
+    .btn-yellow {
+        background: #f4c400;
+        border-color: #f4c400;
+        color: #0f172a;
+    }
+
+        .btn-yellow:hover {
+            filter: brightness(.97);
+        }
+
+    .btn-danger.btn-pill:hover {
+        filter: brightness(.98);
+    }
+
+    .muted {
+        color: #64748b;
+        font-weight: 800;
+        font-size: .88rem;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5">
+    <div class="pg-wrap">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+                <div class="muted">Trang chủ / Tours</div>
+                <h4 class="fw-bold mb-0">Xóa Tour</h4>
+            </div>
+
+            <a href="@returnUrl" class="btn btn-yellow btn-pill">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </a>
+        </div>
+
+        <div class="card-glass p-4">
+            <div class="hero-warn mb-4">
+                <div class="rounded-4 d-flex align-items-center justify-content-center"
+                     style="width:48px;height:48px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.2);">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-danger">Xác nhận xóa tour</div>
+                    <div class="muted" style="color:#991b1b;">
+                        Thao tác này có thể không khôi phục được. Nếu tour đang có dữ liệu liên quan (đăng ký/hoá đơn/đánh giá),
+                        hệ thống có thể chặn xóa.
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 flex-wrap align-items-start mb-4">
+                <img class="thumb" src="@(Model?.HinhAnhTourUrl ?? "/uploads/tours/no-image.jpg")" alt="thumb" />
+                <div class="flex-grow-1">
+                    <div class="fw-bold" style="font-size:1.2rem;">@Model?.TenTour</div>
+                    <div class="muted">Mã: #@Model?.MaTour</div>
+                </div>
+            </div>
+
+            <div class="kv mb-4">
+                <div class="k">Địa điểm</div>
+                <div class="v">@Model?.DiaDiem</div>
+
+                <div class="k">Giá tour</div>
+                <div class="v">@((Model?.GiaTour ?? 0).ToString("N0")) đ</div>
+
+                <div class="k">Thời gian</div>
+                <div class="v">@Model?.NgayDi?.ToString("dd/MM/yyyy") → @Model?.NgayVe?.ToString("dd/MM/yyyy")</div>
+
+                <div class="k">Trạng thái</div>
+                <div class="v">@Model?.TrangThai</div>
+            </div>
+
+            <form asp-action="Delete" asp-route-id="@Model?.MaTour" method="post" class="d-flex gap-2 flex-wrap justify-content-end">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <a href="@returnUrl" class="btn btn-yellow btn-pill">
+                    <i class="bi bi-x-circle me-1"></i> Hủy
+                </a>
+
+                <button type="submit" class="btn btn-danger btn-pill">
+                    <i class="bi bi-trash me-1"></i> Xóa tour
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

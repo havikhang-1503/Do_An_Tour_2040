@@ -1,0 +1,633 @@
+﻿@*
+    Folder: Views/Tours
+    File path: Views/Tours/Index.cshtml
+    File name: Index.cshtml
+    View: Tours/Index
+    Labels: A(UI pill/rounded), B(Pagination), C(Filter), D(ToggleHide POST fix), E(Delete Modal), F(Admin Dropdown), G(User UI 2-cols + lighter colors)
+    Notes:
+      - FIX user grid: 2 cards/row (md+), bigger card, lighter palette like other index pages.
+*@
+
+@model IEnumerable<Tour_2040.Models.Tour>
+
+@{
+    var list = Model?.ToList() ?? new List<Tour_2040.Models.Tour>();
+
+    var isAdmin = User.IsInRole("Admin");
+    var isStaff = User.IsInRole("Staff");
+    var isManager = isAdmin || isStaff;
+
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var isPendingList = currentAction == "PendingPersonalList";
+
+    ViewData["Title"] = isPendingList
+        ? "Phê Duyệt Yêu Cầu Thiết Kế"
+        : (isManager ? "Quản Lý Hệ Thống Tour" : "Hành Trình Khám Phá");
+
+    var userVisibleTours = list
+        .Where(x => x.TrangThai == "DaDuyet" || (isAuthenticated && x.UserId == currentUserId))
+        .ToList();
+
+    var renderList = isManager ? list : userVisibleTours;
+
+    var total = renderList.Count;
+    var systemTours = renderList.Count(x => !x.IsPersonal);
+
+    var pendingTours = isManager
+        ? list.Count(x => x.TrangThai == "ChoDuyet")
+        : renderList.Count(x => x.IsPersonal && x.UserId == currentUserId && x.TrangThai == "ChoDuyet");
+
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+@section Styles {
+    <style>
+        /* Gradient Overlay for cards */
+        .bg-gradient-dark-transparent {
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Pagination Styles (Dynamic via JS) */
+        .pager-btn {
+            width: 36px; height: 36px;
+            border-radius: 50%; border: 1px solid #e2e8f0;
+            background: white; color: var(--text-muted);
+            font-weight: 700; transition: 0.2s;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin: 0 4px;
+        }
+        .pager-btn:hover { border-color: var(--primary-indigo); color: var(--primary-indigo); background: var(--primary-soft); }
+        .pager-btn.active { background: var(--primary-indigo); color: white; border-color: var(--primary-indigo); }
+    </style>
+}
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        <!-- HEADER -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Trang chủ</a></li>
+                        <li class="breadcrumb-item active text-primary fw-bold">Hành trình</li>
+                    </ol>
+                </nav>
+                <div class="d-flex align-items-baseline gap-3">
+                    <h2 class="fw-bold m-0 text-dark">@ViewData["Title"]</h2>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill small">@total kết quả</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                @if (isManager)
+                {
+                    <a asp-action="Create" class="btn btn-primary btn-pill shadow-sm hover-scale text-decoration-none px-4">
+                        <i class="bi bi-plus-lg"></i> Thêm Tour
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="CreatePersonal" class="btn btn-primary btn-pill shadow-sm hover-scale text-decoration-none px-4">
+                        <i class="bi bi-magic"></i> Thiết kế riêng
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="glass-panel p-2 mb-4 d-flex flex-column flex-lg-row align-items-center gap-3 shadow-sm">
+            <div class="input-group border-0 bg-transparent flex-grow-1">
+                <span class="input-group-text bg-transparent border-0 ps-3 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="mainSearch" class="form-control border-0 bg-transparent fw-bold text-dark shadow-none" 
+                       placeholder="Tìm tên tour, địa danh, mã số...">
+            </div>
+
+            <div class="vr mx-2 d-none d-lg-block text-muted opacity-25" style="height: 24px;"></div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap w-100 w-lg-auto px-2 pb-2 pb-lg-0">
+                <select id="typeFilter" class="form-select border-0 bg-transparent fw-bold text-muted shadow-none" style="width: auto;">
+                    <option value="">Loại Tour</option>
+                    <option value="system">Hệ thống</option>
+                    <option value="personal">Thiết kế riêng</option>
+                </select>
+
+                @if (isManager)
+                {
+                    <div class="vr mx-1 d-none d-lg-block text-muted opacity-25"></div>
+                    <select id="statusFilter" class="form-select border-0 bg-transparent fw-bold text-muted shadow-none" style="width: auto;">
+                        <option value="">Trạng thái</option>
+                        <option value="ChoDuyet">Chờ duyệt</option>
+                        <option value="DaDuyet">Hoạt động</option>
+                        <option value="TuChoi">Từ chối</option>
+                    </select>
+                }
+                else if (isAuthenticated)
+                {
+                    <div class="vr mx-1 d-none d-lg-block text-muted opacity-25"></div>
+                    <button type="button" id="btnMyPending" class="btn btn-sm btn-outline-warning rounded-pill fw-bold" style="white-space:nowrap;">
+                        <i class="bi bi-hourglass-split"></i> Chưa duyệt
+                    </button>
+                    <button type="button" id="btnResetQuick" class="btn btn-sm btn-light rounded-circle text-muted fw-bold shadow-sm" style="width:32px;height:32px;">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- CONTENT AREA -->
+        @if (isManager)
+        {
+            <!-- ADMIN TABLE VIEW -->
+            <div class="glass-panel p-0 overflow-hidden shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="adminTable">
+                        <thead class="bg-light">
+                            <tr class="fw-bold text-muted text-uppercase small" style="letter-spacing:0.5px;">
+                                <th class="ps-4 py-3">Hành trình</th>
+                                <th class="py-3">Địa điểm</th>
+                                <th class="py-3">Giá dự kiến</th>
+                                <th class="py-3">Thời gian</th>
+                                <th class="py-3">Phân loại</th>
+                                <th class="py-3 text-center">Trạng thái</th>
+                                <th class="py-3 text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in renderList)
+                            {
+                                var totalSlots = item.SoNguoiToiDa ?? 0;
+                                var booked = item.SoNguoiHienTai ?? 0;
+                                var isFull = totalSlots > 0 && booked >= totalSlots;
+                                var statusClass = item.TrangThai == "DaDuyet" ? "success" : (item.TrangThai == "TuChoi" ? "danger" : "warning");
+                                var statusText = item.TrangThai == "DaDuyet" ? "Hoạt động" : (item.TrangThai == "TuChoi" ? "Từ chối" : "Chờ duyệt");
+
+                                <tr class="tour-item"
+                                    data-search="@item.TenTour @item.DiaDiem @item.MaTour"
+                                    data-type="@(item.IsPersonal ? "personal" : "system")"
+                                    data-status="@item.TrangThai">
+                                    
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="position-relative">
+                                                <img src="@(item.HinhAnhTourUrl ?? "/uploads/tours/no-image.jpg")" 
+                                                     class="rounded-3 object-fit-cover shadow-sm" 
+                                                     style="width: 56px; height: 42px;" alt="thumb" />
+                                            </div>
+                                            <div style="max-width: 220px;">
+                                                <div class="fw-bold text-dark text-truncate">@item.TenTour</div>
+                                                <div class="small text-muted font-monospace" style="font-size: 0.75rem;">#@item.MaTour</div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="small fw-semibold text-secondary">@item.DiaDiem</td>
+                                    <td class="fw-bold text-primary">@item.GiaTour.ToString("N0")đ</td>
+
+                                    <td class="small text-muted">
+                                        <div class="fw-semibold text-dark">@item.NgayDi?.ToString("dd/MM/yyyy")</div>
+                                        <div>đến @item.NgayVe?.ToString("dd/MM/yyyy")</div>
+                                    </td>
+
+                                    <td>
+                                        @if(item.IsPersonal) {
+                                            <span class="badge bg-info-subtle text-info-emphasis rounded-pill small border border-info-subtle">Thiết kế</span>
+                                        } else {
+                                            <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill small border border-primary-subtle">Hệ thống</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-@statusClass-subtle text-@statusClass-emphasis rounded-pill small border border-@statusClass-subtle">
+                                            @statusText
+                                        </span>
+                                        @if(isFull) { <div class="badge bg-danger rounded-pill mt-1" style="font-size: 0.6rem;">Full</div> }
+                                        else if (totalSlots > 0) { <div class="small text-muted mt-1 fw-bold">@booked/@totalSlots</div> }
+                                    </td>
+
+                                    <td class="text-end pe-4">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light rounded-circle shadow-sm" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2" style="font-size: 0.9rem;">
+                                                <li><a asp-action="Details" asp-route-id="@item.MaTour" class="dropdown-item rounded-2"><i class="bi bi-info-circle me-2"></i>Chi tiết</a></li>
+                                                <li><a asp-action="Edit" asp-route-id="@item.MaTour" class="dropdown-item rounded-2"><i class="bi bi-pencil me-2"></i>Sửa</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                
+                                                @if (item.IsPersonal && item.TrangThai == "ChoDuyet") {
+                                                    <li><button onclick="approveTour('@item.MaTour', @item.GiaTour)" class="dropdown-item text-success fw-bold rounded-2"><i class="bi bi-check-lg me-2"></i>Duyệt Báo Giá</button></li>
+                                                    <li><button onclick="rejectTour('@item.MaTour')" class="dropdown-item text-danger fw-bold rounded-2"><i class="bi bi-x-lg me-2"></i>Từ chối</button></li>
+                                                }
+                                                else if (item.IsPersonal) {
+                                                     <li>
+                                                        <form asp-action="TogglePersonalStatus" asp-route-id="@item.MaTour" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                            <button type="submit" class="dropdown-item small rounded-2">
+                                                                <i class="bi bi-arrow-repeat me-2"></i> Đổi trạng thái
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                }
+
+                                                <li>
+                                                    <form asp-action="ToggleHide" asp-route-id="@item.MaTour" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                        <button type="submit" class="dropdown-item rounded-2">
+                                                            <i class="bi @(item.IsHidden ? "bi-eye-slash" : "bi-eye") me-2"></i> @(item.IsHidden ? "Hiện lại" : "Ẩn đi")
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item text-danger rounded-2"
+                                                            data-tourid="@item.MaTour" data-tourname="@item.TenTour" onclick="openDeleteModal(this)">
+                                                        <i class="bi bi-trash me-2"></i> Xóa
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-center" id="paginationBar"></div>
+        }
+        else
+        {
+            <!-- USER GRID VIEW -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-2 g-4 animate__animated animate__fadeInUp" id="userGrid">
+                @foreach (var item in renderList)
+                {
+                    int totalSlots = item.SoNguoiToiDa ?? 10;
+                    int booked = item.SoNguoiHienTai ?? 0;
+                    if (totalSlots <= 0) totalSlots = 10;
+                    if (booked < 0) booked = 0;
+                    if (booked > totalSlots) booked = totalSlots;
+                    var pct = (int)Math.Round((double)booked * 100 / totalSlots);
+                    var isFull = totalSlots > 0 && booked >= totalSlots;
+
+                    <div class="col tour-item"
+                         data-search="@item.TenTour @item.DiaDiem @item.MaTour"
+                         data-type="@(item.IsPersonal ? "personal" : "system")"
+                         data-status="@item.TrangThai"
+                         data-mine="@(isAuthenticated && item.UserId == currentUserId ? "1" : "0")">
+
+                        <div class="glass-panel p-3 h-100 d-flex flex-column hover-scale shadow-sm text-decoration-none position-relative" style="transition: transform 0.2s;">
+                            <!-- Image -->
+                            <div class="position-relative rounded-4 overflow-hidden mb-3" style="aspect-ratio: 16/9;">
+                                <img src="@(item.HinhAnhTourUrl ?? "/uploads/tours/no-image.jpg")" class="w-100 h-100 object-fit-cover" alt="@item.TenTour" />
+                                
+                                <div class="position-absolute top-0 end-0 p-2">
+                                    <span class="badge @(item.IsPersonal ? "bg-info" : "bg-primary") shadow-sm rounded-pill fw-bold" style="background-color: var(--primary-indigo) !important;">
+                                        @(item.IsPersonal ? "Thiết kế" : "Hệ thống")
+                                    </span>
+                                </div>
+                                <div class="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient-dark-transparent">
+                                    <div class="d-flex align-items-center text-white small fw-bold">
+                                        <i class="bi bi-geo-alt-fill me-1 text-warning"></i>
+                                        <span class="text-truncate">@item.DiaDiem</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="flex-grow-1 d-flex flex-column gap-2 mb-3">
+                                <h5 class="fw-bold text-dark m-0 line-clamp-2" title="@item.TenTour">@item.TenTour</h5>
+                                <div class="d-flex align-items-center text-muted small fw-semibold">
+                                    <i class="bi bi-calendar-event me-2"></i>
+                                    @item.NgayDi?.ToString("dd/MM/yyyy") - @item.NgayVe?.ToString("dd/MM/yyyy")
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                     <div class="fw-bold small text-dark">
+                                        <i class="bi bi-people-fill me-1 text-secondary"></i>
+                                        @booked.ToString("D2")/@totalSlots.ToString("D2") <span class="text-muted fw-normal">chỗ</span>
+                                    </div>
+                                    @if(isFull) { <span class="badge bg-danger rounded-pill">Đã đầy</span> }
+                                </div>
+                                <div class="progress mt-1" style="height: 6px; border-radius:99px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: @pct%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="mt-auto pt-3 border-top border-light d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Giá tham khảo</div>
+                                    <div class="fw-bold text-primary fs-5">@item.GiaTour.ToString("N0") <span class="fs-6">đ</span></div>
+                                </div>
+                                <a asp-action="Details" asp-route-id="@item.MaTour" class="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                                    <i class="bi bi-arrow-right text-primary"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <div class="mt-4 d-flex justify-content-center" id="paginationBar"></div>
+        }
+    </div>
+</div>
+
+@if (isManager)
+{
+    <div class="modal fade" id="approveModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <form asp-action="ApprovePersonal" method="post" class="modal-content border-0 rounded-4 shadow-lg">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="approveTourId" />
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="bg-success bg-opacity-10 text-success mx-auto mb-2 d-flex align-items-center justify-content-center"
+                             style="width:56px;height:56px;border-radius:16px;">
+                            <i class="bi bi-shield-check fs-3"></i>
+                        </div>
+                        <h6 class="fw-bold">Phê duyệt báo giá</h6>
+                        <p class="text-muted small mb-0">Nhập giá trọn gói cuối cùng cho khách</p>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <input type="number" name="giaTour" id="modalPriceInput"
+                               class="form-control text-center fw-bold text-success border-0 bg-light rounded-3"
+                               style="font-size: 1.2rem;" required />
+                    </div>
+                    <textarea name="adminNote" class="form-control rounded-3 mb-3 small" rows="3" placeholder="Lời nhắn gửi khách..."></textarea>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light btn-pill flex-fill small" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success btn-pill flex-fill small fw-bold">Xác nhận</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="rejectModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <form asp-action="RejectPersonal" method="post" class="modal-content border-0 rounded-4 shadow-lg">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="rejectTourId" />
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="bg-danger bg-opacity-10 text-danger mx-auto mb-2 d-flex align-items-center justify-content-center"
+                             style="width:56px;height:56px;border-radius:16px;">
+                            <i class="bi bi-x-circle fs-3"></i>
+                        </div>
+                        <h6 class="fw-bold">Từ chối yêu cầu</h6>
+                    </div>
+                    <textarea name="lyDo" class="form-control rounded-3 mb-3 small" rows="4" required placeholder="Lý do từ chối..."></textarea>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light btn-pill flex-fill small" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-danger btn-pill flex-fill small fw-bold">Từ chối</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <form asp-controller="Tours" asp-action="Delete" method="post" class="modal-content border-0 rounded-4 shadow-lg">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteTourId" />
+                <input type="hidden" name="returnUrl" id="deleteReturnUrl" value="@returnUrl" />
+
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="bg-danger bg-opacity-10 text-danger mx-auto mb-2 d-flex align-items-center justify-content-center"
+                             style="width:56px;height:56px;border-radius:16px;">
+                            <i class="bi bi-trash fs-3"></i>
+                        </div>
+                        <div class="fw-bold" style="font-size: 1rem;">Xóa tour?</div>
+                        <div class="text-muted small mt-1">
+                            Tour: <span id="deleteTourName" class="fw-bold text-dark"></span>
+                        </div>
+                        <div class="text-muted small mt-2">
+                            Hành động này <span class="fw-bold text-danger">không thể hoàn tác</span>.
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light btn-pill flex-fill small" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger btn-pill flex-fill small fw-bold">Xóa</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const PAGE_SIZE = 25;
+            let currentPage = 1;
+            let quickMyPending = false;
+
+            const mainSearch = document.getElementById('mainSearch');
+            const typeFilter = document.getElementById('typeFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const matchCount = document.getElementById('matchCount');
+            const matchCount2 = document.getElementById('matchCount2');
+            const rangeText = document.getElementById('rangeText');
+            const paginationBar = document.getElementById('paginationBar');
+
+            const btnMyPending = document.getElementById('btnMyPending');
+            const btnResetQuick = document.getElementById('btnResetQuick');
+
+            function getAllItems() { return Array.from(document.querySelectorAll('.tour-item')); }
+            function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+            function renderPager(totalPages, page) {
+                if (!paginationBar) return;
+                paginationBar.innerHTML = '';
+
+                const makeBtn = (label, targetPage, disabled, isActive) => {
+                    const b = document.createElement('button');
+                    b.type = "button";
+                    b.textContent = label;
+                    if (disabled) b.disabled = true;
+                    if (isActive) b.classList.add('active');
+                    b.className = 'pager-btn' + (isActive ? ' active' : '');
+                    b.addEventListener('click', () => {
+                        if (disabled) return;
+                        paginateTo(targetPage);
+                    });
+                    return b;
+                };
+
+                paginationBar.appendChild(makeBtn('‹', page - 1, page <= 1, false));
+
+                const windowSize = 7;
+                let start = Math.max(1, page - 2);
+                let end = Math.min(totalPages, start + (windowSize - 1));
+                start = Math.max(1, end - (windowSize - 1));
+
+                if (start > 1) {
+                    paginationBar.appendChild(makeBtn('1', 1, false, page === 1));
+                    if (start > 2) paginationBar.appendChild(makeBtn('…', page, true, false));
+                }
+
+                for (let p = start; p <= end; p++) {
+                    paginationBar.appendChild(makeBtn(String(p), p, false, p === page));
+                }
+
+                if (end < totalPages) {
+                    if (end < totalPages - 1) paginationBar.appendChild(makeBtn('…', page, true, false));
+                    paginationBar.appendChild(makeBtn(String(totalPages), totalPages, false, page === totalPages));
+                }
+
+                paginationBar.appendChild(makeBtn('›', page + 1, page >= totalPages, false));
+            }
+
+            function applyFilterOnly() {
+                const q = (mainSearch?.value || '').toLowerCase().trim();
+                const type = (typeFilter?.value || '');
+                const status = statusFilter ? (statusFilter.value || '') : '';
+
+                let count = 0;
+                const items = getAllItems();
+
+                items.forEach(item => {
+                    const searchData = (item.dataset.search || "").toLowerCase();
+                    const itemType = item.dataset.type || "";
+                    const itemStatus = item.dataset.status || "";
+
+                    let ok = true;
+                    if (q && !searchData.includes(q)) ok = false;
+                    if (type && itemType !== type) ok = false;
+                    if (status && itemStatus !== status) ok = false;
+
+                    if (quickMyPending) {
+                        const mine = item.dataset.mine === "1";
+                        if (!mine || itemStatus !== "ChoDuyet") ok = false;
+                    }
+
+                    item.classList.toggle('filter-hidden', !ok);
+                    if (ok) count++;
+                });
+
+                if (matchCount) matchCount.textContent = count;
+                if (matchCount2) matchCount2.textContent = count;
+
+                return count;
+            }
+
+            function paginateTo(page) {
+                const items = getAllItems().filter(i => !i.classList.contains('filter-hidden'));
+                const totalItems = items.length;
+                const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+                currentPage = clamp(page, 1, totalPages);
+
+                const startIdx = (currentPage - 1) * PAGE_SIZE;
+                const endIdx = startIdx + PAGE_SIZE;
+
+                items.forEach((item, idx) => {
+                    const onPage = idx >= startIdx && idx < endIdx;
+                    item.classList.toggle('page-hidden', !onPage);
+                });
+
+                const from = totalItems === 0 ? 0 : (startIdx + 1);
+                const to = totalItems === 0 ? 0 : Math.min(endIdx, totalItems);
+                if (rangeText) rangeText.textContent = `${from}–${to}`;
+
+                renderPager(totalPages, currentPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function performFilterAndPaginate(resetToFirst = true) {
+                applyFilterOnly();
+                if (resetToFirst) currentPage = 1;
+                paginateTo(currentPage);
+
+                getAllItems().forEach(i => {
+                    if (i.classList.contains('filter-hidden')) i.classList.add('page-hidden');
+                });
+            }
+
+            [mainSearch, typeFilter, statusFilter].forEach(el => {
+                if (!el) return;
+                el.addEventListener('input', () => performFilterAndPaginate(true));
+                el.addEventListener('change', () => performFilterAndPaginate(true));
+            });
+
+            if (btnMyPending) {
+                btnMyPending.addEventListener('click', () => {
+                    quickMyPending = !quickMyPending;
+                    btnMyPending.classList.toggle('btn-warning', !quickMyPending);
+                    btnMyPending.classList.toggle('btn-primary', quickMyPending);
+                    btnMyPending.innerHTML = quickMyPending
+                        ? '<i class="bi bi-hourglass-split me-1"></i> Đang lọc: Chưa duyệt'
+                        : '<i class="bi bi-hourglass-split me-1"></i> Tour chưa duyệt';
+                    performFilterAndPaginate(true);
+                });
+            }
+
+            if (btnResetQuick) {
+                btnResetQuick.addEventListener('click', () => {
+                    quickMyPending = false;
+                    if (btnMyPending) {
+                        btnMyPending.classList.remove('btn-primary');
+                        btnMyPending.classList.add('btn-warning');
+                        btnMyPending.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Tour chưa duyệt';
+                    }
+                    if (mainSearch) mainSearch.value = '';
+                    if (typeFilter) typeFilter.value = '';
+                    if (statusFilter) statusFilter.value = '';
+                    performFilterAndPaginate(true);
+                });
+            }
+
+            window.approveTour = function (id, price) {
+                const idEl = document.getElementById('approveTourId');
+                const priceEl = document.getElementById('modalPriceInput');
+                if (idEl) idEl.value = id;
+                if (priceEl) priceEl.value = price;
+                const modalEl = document.getElementById('approveModal');
+                if (modalEl) new bootstrap.Modal(modalEl).show();
+            };
+
+            window.rejectTour = function (id) {
+                const idEl = document.getElementById('rejectTourId');
+                if (idEl) idEl.value = id;
+                const modalEl = document.getElementById('rejectModal');
+                if (modalEl) new bootstrap.Modal(modalEl).show();
+            };
+
+            window.openDeleteModal = function (btnEl) {
+                const id = btnEl?.dataset?.tourid || "";
+                const name = btnEl?.dataset?.tourname || "";
+
+                const idEl = document.getElementById('deleteTourId');
+                const nameEl = document.getElementById('deleteTourName');
+                const returnEl = document.getElementById('deleteReturnUrl');
+
+                if (idEl) idEl.value = id;
+                if (nameEl) nameEl.textContent = name || "";
+                if (returnEl) returnEl.value = window.location.pathname + window.location.search;
+
+                const modalEl = document.getElementById('deleteModal');
+                if (!modalEl) return;
+
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            };
+
+            performFilterAndPaginate(true);
+        });
+    </script>
+}

@@ -1,0 +1,548 @@
+﻿@*
+Folder: Views/ThongKe
+FilePath: Views/ThongKe/Index.cshtml
+FileName: Index.cshtml
+Method/Class/View: ThongKe - Index
+Label: A,B,C
+Desc:
+A) Chuẩn hóa UI theo style Voucher + lề ngoài ổn định khi zoom (page-shell + outer-gutter clamp)
+B) KPI + filter dạng pill + card glass + table glass
+C) Progress “tiến độ mục tiêu” tính theo dữ liệu thật (SoLuong/max) thay vì fix 75%
+*@
+
+@model Tour_2040.Models.ThongKeViewModel
+
+@{
+    ViewData["Title"] = "Báo cáo hiệu suất";
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+
+    var maxDv = (Model.ThongKeDichVus != null && Model.ThongKeDichVus.Any())
+        ? Model.ThongKeDichVus.Max(x => x.SoLuong)
+        : 1;
+
+    if (maxDv <= 0) maxDv = 1;
+}
+
+<style>
+    :root {
+        --bg-system: #F7F8FF;
+        --card-bg: rgba(255,255,255,0.86);
+        --glass-border: 1px solid rgba(148,163,184,0.35);
+        --shadow-soft: 0 10px 30px rgba(2, 6, 23, 0.08);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --line: 1px solid rgba(226,232,240,0.9);
+        --primary-blue: #3a86ff;
+        --success-green: #22c55e;
+        --danger-red: #ef4444;
+        --warning-yellow: #f59e0b;
+        /* FIX: lề ngoài ổn định khi zoom */
+        --outer-gutter: clamp(16px, 4vw, 72px);
+        --radius-lg: 20px;
+        --radius-md: 14px;
+    }
+
+    body {
+        background: radial-gradient(1200px 500px at 20% 0%, rgba(58,134,255,0.12), transparent 60%), radial-gradient(900px 420px at 90% 10%, rgba(34,197,94,0.10), transparent 55%), radial-gradient(900px 420px at 70% 100%, rgba(245,158,11,0.12), transparent 55%), var(--bg-system) !important;
+        color: var(--text-main);
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* ===== Layout giữ lề ngoài ổn định (không phụ thuộc .container) ===== */
+    .page-shell {
+        width: 100%;
+        padding: 12px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    /* ===== Glass card ===== */
+    .glass {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        border-radius: var(--radius-lg);
+        backdrop-filter: blur(10px);
+    }
+
+    .header-glass {
+        padding: 18px 18px;
+    }
+
+    .title-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .hero-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(58,134,255,0.10);
+        border: var(--glass-border);
+        color: var(--primary-blue);
+        font-size: 1.15rem;
+    }
+
+    .subtitle {
+        margin: 2px 0 0 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+    }
+
+    /* ===== Pill buttons (đúng quy ước dự án) ===== */
+    .btn-pill {
+        border-radius: 999px !important;
+        padding: 10px 14px;
+        font-weight: 900;
+        font-size: 0.85rem;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none !important;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .btn-pill:active {
+            transform: translateY(1px);
+        }
+
+    .btn-pill-primary {
+        background: rgba(58,134,255,0.12);
+        border-color: rgba(58,134,255,0.35);
+        color: #0b2a66 !important;
+    }
+
+        .btn-pill-primary:hover {
+            background: rgba(58,134,255,0.18);
+            box-shadow: 0 10px 18px rgba(58,134,255,0.14);
+        }
+
+    .btn-pill-neutral {
+        background: rgba(100,116,139,0.10);
+        border-color: rgba(100,116,139,0.25);
+        color: var(--text-main) !important;
+    }
+
+        .btn-pill-neutral:hover {
+            background: rgba(100,116,139,0.14);
+        }
+
+    /* ===== Filter pill ===== */
+    .filter-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.82);
+        border: var(--glass-border);
+        box-shadow: 0 8px 18px rgba(2,6,23,0.06);
+        backdrop-filter: blur(8px);
+        flex-wrap: wrap;
+    }
+
+    .date-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.88rem;
+        color: var(--text-main);
+        padding: 2px 4px;
+        min-width: 145px;
+    }
+
+        .date-input::-webkit-calendar-picker-indicator {
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+    /* ===== KPI ===== */
+    .kpi-grid {
+        margin-top: 14px;
+    }
+
+    .kpi-card {
+        padding: 16px 16px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 100%;
+        transition: transform .15s ease, border-color .15s ease;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(58,134,255,0.40);
+        }
+
+    .kpi-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        border: var(--glass-border);
+        font-size: 1.1rem;
+    }
+
+        .kpi-icon.blue {
+            background: rgba(58,134,255,0.10);
+            color: var(--primary-blue);
+        }
+
+        .kpi-icon.pink {
+            background: rgba(244,63,94,0.10);
+            color: #f43f5e;
+        }
+
+        .kpi-icon.green {
+            background: rgba(34,197,94,0.10);
+            color: var(--success-green);
+        }
+
+        .kpi-icon.purple {
+            background: rgba(168,85,247,0.10);
+            color: #a855f7;
+        }
+
+    .kpi-title {
+        font-size: 0.72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .kpi-value {
+        font-size: 1.45rem;
+        font-weight: 900;
+        margin: 2px 0 0 0;
+        letter-spacing: -0.3px;
+    }
+
+    /* ===== Chart cards ===== */
+    .chart-card {
+        padding: 14px 14px;
+        border-radius: var(--radius-lg);
+    }
+
+    .chart-title {
+        font-weight: 900;
+        font-size: 0.95rem;
+        margin: 2px 0 10px 4px;
+        color: var(--text-main);
+    }
+
+    /* ===== Table glass ===== */
+    .table-shell {
+        margin-top: 14px;
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+        .table-modern thead th {
+            background: rgba(255,255,255,0.92);
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 14px 14px;
+            border-bottom: var(--line);
+            letter-spacing: 0.6px;
+        }
+
+        .table-modern td {
+            padding: 14px 14px;
+            border-bottom: var(--line);
+            font-size: 0.92rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover td {
+            background: rgba(2,6,23,0.02);
+        }
+
+    /* ===== Progress ===== */
+    .progress-thin {
+        height: 7px;
+        background: rgba(226,232,240,0.8);
+        border-radius: 999px;
+        overflow: hidden;
+        width: 160px;
+    }
+
+    .progress-bar-thin {
+        height: 100%;
+        background: rgba(58,134,255,0.95);
+        border-radius: 999px;
+        transition: width .25s ease;
+    }
+
+    .progress-meta {
+        margin-top: 6px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-weight: 800;
+    }
+
+    /* ===== Small link ===== */
+    .link-pill {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+    }
+
+    @@media (max-width: 768px) {
+        .filter-pill {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .date-input {
+            min-width: 130px;
+        }
+
+        .progress-thin {
+            width: 140px;
+        }
+    }
+</style>
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        @* ===== HEADER ===== *@
+        <div class="glass header-glass">
+            <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
+                <div class="title-hero">
+                    <div class="hero-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div>
+                        <h4 class="m-0 fw-bold" style="letter-spacing:-0.4px;">Báo cáo hiệu suất</h4>
+                        <p class="subtitle mb-0">
+                            Dữ liệu tổng hợp từ: @Model.FromDate.ToString("dd/MM") - @Model.ToDate.ToString("dd/MM/yyyy")
+                        </p>
+                    </div>
+                </div>
+
+                <form method="get" class="filter-pill">
+                    <i class="bi bi-calendar3 text-muted"></i>
+
+                    <input type="date" name="fromDate" class="date-input"
+                           value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+
+                    <span class="text-muted fw-bold">→</span>
+
+                    <input type="date" name="toDate" class="date-input"
+                           value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+
+                    <button type="submit" class="btn-pill btn-pill-primary" style="padding:8px 14px;">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
+
+                    <a asp-action="Index" class="btn-pill btn-pill-neutral" style="padding:8px 14px;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </form>
+            </div>
+
+            @* ===== KPI ===== *@
+            <div class="row g-3 kpi-grid">
+                <div class="col-md-3">
+                    <div class="glass kpi-card">
+                        <div class="kpi-icon blue"><i class="bi bi-currency-dollar"></i></div>
+                        <div>
+                            <p class="kpi-title">Doanh thu</p>
+                            <div class="kpi-value">@Model.TongDoanhThu.ToString("N0", culture) đ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="glass kpi-card">
+                        <div class="kpi-icon pink"><i class="bi bi-people"></i></div>
+                        <div>
+                            <p class="kpi-title">Khách hàng</p>
+                            <div class="kpi-value">@Model.TongSoKhachHang</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="glass kpi-card">
+                        <div class="kpi-icon green"><i class="bi bi-file-earmark-text"></i></div>
+                        <div>
+                            <p class="kpi-title">Hợp đồng</p>
+                            <div class="kpi-value">@Model.TongSoHopDong</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="glass kpi-card">
+                        <div class="kpi-icon purple"><i class="bi bi-map"></i></div>
+                        <div>
+                            <p class="kpi-title">Tổng tour</p>
+                            <div class="kpi-value">@Model.TongSoTour</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ===== CHARTS ===== *@
+        <div class="row g-3 mt-3">
+            <div class="col-lg-8">
+                <div class="glass chart-card h-100">
+                    <div class="chart-title">Xu hướng doanh thu</div>
+                    <canvas id="revenueChart" style="max-height: 260px;"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="glass chart-card h-100">
+                    <div class="chart-title text-center">Loại hình Tour</div>
+                    <div class="px-2">
+                        <canvas id="tourTypeChart" style="max-height: 260px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ===== TABLE ===== *@
+        <div class="d-flex justify-content-between align-items-center mt-4 px-1">
+            <h6 class="fw-bold mb-0">Hiệu suất dịch vụ</h6>
+            <a asp-controller="DichVus" asp-action="Index"
+               class="btn-pill btn-pill-primary link-pill">
+                Quản lý dịch vụ <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="glass table-shell mt-2">
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">TÊN DỊCH VỤ</th>
+                            <th class="text-center">LƯỢNG ĐẶT</th>
+                            <th>TIẾN ĐỘ (THEO DỮ LIỆU)</th>
+                            <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ThongKeDichVus != null && Model.ThongKeDichVus.Any())
+                        {
+                            foreach (var item in Model.ThongKeDichVus)
+                            {
+                                var pct = (int)Math.Round(item.SoLuong * 100.0 / maxDv);
+                                if (pct < 0) pct = 0;
+                                if (pct > 100) pct = 100;
+
+                                <tr>
+                                    <td class="ps-4 fw-bold">@item.LoaiDichVu</td>
+                                    <td class="text-center fw-bold text-primary">@item.SoLuong</td>
+                                    <td>
+                                        <div class="progress-thin">
+                                            <div class="progress-bar-thin" style="width:@pct%"></div>
+                                        </div>
+                                        <div class="progress-meta">@pct% (so với dịch vụ cao nhất)</div>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a asp-controller="DichVus" asp-action="Index" asp-route-loai="@item.LoaiDichVu"
+                                           class="btn-pill btn-pill-neutral" style="padding:8px 12px; font-size:0.82rem;">
+                                            <i class="bi bi-eye-fill"></i> Xem dịch vụ
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5" style="color: var(--text-muted);">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2" style="opacity:.25;"></i>
+                                    Chưa có dữ liệu thống kê dịch vụ trong khoảng thời gian này.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    Chart.defaults.animation = { duration: 900 };
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#94a3b8';
+
+    // ===== Revenue chart =====
+    const ctxRev = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctxRev, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.DoanhThuTheoMoc.Select(x => x.Nhan))),
+            datasets: [{
+                data: @Html.Raw(Json.Serialize(Model.DoanhThuTheoMoc.Select(x => x.TongTien))),
+                borderColor: '#3a86ff',
+                backgroundColor: 'rgba(58, 134, 255, 0.08)',
+                fill: true,
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 3,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#3a86ff'
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+
+    // ===== Tour type doughnut =====
+    const ctxPie = document.getElementById('tourTypeChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['Mặc định', 'Cá nhân'],
+            datasets: [{
+                data: [@Model.TongSoTourMacDinh, @Model.TongSoTourCaNhan],
+                backgroundColor: ['#3a86ff', '#a855f7'],
+                borderWidth: 5,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 10, padding: 18, font: { size: 11, weight: 'bold' } }
+                }
+            }
+        }
+    });
+</script>

@@ -1,0 +1,152 @@
+﻿@model Tour_2040.Models.StartThanhToanViewModel
+
+<style>
+    /* CSS nâng cao cho nút chọn thanh toán */
+    .payment-option-label {
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #eef2ff;
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Hiệu ứng hover nhẹ */
+        .payment-option-label:hover {
+            background-color: #f8fafc;
+            border-color: #c7d2fe;
+            transform: translateY(-2px);
+        }
+
+    /* Khi radio được check - Hiệu ứng Active */
+    .btn-check:checked + .payment-option-label {
+        border-color: #4f46e5; /* Indigo primary */
+        background-color: #f5f3ff;
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+    }
+
+    /* Hiệu ứng icon nhảy lên khi được chọn */
+    .payment-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f1f5f9;
+        border-radius: 12px;
+        font-size: 1.4rem;
+        color: #64748b;
+        transition: all 0.3s ease;
+    }
+
+    .btn-check:checked + .payment-option-label .payment-icon {
+        background-color: #4f46e5;
+        color: #ffffff;
+        transform: rotate(-10deg) scale(1.1);
+    }
+
+    /* Hiệu ứng hiện dấu check mượt mà */
+    .check-icon {
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn-check:checked + .payment-option-label .check-icon {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Glassmorphism cho container chính */
+    .payment-method-container {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+</style>
+
+<div class="mb-4 p-3 p-md-4 rounded-4 shadow-sm payment-method-container border-start border-4 border-primary">
+    <h5 class="mb-4 d-flex align-items-center gap-2 text-dark fw-bold">
+        <span class="badge rounded-pill bg-primary text-white" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">3</span>
+        <span>Phương thức thanh toán</span>
+    </h5>
+
+    <div class="d-grid gap-3">
+        @* --- TIỀN MẶT --- *@
+        <div class="position-relative">
+            <input type="radio" class="btn-check"
+                   asp-for="PhuongThucThanhToan"
+                   id="pt_tienmat"
+                   value="TienMat" checked>
+
+            <label class="payment-option-label d-flex align-items-center gap-3 p-4 rounded-4 bg-white w-100 shadow-sm" for="pt_tienmat">
+                <div class="payment-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-dark fs-6">Tiền mặt tại quầy</div>
+                    <div class="small text-muted">Thanh toán trực tiếp tại văn phòng Tour 2040</div>
+                </div>
+                <div class="text-primary check-icon">
+                    <i class="bi bi-check-circle-fill fs-4"></i>
+                </div>
+            </label>
+        </div>
+
+        @* --- CHUYỂN KHOẢN --- *@
+        <div class="position-relative">
+            <input type="radio" class="btn-check"
+                   asp-for="PhuongThucThanhToan"
+                   id="pt_chuyenkhoan"
+                   value="ChuyenKhoan">
+
+            <label class="payment-option-label d-flex align-items-center gap-3 p-4 rounded-4 bg-white w-100 shadow-sm" for="pt_chuyenkhoan">
+                <div class="payment-icon">
+                    <i class="bi bi-bank"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-dark fs-6">Chuyển khoản Ngân hàng (VietQR)</div>
+                    <div class="small text-muted">Xác nhận tự động qua ứng dụng ngân hàng</div>
+                </div>
+                <div class="text-primary check-icon">
+                    <i class="bi bi-check-circle-fill fs-4"></i>
+                </div>
+            </label>
+        </div>
+
+        @* --- VÍ ĐIỆN TỬ --- *@
+        <div class="position-relative">
+            <input type="radio" class="btn-check"
+                   asp-for="PhuongThucThanhToan"
+                   id="pt_vidientu"
+                   value="ViDienTu">
+
+            <label class="payment-option-label d-flex align-items-center gap-3 p-4 rounded-4 bg-white w-100 shadow-sm" for="pt_vidientu">
+                <div class="payment-icon">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-dark fs-6">Ví điện tử / Cổng thanh toán</div>
+                    <div class="small text-muted">Hỗ trợ MoMo, VNPay, ZaloPay...</div>
+                </div>
+                <div class="text-primary check-icon">
+                    <i class="bi bi-check-circle-fill fs-4"></i>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    @* Thông báo lỗi Validation *@
+    <div class="mt-3">
+        <span asp-validation-for="PhuongThucThanhToan" class="text-danger small fw-medium"></span>
+    </div>
+</div>
+
+
+
+### Các điểm đã sửa và cải tiến:
+1.  **Hiệu ứng Icon:** Khi bạn click chọn một phương thức, biểu tượng (Cash, Bank, QR) sẽ đổi sang màu trắng, nền đổi sang màu xanh Indigo, đồng thời xoay nhẹ 10 độ để tạo cảm giác phản hồi sinh động.
+2.  **Giao diện "Pill-style":** Các thẻ được bo góc lớn hơn (`rounded-4`), phù hợp với phong cách hiện đại.
+3.  **Dấu Check:** Sử dụng `cubic-bezier` để tạo hiệu ứng "bật nảy" khi dấu tích xuất hiện, giúp người dùng nhận biết rõ ràng lựa chọn của mình.
+4.  **Phản hồi Mobile:** Thêm padding lớn hơn và giãn cách giữa các nút để dễ dàng thao tác bằng ngón tay trên điện thoại.
+
+Would you like me to add a script that scrolls automatically to the payment details once a method is selected?

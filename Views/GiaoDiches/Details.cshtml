@@ -1,0 +1,315 @@
+﻿@model Tour_2040.Models.GiaoDich
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng #" + Model.MaGiaoDich;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+
+    // 1. Tính toán tài chính
+    var daThanhToan = Model.ThanhToans?.Where(x => x.TrangThai == "Thành công").Sum(t => t.SoTien) ?? 0;
+    var conLai = Model.TongTien - daThanhToan;
+    if (conLai < 0) conLai = 0;
+
+    // 2. Lấy thông tin Tour & Dịch vụ
+    var tour = Model.Tour;
+    var listDichVu = tour?.TourDichVus?.Select(x => x.DichVu).Where(x => x != null).Cast<Tour_2040.Models.DichVu>().ToList() ?? new List<Tour_2040.Models.DichVu>();
+
+    // 3. Tìm Mã Lịch Trình
+    var lichTrinh = Model.LichTrinhs?.FirstOrDefault();
+    var linkLichTrinh = lichTrinh != null ? Url.Action("Details", "LichTrinhs", new { id = lichTrinh.MaLichTrinh }) : "#";
+
+    // 4. Thông tin khách hàng
+    var khachHoTen = Model.HoTenNguoiDaiDien ?? Model.User?.HoTen;
+    var khachEmail = Model.Email ?? Model.User?.Email;
+    var khachSdt = Model.SoDienThoai ?? Model.User?.PhoneNumber;
+    var khachDiaChi = Model.DiaChiLienHe ?? Model.User?.DiaChi;
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --primary-blue: #3a86ff;
+    }
+
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    .invoice-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        background: white;
+        border-radius: 24px;
+        border: var(--border-thin);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+
+    /* ✅ HEADER MỚI: BỎ KHUNG ĐEN, THÊM TÊN CÔNG TY */
+    .invoice-header-clean {
+        padding: 40px 50px 30px 50px;
+        border-bottom: 2px solid var(--bg-system);
+        background: white;
+    }
+
+    .company-brand {
+        color: var(--primary-blue);
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        font-size: 1.5rem;
+        margin-bottom: 0;
+    }
+
+    .status-badge {
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+    }
+
+    .section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+        font-weight: 800;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .section-title::after {
+            content: "";
+            height: 1px;
+            background: #f1f5f9;
+            flex-grow: 1;
+        }
+
+    /* Giao dịch ngang */
+    .payment-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .payment-card-flat {
+        background: #fcfcfd;
+        border: var(--border-thin);
+        border-radius: 16px;
+        padding: 15px;
+        flex: 1;
+        min-width: 280px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .btn-action {
+        border-radius: 50px;
+        padding: 10px 24px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: 0.3s;
+    }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+
+        .invoice-container {
+            box-shadow: none;
+            border: 1px solid #eee;
+            margin: 0;
+        }
+
+        body {
+            background: white !important;
+        }
+    }
+</style>
+
+<div class="container py-2">
+    <div class="invoice-container animate__animated animate__fadeIn">
+
+        @* --- NEW HEADER SECTION --- *@
+        <div class="invoice-header-clean">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h3 class="company-brand">ROYAL ASCEND TRAVAL</h3>
+                    <p class="text-muted small mb-0">Hệ thống quản lý dịch vụ du lịch chuyên nghiệp</p>
+                    <div class="mt-3">
+                        <span class="text-dark fw-bold h4 mb-0">Hóa đơn #@Model.MaGiaoDich</span>
+                    </div>
+                </div>
+                <div class="text-end">
+                    @{
+                        string badgeClass = (conLai == 0 && Model.TongTien > 0) ? "bg-success bg-opacity-10 text-success border-success-subtle" :
+                        (Model.TrangThai == "Huy" ? "bg-danger bg-opacity-10 text-danger border-danger-subtle" :
+                        "bg-warning bg-opacity-10 text-warning border-warning-subtle");
+                        string statusText = (conLai == 0 && Model.TongTien > 0) ? "Đã hoàn tất" :
+                        (Model.TrangThai == "Huy" ? "Đã hủy bỏ" : "Chờ thanh toán");
+                    }
+                    <span class="status-badge @badgeClass">@statusText</span>
+                    <p class="text-muted small mt-2 mb-0">Ngày tạo: @Model.NgayTao.ToString("dd/MM/yyyy")</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5 py-4">
+            @* --- 1. THÔNG TIN KHÁCH & TOUR --- *@
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="section-title">Thông tin khách hàng</div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-sq bg-light rounded-3 d-flex align-items-center justify-content-center fw-bold text-primary border" style="width:48px; height:48px;">
+                            @((khachHoTen?.Substring(0, 1) ?? "K").ToUpper())
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">@khachHoTen</h6>
+                            <span class="text-muted small">@khachSdt</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 small text-muted">
+                        <div class="mb-1"><i class="bi bi-envelope me-2"></i>@khachEmail</div>
+                        <div><i class="bi bi-geo-alt me-2"></i>@khachDiaChi</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="section-title">Chi tiết lịch trình</div>
+                    <h6 class="fw-bold text-dark mb-1">@tour?.TenTour</h6>
+                    <div class="d-flex gap-2 mb-2">
+                        <span class="badge bg-light text-primary border border-primary-subtle font-monospace">#@tour?.MaTour</span>
+                    </div>
+                    <div class="p-3 rounded-3 border bg-light bg-opacity-25 mt-2">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Khởi hành:</span>
+                            <span class="fw-bold">@tour?.NgayDi?.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mt-1">
+                            <span class="text-muted">Kết thúc:</span>
+                            <span class="fw-bold">@tour?.NgayVe?.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* --- 2. CHI TIẾT TÀI CHÍNH --- *@
+            <div class="section-title">Hạng mục thanh toán</div>
+            <div class="table-responsive mb-5">
+                <table class="table align-middle">
+                    <thead class="small text-muted border-bottom">
+                        <tr>
+                            <th class="ps-0 py-3">Dịch vụ / Vé</th>
+                            <th class="text-center py-3">Số lượng</th>
+                            <th class="text-end pe-0 py-3">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-bottom">
+                        <tr>
+                            <td class="ps-0 py-3">
+                                <div class="fw-bold">Vé người lớn</div>
+                                <small class="text-muted">Tour trọn gói</small>
+                            </td>
+                            <td class="text-center">@Model.SoNguoiLon</td>
+                            <td class="text-end pe-0">@(((tour?.GiaTour ?? 0) * Model.SoNguoiLon).ToString("N0", culture)) đ</td>
+                        </tr>
+                        @if (Model.SoTreEm > 0)
+                        {
+                            <tr>
+                                <td class="ps-0 py-3">
+                                    <div class="fw-bold">Vé trẻ em</div>
+                                    <small class="text-muted">Giảm 30% giá vé</small>
+                                </td>
+                                <td class="text-center">@Model.SoTreEm</td>
+                                <td class="text-end pe-0">@(((tour?.GiaTour ?? 0) * Model.SoTreEm * 0.7m).ToString("N0", culture)) đ</td>
+                            </tr>
+                        }
+                        @foreach (var dv in listDichVu)
+                        {
+                            <tr>
+                                <td class="ps-0 py-3 text-muted small">Cung ứng: @dv.TenDichVu</td>
+                                <td class="text-center">1</td>
+                                <td class="text-end pe-0">@dv.DonGia.ToString("N0", culture) đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="row justify-content-end mt-4">
+                    <div class="col-md-5">
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span class="text-muted">Tổng đơn hàng</span>
+                            <span class="fw-bold text-dark">@Model.TongTien.ToString("N0", culture) đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-success small">
+                            <span class="fw-bold">Thực thu</span>
+                            <span class="fw-bold">@daThanhToan.ToString("N0", culture) đ</span>
+                        </div>
+                        @if (conLai > 0)
+                        {
+                            <div class="d-flex justify-content-between border-top pt-2 h5 fw-bold text-danger">
+                                <span>Dư nợ</span>
+                                <span>@conLai.ToString("N0", culture) đ</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* --- 3. LỊCH SỬ GIAO DỊCH NGANG --- *@
+            @if (Model.ThanhToans != null && Model.ThanhToans.Any())
+            {
+                <div class="section-title">Lịch sử giao dịch</div>
+                <div class="payment-grid mb-5">
+                    @foreach (var tt in Model.ThanhToans)
+                    {
+                        <div class="payment-card-flat shadow-sm">
+                            <div class="icon-square-sm bg-white border rounded-3 d-flex align-items-center justify-content-center text-primary" style="width:40px; height:40px;">
+                                @if (tt.PhuongThuc.Contains("ChuyenKhoan"))
+                                {
+                                    <i class="bi bi-bank"></i>
+                                }
+                                else
+                                {
+
+                                    <i class="bi bi-cash-stack"></i>
+                                }
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-dark small">@(tt.PhuongThuc.Contains("ChuyenKhoan") ? "Chuyển khoản" : "Giao dịch thành công")</div>
+                                <div class="small text-muted" style="font-size: 0.65rem;">@tt.NgayThanhToan.ToString("dd/MM/yyyy HH:mm")</div>
+                                <div class="fw-bold text-success" style="font-size: 0.85rem;">+@tt.SoTien.ToString("N0", culture) đ</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @* --- 4. HÀNH ĐỘNG --- *@
+            <div class="mt-4 pt-4 border-top d-flex justify-content-between align-items-center no-print">
+                <a href="javascript:history.back()" class="btn-grey-sm text-decoration-none">
+                    <i class="bi bi-chevron-left me-1"></i> Trở lại
+                </a>
+                <div class="d-flex gap-2">
+                    <button onclick="window.print()" class="btn btn-light border rounded-pill px-4 fw-bold shadow-sm small">
+                        <i class="bi bi-printer me-2"></i> In hóa đơn
+                    </button>
+                    @if (conLai > 0 && Model.TrangThai != "Huy")
+                    {
+                        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm small">
+                            <i class="bi bi-credit-card me-2"></i> Thanh toán dư nợ
+                        </button>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

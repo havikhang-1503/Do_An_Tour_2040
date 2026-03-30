@@ -1,0 +1,234 @@
+﻿@model Tour_2040.Models.YeuCauHoTro
+@{
+    ViewData["Title"] = "Gửi yêu cầu hỗ trợ";
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --btn-grey: #f1f5f9;
+        --btn-grey-hover: #e2e8f0;
+        --primary-blue: #3a86ff;
+    }
+
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    /* Card chính */
+    .card-flat {
+        background: white;
+        border: var(--border-thin);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Ô nhập liệu kiểu Pill */
+    .input-pill {
+        border-radius: 50px !important;
+        border: 1px solid #e2e8f0;
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+        background-color: #fcfcfd;
+        transition: all 0.2s;
+    }
+
+        .input-pill:focus {
+            background-color: #fff;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(58, 134, 255, 0.1);
+            outline: none;
+        }
+
+    /* Textarea bo tròn nhẹ hơn để phù hợp không gian */
+    .textarea-pill {
+        border-radius: 16px !important;
+        border: 1px solid #e2e8f0;
+        padding: 1rem 1.25rem;
+        background-color: #fcfcfd;
+        font-size: 0.9rem;
+    }
+
+        .textarea-pill:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(58, 134, 255, 0.1);
+        }
+
+    /* Label tinh tế */
+    .label-custom {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* Info Card bên phải (Sidebar) */
+    .info-card-flat {
+        background: #fcfcfd;
+        border: var(--border-thin);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 1.25rem;
+    }
+
+    .icon-shape-sm {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: var(--border-thin);
+        color: var(--primary-blue);
+        font-size: 1rem;
+    }
+
+    .btn-submit-pill {
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 0.8rem 2rem;
+        font-weight: 700;
+        transition: all 0.3s;
+    }
+
+        .btn-submit-pill:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+        }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    @* --- HEADER --- *@
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item small"><a asp-action="Index" class="text-decoration-none">Hỗ trợ</a></li>
+                <li class="breadcrumb-item small active" aria-current="page">Tạo mới</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold mb-1">Gửi yêu cầu hỗ trợ</h4>
+        <p class="text-muted small mb-0">Chúng tôi sẽ tiếp nhận và xử lý vấn đề của bạn trong vòng 24h.</p>
+    </div>
+
+    <div class="row g-4">
+        @* --- CỘT TRÁI: FORM --- *@
+        <div class="col-lg-8">
+            <div class="card-flat p-4 p-md-5">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="label-custom"><i class="bi bi-tag-fill me-1"></i> Loại yêu cầu</label>
+                            <select asp-for="LoaiHoTro" class="form-select input-pill">
+                                <option value="Tư vấn Tour">📍 Tư vấn Tour mới</option>
+                                <option value="Đổi trả vé">💳 Thanh toán & Hoàn vé</option>
+                                <option value="Khiếu nại">⚠️ Khiếu nại dịch vụ</option>
+                                <option value="Kỹ thuật">⚙️ Lỗi hệ thống/Tài khoản</option>
+                                <option value="Khác">💬 Các yêu cầu khác</option>
+                            </select>
+                            <span asp-validation-for="LoaiHoTro" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="label-custom"><i class="bi bi-flag-fill me-1"></i> Mức độ ưu tiên</label>
+                            <select class="form-select input-pill">
+                                <option value="Thường">Bình thường</option>
+                                <option value="Gấp">Cần xử lý gấp</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="label-custom"><i class="bi bi-chat-square-dots-fill me-1"></i> Tiêu đề ngắn gọn</label>
+                            <input asp-for="ChuDe" class="form-control input-pill" placeholder="Ví dụ: Không nhận được email xác nhận tour..." required />
+                            <span asp-validation-for="ChuDe" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="label-custom"><i class="bi bi-pencil-fill me-1"></i> Nội dung chi tiết</label>
+                            <textarea asp-for="NoiDung" class="form-control textarea-pill" rows="6" placeholder="Vui lòng mô tả chi tiết để đội ngũ hỗ trợ nhanh nhất..." required></textarea>
+                            <span asp-validation-for="NoiDung" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="submit" class="btn-submit-pill">
+                                    <i class="bi bi-send-fill me-2"></i> Gửi yêu cầu ngay
+                                </button>
+                                <a asp-action="Index" class="btn btn-light rounded-pill px-4 text-muted fw-bold border">Hủy bỏ</a>
+                            </div>
+                            <p class="text-muted small mt-3 italic">
+                                <i class="bi bi-info-circle me-1"></i> Thông tin của bạn sẽ được bảo mật theo chính sách quyền riêng tư.
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @* --- CỘT PHẢI: SIDEBAR --- *@
+        <div class="col-lg-4">
+            <div class="info-card-flat shadow-sm mb-4">
+                <h6 class="fw-bold mb-3">Thông tin liên hệ trực tiếp</h6>
+
+                <div class="contact-item">
+                    <div class="icon-shape-sm"><i class="bi bi-telephone-fill"></i></div>
+                    <div>
+                        <div class="text-muted small">Hotline 24/7</div>
+                        <div class="fw-bold">1900 2040</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="icon-shape-sm"><i class="bi bi-envelope-at-fill"></i></div>
+                    <div>
+                        <div class="text-muted small">Email phản hồi</div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">support@royalascend.com</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="icon-shape-sm"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div>
+                        <div class="text-muted small">Văn phòng chính</div>
+                        <div class="fw-bold">Landmark 81, TP.HCM</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card-flat shadow-sm" style="border-left: 4px solid var(--success);">
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-shield-check me-2"></i>Cam kết chất lượng</h6>
+                <ul class="list-unstyled small text-muted mb-0">
+                    <li class="mb-2"><i class="bi bi-check2 me-1"></i> Phản hồi trong 24 giờ làm việc.</li>
+                    <li class="mb-2"><i class="bi bi-check2 me-1"></i> Nhân viên hỗ trợ tận tâm.</li>
+                    <li><i class="bi bi-check2 me-1"></i> Giải quyết khiếu nại công bằng.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

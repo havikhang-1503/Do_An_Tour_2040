@@ -1,0 +1,804 @@
+﻿@* 
+Folder: Views/UserVouchers
+FilePath: Views/UserVouchers/Index.cshtml
+FileName: Index.cshtml
+Method/Class/View: UserVouchers - Index
+Label: A,B,C
+Desc: UI Ví Voucher (KPI + Search + Filter + Table + Copy code + Empty/No result state)
+      FIX: Giữ lề ngoài ổn định khi zoom bằng outer-gutter clamp + page max-width lớn hơn
+*@
+
+@model IEnumerable<Tour_2040.Models.UserVoucher>
+
+@{
+    ViewData["Title"] = "Voucher của tôi";
+
+    var list = Model?.Where(x => x?.Voucher != null).ToList() ?? new List<Tour_2040.Models.UserVoucher>();
+
+    // KPI
+    var total = list.Count;
+    var used = list.Count(x => x.IsUsed);
+
+    var now = DateTime.Now;
+    var expired = list.Count(x => !x.IsUsed && x.Voucher != null && x.Voucher.NgayKetThuc.HasValue && x.Voucher.NgayKetThuc.Value < now);
+    var ready = list.Count(x =>
+        !x.IsUsed
+        && x.Voucher != null
+        && (x.Voucher.IsActive)
+        && (!x.Voucher.NgayKetThuc.HasValue || x.Voucher.NgayKetThuc.Value >= now)
+    );
+}
+
+<style>
+    :root {
+        --bg-system: #F7F8FF;
+        --card-bg: rgba(255,255,255,0.86);
+        --glass-border: 1px solid rgba(148,163,184,0.35);
+        --shadow-soft: 0 10px 30px rgba(2, 6, 23, 0.08);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --primary-blue: #3a86ff; /* confirm */
+        --success-green: #22c55e; /* success */
+        --danger-red: #ef4444; /* danger */
+        --warning-yellow: #f59e0b; /* back */
+
+        --line: 1px solid rgba(226,232,240,0.9);
+        --chip-bg: rgba(255,255,255,0.8);
+        --chip-bg-hover: rgba(255,255,255,0.95);
+        /* FIX: lề ngoài ổn định khi zoom */
+        --outer-gutter: clamp(16px, 4vw, 72px);
+    }
+
+    body {
+        background: radial-gradient(1200px 500px at 20% 0%, rgba(58,134,255,0.12), transparent 60%), radial-gradient(900px 420px at 90% 10%, rgba(34,197,94,0.10), transparent 55%), radial-gradient(900px 420px at 70% 100%, rgba(245,158,11,0.12), transparent 55%), var(--bg-system) !important;
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text-main);
+    }
+
+    /* FIX: wrapper giữ lề ngoài cố định, không lệ thuộc container-fluid */
+    .voucher-page {
+        padding-top: 8px; /* sát thêm */
+        padding-left: var(--outer-gutter);
+        padding-right: var(--outer-gutter);
+        padding-bottom: 12px;
+    }
+
+
+
+    /* FIX: tăng max-width để page dùng diện tích tốt hơn, zoom không bị "lọt thỏm" */
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    /* Glass header */
+    .glass-header {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        border-radius: 20px;
+        padding: 18px 18px;
+        backdrop-filter: blur(10px);
+    }
+
+    .title-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+        .title-hero .hero-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            background: rgba(58,134,255,0.10);
+            border: var(--glass-border);
+        }
+
+        .title-hero h4 {
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+        }
+
+    .subtitle {
+        margin: 2px 0 0 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* Pill buttons - theo quy ước dự án */
+    .btn-pill {
+        border-radius: 999px !important;
+        padding: 10px 14px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none !important;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .btn-pill:active {
+            transform: translateY(1px);
+        }
+
+    .btn-pill-primary {
+        background: rgba(58,134,255,0.12);
+        border-color: rgba(58,134,255,0.35);
+        color: #0b2a66 !important;
+    }
+
+        .btn-pill-primary:hover {
+            background: rgba(58,134,255,0.18);
+            box-shadow: 0 10px 18px rgba(58,134,255,0.14);
+        }
+
+    .btn-pill-success {
+        background: rgba(34,197,94,0.12);
+        border-color: rgba(34,197,94,0.35);
+        color: #0a3a20 !important;
+    }
+
+        .btn-pill-success:hover {
+            background: rgba(34,197,94,0.18);
+            box-shadow: 0 10px 18px rgba(34,197,94,0.14);
+        }
+
+    .btn-pill-danger {
+        background: rgba(239,68,68,0.10);
+        border-color: rgba(239,68,68,0.35);
+        color: #5b0b0b !important;
+    }
+
+        .btn-pill-danger:hover {
+            background: rgba(239,68,68,0.16);
+            box-shadow: 0 10px 18px rgba(239,68,68,0.12);
+        }
+
+    .btn-pill-warning {
+        background: rgba(245,158,11,0.14);
+        border-color: rgba(245,158,11,0.35);
+        color: #5a3a07 !important;
+    }
+
+        .btn-pill-warning:hover {
+            background: rgba(245,158,11,0.20);
+            box-shadow: 0 10px 18px rgba(245,158,11,0.12);
+        }
+
+    .btn-pill-neutral {
+        background: rgba(100,116,139,0.10);
+        border-color: rgba(100,116,139,0.25);
+        color: var(--text-main) !important;
+    }
+
+        .btn-pill-neutral:hover {
+            background: rgba(100,116,139,0.14);
+        }
+
+    /* Search + Filters row */
+    .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+    }
+
+    .search-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--chip-bg);
+        border: var(--glass-border);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 18px rgba(2,6,23,0.06);
+        min-width: 260px;
+    }
+
+        .search-pill input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 260px;
+            max-width: 65vw;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+    .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .chip {
+        border-radius: 999px;
+        padding: 8px 12px;
+        border: var(--glass-border);
+        background: var(--chip-bg);
+        font-weight: 800;
+        font-size: 0.78rem;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: background .15s ease, transform .15s ease, border-color .15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        user-select: none;
+    }
+
+        .chip:hover {
+            background: var(--chip-bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .chip.active {
+            border-color: rgba(58,134,255,0.45);
+            background: rgba(58,134,255,0.12);
+            color: #0b2a66;
+        }
+
+        .chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: rgba(100,116,139,0.6);
+        }
+
+        .chip.ready .dot {
+            background: rgba(34,197,94,0.9);
+        }
+
+        .chip.used .dot {
+            background: rgba(100,116,139,0.9);
+        }
+
+        .chip.expired .dot {
+            background: rgba(239,68,68,0.9);
+        }
+
+    /* KPI cards */
+    .kpi-grid {
+        margin-top: 14px;
+    }
+
+    .kpi-card {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        border-radius: 18px;
+        padding: 16px 16px;
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: transform .15s ease, border-color .15s ease;
+        backdrop-filter: blur(10px);
+        height: 100%;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(58,134,255,0.40);
+        }
+
+    .kpi-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        border: var(--glass-border);
+    }
+
+        .kpi-icon.total {
+            background: rgba(58,134,255,0.10);
+            color: var(--primary-blue);
+        }
+
+        .kpi-icon.used {
+            background: rgba(100,116,139,0.10);
+            color: #334155;
+        }
+
+        .kpi-icon.ready {
+            background: rgba(34,197,94,0.10);
+            color: var(--success-green);
+        }
+
+    .kpi-meta .label {
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.6px;
+    }
+
+    .kpi-meta .value {
+        font-size: 1.35rem;
+        font-weight: 900;
+        margin-top: 2px;
+        letter-spacing: -0.3px;
+    }
+
+    /* Table container */
+    .table-shell {
+        margin-top: 14px;
+        background: var(--card-bg);
+        border: var(--glass-border);
+        border-radius: 20px;
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+        .table-modern thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: rgba(255,255,255,0.92);
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 14px 14px;
+            border-bottom: var(--line);
+            letter-spacing: 0.6px;
+        }
+
+        .table-modern td {
+            padding: 14px 14px;
+            border-bottom: var(--line);
+            font-size: 0.92rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover td {
+            background: rgba(2,6,23,0.02);
+        }
+
+        .table-modern tr:last-child td {
+            border-bottom: none;
+        }
+
+    .code-box {
+        background: rgba(58,134,255,0.08);
+        border: 1px dashed rgba(58,134,255,0.35);
+        padding: 6px 10px;
+        border-radius: 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-weight: 900;
+        color: #0b2a66;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .code-box i {
+            opacity: 0.8;
+        }
+
+    .muted-small {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 900;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+    .badge-used {
+        background: rgba(100,116,139,0.10);
+        border-color: rgba(100,116,139,0.28);
+        color: #334155;
+    }
+
+        .badge-used .dot {
+            background: rgba(100,116,139,0.9);
+        }
+
+    .badge-expired {
+        background: rgba(239,68,68,0.10);
+        border-color: rgba(239,68,68,0.30);
+        color: #7f1d1d;
+    }
+
+        .badge-expired .dot {
+            background: rgba(239,68,68,0.9);
+        }
+
+    .badge-ready {
+        background: rgba(34,197,94,0.10);
+        border-color: rgba(34,197,94,0.30);
+        color: #14532d;
+    }
+
+        .badge-ready .dot {
+            background: rgba(34,197,94,0.9);
+        }
+
+    /* Empty / no result */
+    .state-box {
+        padding: 44px 18px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+        .state-box i {
+            font-size: 2.4rem;
+            opacity: 0.25;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+    /* Tiny toast */
+    .mini-toast {
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        z-index: 9999;
+        background: rgba(15,23,42,0.92);
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        box-shadow: 0 16px 26px rgba(2,6,23,0.25);
+        display: none;
+        align-items: center;
+        gap: 8px;
+    }
+
+    @@media (max-width: 768px) {
+        .search-pill {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .search-pill input {
+                width: 100%;
+            }
+
+        .toolbar {
+            justify-content: stretch;
+        }
+
+        .voucher-page {
+            padding: 18px 16px;
+        }
+        /* FIX: mobile vẫn có lề */
+    }
+</style>
+
+<div class="voucher-page">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        <!-- HEADER -->
+        <div class="glass-header">
+            <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-2">
+                <div class="title-hero">
+                    <div class="hero-icon">
+                        <i class="bi bi-wallet2 text-primary"></i>
+                    </div>
+                    <div>
+                        <h4>Ví Voucher của tôi</h4>
+                        <p class="subtitle">Quản lý mã giảm giá, lọc nhanh trạng thái, bấm là copy mã.</p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-10 align-items-center justify-content-start justify-content-lg-end">
+                    <a asp-action="Available" class="btn-pill btn-pill-primary">
+                        <i class="bi bi-plus-lg"></i>
+                        Săn thêm Voucher
+                    </a>
+                </div>
+            </div>
+
+            <!-- TOOLBAR -->
+            <div class="toolbar">
+                <div class="search-pill">
+                    <i class="bi bi-search text-muted"></i>
+                    <input type="text" id="voucherSearch" placeholder="Tìm theo mã, tên voucher..." autocomplete="off" />
+                    <span id="clearSearch" class="btn-pill btn-pill-neutral" style="padding:6px 10px; font-size:0.78rem;">
+                        <i class="bi bi-x-lg"></i>
+                    </span>
+                </div>
+
+                <div class="filter-chips" id="statusChips">
+                    <span class="chip active" data-status="all">
+                        <span class="dot"></span> Tất cả <span class="muted-small">(@total)</span>
+                    </span>
+                    <span class="chip ready" data-status="ready">
+                        <span class="dot"></span> Sẵn sàng <span class="muted-small">(@ready)</span>
+                    </span>
+                    <span class="chip used" data-status="used">
+                        <span class="dot"></span> Đã dùng <span class="muted-small">(@used)</span>
+                    </span>
+                    <span class="chip expired" data-status="expired">
+                        <span class="dot"></span> Hết hạn <span class="muted-small">(@expired)</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- KPI -->
+            
+
+        <!-- TABLE -->
+        <div class="table-shell">
+            <div class="table-responsive">
+                <table class="table-modern" id="voucherTable">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Mã & Tên ưu đãi</th>
+                            <th class="text-center">Giá trị giảm</th>
+                            <th>Điều kiện đơn</th>
+                            <th>Hạn sử dụng</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="voucherTbody">
+                        @if (list.Any())
+                        {
+                            foreach (var uv in list)
+                            {
+                                var v = uv.Voucher!;
+                                bool isExpired = !uv.IsUsed && v.NgayKetThuc.HasValue && v.NgayKetThuc.Value < now;
+                                bool isReady = !uv.IsUsed && v.IsActive && (!v.NgayKetThuc.HasValue || v.NgayKetThuc.Value >= now);
+
+                                var statusKey = uv.IsUsed ? "used" : (isExpired ? "expired" : "ready");
+
+                                string badgeClass = uv.IsUsed ? "status-badge badge-used"
+                                : (isExpired ? "status-badge badge-expired" : "status-badge badge-ready");
+
+                                string statusText = uv.IsUsed ? "Đã dùng" : (isExpired ? "Hết hạn" : "Sẵn sàng");
+
+                                <tr data-status="@statusKey">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="code-box" data-copy="@v.MaVoucher" title="Bấm để copy mã">
+                                                <i class="bi bi-clipboard"></i> @v.MaVoucher
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark">@v.TenVoucher</div>
+                                                <div class="muted-small">Lưu ngày: @uv.NgayLuu.ToString("dd/MM/yyyy")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <div class="fw-bold" style="font-size: 1.05rem; color: #0b2a66;">
+                                            @if (v.LoaiGiam == "PhanTram")
+                                            {
+                                                @($"{v.GiaTriGiam:N0}%")
+                                            }
+                                            else
+                                            {
+                                                @($"{v.GiaTriGiam:N0}đ")
+                                            }
+                                        </div>
+                                        <div class="muted-small">Giảm trực tiếp</div>
+                                    </td>
+
+                                    <td>
+                                        <div class="muted-small">Đơn tối thiểu:</div>
+                                        <div class="fw-bold">@((v.DonHangToiThieu ?? 0).ToString("N0"))đ</div>
+                                    </td>
+
+                                    <td>
+                                        <div class="fw-bold @(isExpired ? "text-danger" : "")">
+                                            <i class="bi bi-calendar-event me-1"></i>
+                                            @(v.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "Không thời hạn")
+                                        </div>
+                                        <div class="muted-small">
+                                            @(v.NgayKetThuc.HasValue ? (isExpired ? "Đã hết hạn" : "Còn hiệu lực") : "Luôn khả dụng")
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="@badgeClass">
+                                            <span class="dot"></span> @statusText
+                                        </span>
+                                    </td>
+
+                                    <td class="text-end pe-4">
+                                        @if (isReady)
+                                        {
+                                            <a asp-controller="Tours" asp-action="Index"
+                                               class="btn-pill btn-pill-primary"
+                                               style="padding:8px 12px; font-size:0.8rem;">
+                                                <i class="bi bi-bag-check"></i> Dùng ngay
+                                            </a>
+                                        }
+                                        else if (uv.IsUsed)
+                                        {
+                                            <span class="btn-pill btn-pill-neutral" style="padding:8px 12px; font-size:0.8rem; cursor:default;">
+                                                <i class="bi bi-check2"></i> Đã dùng
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="btn-pill btn-pill-danger" style="padding:8px 12px; font-size:0.8rem; cursor:default;">
+                                                <i class="bi bi-x-circle"></i> Hết hạn
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6">
+                                    <div class="state-box">
+                                        <i class="bi bi-wallet2"></i>
+                                        <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">
+                                            Ví voucher của bạn đang trống
+                                        </div>
+                                        <div class="muted-small mb-3">Săn ưu đãi để giảm giá khi đặt tour nhé.</div>
+                                        <a asp-action="Available" class="btn-pill btn-pill-primary">
+                                            <i class="bi bi-stars"></i> Khám phá ưu đãi
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        <!-- No result row (hidden by default) -->
+                        <tr id="noResultRow" style="display:none;">
+                            <td colspan="6">
+                                <div class="state-box">
+                                    <i class="bi bi-search"></i>
+                                    <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">
+                                        Không tìm thấy voucher phù hợp
+                                    </div>
+                                    <div class="muted-small">Thử đổi từ khóa hoặc đổi bộ lọc trạng thái.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- mini toast -->
+        <div class="mini-toast" id="miniToast">
+            <i class="bi bi-clipboard-check"></i> Đã copy mã voucher
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const searchInput = document.getElementById('voucherSearch');
+            const clearBtn = document.getElementById('clearSearch');
+            const chipsWrap = document.getElementById('statusChips');
+            const tbody = document.getElementById('voucherTbody');
+            const rows = () => Array.from(tbody.querySelectorAll('tr')).filter(r => r.id !== 'noResultRow');
+            const noRow = document.getElementById('noResultRow');
+            const toast = document.getElementById('miniToast');
+
+            let activeStatus = 'all';
+            let debounceTimer = null;
+
+            function showToast() {
+                if (!toast) return;
+                toast.style.display = 'inline-flex';
+                clearTimeout(showToast._t);
+                showToast._t = setTimeout(() => { toast.style.display = 'none'; }, 1100);
+            }
+
+            async function copyText(text) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast();
+                } catch (e) {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    showToast();
+                }
+            }
+
+            function applyFilter() {
+                const q = (searchInput.value || '').trim().toLowerCase();
+                let visibleCount = 0;
+
+                rows().forEach(tr => {
+                    const status = tr.getAttribute('data-status') || 'all';
+                    const text = (tr.textContent || '').toLowerCase();
+
+                    const okStatus = (activeStatus === 'all') || (status === activeStatus);
+                    const okSearch = !q || text.includes(q);
+
+                    const show = okStatus && okSearch;
+                    tr.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
+                });
+
+                const hasData = rows().length > 0 && rows().some(r => r.getAttribute('data-status'));
+                if (hasData) {
+                    noRow.style.display = (visibleCount === 0) ? '' : 'none';
+                }
+            }
+
+            function setActiveChip(el) {
+                Array.from(chipsWrap.querySelectorAll('.chip')).forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
+                activeStatus = el.getAttribute('data-status') || 'all';
+                applyFilter();
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(applyFilter, 150);
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    applyFilter();
+                    searchInput.focus();
+                });
+            }
+
+            if (chipsWrap) {
+                chipsWrap.addEventListener('click', function (e) {
+                    const chip = e.target.closest('.chip');
+                    if (!chip) return;
+                    setActiveChip(chip);
+                });
+            }
+
+            tbody.addEventListener('click', function (e) {
+                const box = e.target.closest('[data-copy]');
+                if (!box) return;
+                const code = box.getAttribute('data-copy');
+                if (code) copyText(code);
+            });
+
+            applyFilter();
+        })();
+    </script>
+}

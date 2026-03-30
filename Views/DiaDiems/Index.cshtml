@@ -1,0 +1,366 @@
+﻿@model IEnumerable<Tour_2040.Models.DiaDiem>
+
+@{
+    ViewData["Title"] = "Quản lý Địa điểm";
+    var search = Context.Request.Query["searchString"].ToString();
+    var total = Model.Count();
+    var activeCount = Model.Count(x => x.ConSuDung);
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --btn-grey: #f1f5f9;
+        --btn-grey-hover: #e2e8f0;
+        --primary-blue: #3a86ff;
+    }
+
+    /* Định dạng chung */
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    /* Thanh lọc & Tìm kiếm (Pill style) */
+    .pill-filter {
+        background: white;
+        border: var(--border-thin);
+        border-radius: 50px;
+        padding: 5px 15px;
+        display: flex;
+        align-items: center;
+        transition: border-color 0.3s;
+    }
+
+        .pill-filter:focus-within {
+            border-color: var(--primary-blue);
+        }
+
+    .search-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        width: 200px;
+        margin-left: 8px;
+    }
+
+    /* Thẻ KPI */
+    .kpi-card-flat {
+        border: var(--border-thin);
+        padding: 1.25rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        transition: transform 0.2s, border-color 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .kpi-card-flat:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-blue);
+        }
+
+    .icon-shape {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-system);
+        border: var(--border-thin);
+        font-size: 1.2rem;
+    }
+
+    /* Bảng Modern */
+    .table-container-flat {
+        border: var(--border-thin);
+        border-radius: 16px;
+        background: white;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: #fcfcfd;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            letter-spacing: 0.5px;
+        }
+
+        .table-modern td {
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover {
+            background-color: #f9fafb;
+        }
+
+    /* Badge & Button */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .btn-grey-sm {
+        background: var(--btn-grey);
+        border: var(--border-thin);
+        color: var(--text-muted);
+        padding: 5px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .btn-grey-sm:hover {
+            background: var(--btn-grey-hover);
+            color: var(--text-main);
+            border-color: #cbd5e1;
+        }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    @* --- HEADER SECTION --- *@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Quản lý Địa điểm</h4>
+            <p class="text-muted small mb-0">Danh mục các điểm đến du lịch và phân cấp hành chính</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <form method="get" class="pill-filter shadow-sm">
+                <i class="bi bi-search text-muted"></i>
+                <input type="text" name="searchString" class="search-input" placeholder="Tìm tên, mã, tỉnh..." value="@search">
+                <button type="submit" class="btn btn-link p-0 text-primary fw-bold text-decoration-none ms-2" style="font-size: 0.85rem;">Tìm</button>
+            </form>
+
+            <a asp-action="Create" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i> Tạo mới
+            </a>
+        </div>
+    </div>
+
+    @* --- KPI SECTION --- *@
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-primary"><i class="bi bi-geo-alt"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Tổng địa điểm</div>
+                    <div class="h5 fw-bold mb-0">@total</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="TinhThanhs" asp-action="Index" class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-warning"><i class="bi bi-building"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Quản lý</div>
+                    <div class="fw-bold">Tỉnh / Thành <i class="bi bi-chevron-right small ms-1"></i></div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="XaPhuongs" asp-action="Index" class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-success"><i class="bi bi-diagram-3"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Quản lý</div>
+                    <div class="fw-bold">Xã / Phường <i class="bi bi-chevron-right small ms-1"></i></div>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    @* --- AI QUICK CREATE SECTION --- *@
+    <div class="glass-bar rounded-4 p-3 mb-4 d-flex align-items-center gap-3">
+        <div class="text-warning fs-3"><i class="bi bi-stars"></i></div>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold m-0 text-primary">Tạo nhanh bằng AI</h6>
+            <div class="text-muted small">Nhập tên địa điểm, AI sẽ tự động tìm thông tin và tạo Tỉnh/Xã nếu chưa có.</div>
+        </div>
+        <div class="input-group" style="max-width: 400px;">
+            <input type="text" id="quickAiName" class="form-control border-end-0 rounded-start-pill ps-3" placeholder="VD: Tháp Bà Ponagar..." />
+            <button class="btn btn-warning text-white fw-bold rounded-end-pill px-4" id="btnQuickAi" onclick="runQuickAi()">
+                <i class="bi bi-magic me-1"></i> Tạo Ngay
+            </button>
+        </div>
+    </div>
+
+    @* --- TABLE SECTION --- *@
+    <div class="table-container-flat shadow-sm">
+        <div class="table-responsive">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Mã số</th>
+                        <th>Tên Địa Điểm & Địa Chỉ</th>
+                        <th>Vị Trí Hành Chính</th>
+                        <th>Trạng Thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            var tinh = item.XaPhuong?.TinhThanh?.TenTinh;
+                            var xa = item.XaPhuong?.TenXaPhuong;
+
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold text-primary font-monospace">#@item.MaDiaDiem</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@item.TenDiaDiem</div>
+                                    @if (!string.IsNullOrEmpty(item.DiaChiChiTiet))
+                                    {
+                                        <div class="text-muted small mt-1">
+                                            <i class="bi bi-pin-map me-1"></i>@item.DiaChiChiTiet
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="status-badge bg-primary bg-opacity-10 text-primary border-primary-subtle" style="width: fit-content; font-size: 0.7rem;">
+                                            <i class="bi bi-building me-1"></i>@(tinh ?? "---")
+                                        </span>
+                                        <span class="text-muted small ps-1">
+                                            <i class="bi bi-arrow-return-right me-1"></i>@(xa ?? "---")
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (item.ConSuDung)
+                                    {
+                                        <span class="status-badge bg-success bg-opacity-10 text-success border-success-subtle">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge bg-secondary bg-opacity-10 text-secondary border-secondary-subtle">Ngưng</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a asp-action="Details" asp-route-id="@item.MaDiaDiem" class="btn-grey-sm" title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.MaDiaDiem" class="btn-grey-sm" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.MaDiaDiem" class="btn-grey-sm text-danger"
+                                           onclick="return confirm('Bạn có chắc chắn muốn xóa địa điểm này?')" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+                                <p class="mb-0">Không tìm thấy dữ liệu địa điểm phù hợp.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* --- FOOTER / PAGINATION --- *@
+        <div class="d-flex justify-content-between align-items-center p-3 bg-white border-top">
+            <small class="text-muted fw-medium">Hiển thị @Model.Count() kết quả.</small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled"><a class="page-link border-0 bg-transparent text-muted" href="#"><i class="bi bi-chevron-left"></i></a></li>
+                    <li class="page-item active"><a class="page-link rounded-circle mx-1 border-0 shadow-sm" href="#" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">1</a></li>
+                    <li class="page-item"><a class="page-link rounded-circle mx-1 border-0" href="#" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">2</a></li>
+                    <li class="page-item"><a class="page-link border-0 bg-transparent text-primary" href="#"><i class="bi bi-chevron-right"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function runQuickAi() {
+            const input = document.getElementById('quickAiName');
+            const name = input?.value?.trim();
+            if(!name) { alert("Vui lòng nhập tên địa điểm!"); return; }
+
+            const btn = document.getElementById('btnQuickAi');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+            btn.disabled = true;
+            input.disabled = true;
+
+            try {
+                // Ensure CSRF token if needed, but for now assuming cookie auth is enough or allow anonymous if not strictly secured
+                // Best practice: Add RequestVerificationToken if controller requires it (DiaDiemsController usually does for POST)
+                // However, my API method didn't have [ValidateAntiForgeryToken]. I should check.
+                // It does NOT have it. So fetch is fine.
+                
+                const formData = new FormData();
+                formData.append('locationName', name);
+
+                const res = await fetch('/DiaDiems/AutoCreateLocation', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await res.json();
+                
+                if(data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+
+            } catch(e) {
+                console.error(e);
+                alert("Lỗi kết nối đến máy chủ.");
+            } finally {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+                input.disabled = false;
+                input.value = '';
+            }
+        }
+    </script>
+}

@@ -1,0 +1,316 @@
+﻿@model IEnumerable<Tour_2040.Models.NhanVien>
+
+@{
+    ViewData["Title"] = "Quản lý nhân viên";
+    var msg = TempData["Message"] as string;
+
+    // Tính toán số liệu thống kê nhanh (KPI)
+    var totalStaff = Model.Count();
+    var activeStaff = Model.Count(x => x.ConLamViec);
+    var inactiveStaff = totalStaff - activeStaff;
+}
+
+<style>
+    :root {
+        --bg-system: #F8F8FF;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-thin: 1px solid #e2e8f0;
+        --btn-grey: #f1f5f9;
+        --btn-grey-hover: #e2e8f0;
+        --primary-blue: #3a86ff;
+    }
+
+    /* Định dạng chung */
+    body {
+        background-color: var(--bg-system) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-main);
+    }
+
+    /* Thanh lọc & Tìm kiếm (pill-filter) */
+    .pill-filter {
+        background: white;
+        border: var(--border-thin);
+        border-radius: 50px;
+        padding: 5px 15px;
+        display: flex;
+        align-items: center;
+        transition: border-color 0.3s;
+    }
+
+        .pill-filter:focus-within {
+            border-color: var(--primary-blue);
+        }
+
+    .search-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        width: 200px;
+        margin-left: 8px;
+    }
+
+    /* Thẻ KPI - Modern Flat */
+    .kpi-card-flat {
+        border: var(--border-thin);
+        padding: 1.25rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        background: white;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+
+        .kpi-card-flat:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-system);
+        border: var(--border-thin);
+        font-size: 1.25rem;
+    }
+
+    /* Bảng Modern */
+    .table-container-flat {
+        border: var(--border-thin);
+        border-radius: 16px;
+        background: white;
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table-modern thead th {
+            background: #fcfcfd;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            letter-spacing: 0.5px;
+        }
+
+        .table-modern td {
+            padding: 1rem;
+            border-bottom: var(--border-thin);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover {
+            background-color: #f9fafb;
+        }
+
+    /* Avatar & Badge */
+    .avatar-xs {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: var(--border-thin);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .btn-grey-sm {
+        background: var(--btn-grey);
+        border: var(--border-thin);
+        color: var(--text-muted);
+        padding: 5px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .btn-grey-sm:hover {
+            background: var(--btn-grey-hover);
+            color: var(--text-main);
+            border-color: #cbd5e1;
+        }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    @* --- HEADER SECTION --- *@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Quản lý nhân sự</h4>
+            <p class="text-muted small mb-0">Điều hành danh sách và quyền hạn nhân viên hệ thống</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="pill-filter shadow-sm">
+                <i class="bi bi-search text-muted"></i>
+                <input type="text" id="staffSearch" class="search-input" placeholder="Tìm tên, mã, email...">
+            </div>
+
+            <a asp-action="ChonUser" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="bi bi-person-plus-fill me-1"></i> Thêm nhân viên
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(msg))
+    {
+        <div class="alert bg-white border-success-subtle text-success border rounded-3 px-4 mb-4 shadow-sm small d-flex align-items-center">
+            <i class="bi bi-check-circle-fill me-2"></i> @msg
+            <button type="button" class="btn-close ms-auto small" data-bs-alert="dismiss" style="font-size: 0.6rem;"></button>
+        </div>
+    }
+
+    @* --- KPI SECTION --- *@
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-primary"><i class="bi bi-person-badge"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Tổng nhân sự</div>
+                    <div class="h5 fw-bold mb-0">@totalStaff</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-success"><i class="bi bi-briefcase"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Đang làm việc</div>
+                    <div class="h5 fw-bold mb-0">@activeStaff</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card-flat shadow-sm">
+                <div class="icon-shape text-secondary"><i class="bi bi-person-x"></i></div>
+                <div>
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Đã nghỉ việc</div>
+                    <div class="h5 fw-bold mb-0">@inactiveStaff</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- TABLE SECTION --- *@
+    <div class="table-container-flat shadow-sm">
+        <div class="table-responsive">
+            <table class="table-modern" id="staffTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Thông tin nhân viên</th>
+                        <th>Liên hệ</th>
+                        <th>Chức vụ</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var nv in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar-xs text-primary border">
+                                            @((nv.HoTen?.Substring(0, 1) ?? "N").ToUpper())
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@nv.HoTen</div>
+                                            <div class="text-muted font-monospace" style="font-size: 0.7rem;">#@nv.MaNhanVien</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="small fw-medium text-dark"><i class="bi bi-envelope me-1 text-muted"></i>@nv.Email</span>
+                                        <span class="small text-muted"><i class="bi bi-telephone me-1 text-muted"></i>@nv.SoDienThoai</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge bg-light text-dark border-secondary-subtle">@nv.ChucVu</span>
+                                </td>
+                                <td>
+                                    @if (nv.ConLamViec)
+                                    {
+                                        <span class="status-badge bg-success bg-opacity-10 text-success border-success-subtle">Đang làm việc</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge bg-secondary bg-opacity-10 text-secondary border-secondary-subtle">Đã nghỉ việc</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a asp-action="Edit" asp-route-id="@nv.MaNhanVien" class="btn-grey-sm" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@nv.MaNhanVien" method="post" onsubmit="return confirm('Xác nhận xóa nhân viên này khỏi danh sách?');">
+                                            <button type="submit" class="btn-grey-sm text-danger" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-1 d-block mb-3 opacity-25"></i>
+                                <p class="mb-0">Hiện chưa có dữ liệu nhân sự trên hệ thống.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Tìm kiếm nhanh Client-side
+        document.getElementById('staffSearch').addEventListener('keyup', function() {
+            var input = this.value.toLowerCase();
+            var rows = document.querySelectorAll('#staffTable tbody tr');
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                row.style.display = text.indexOf(input) > -1 ? '' : 'none';
+            });
+        });
+    </script>
+}

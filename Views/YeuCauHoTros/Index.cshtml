@@ -1,0 +1,884 @@
+﻿@*
+Folder: Views/YeuCauHoTro
+FilePath: Views/YeuCauHoTro/Index.cshtml
+FileName: Index.cshtml
+Method/Class/View: YeuCauHoTro - Index
+Label: A,B,C
+Desc:
+A) Tách UI Admin/Staff và User (User giống Voucher style)
+B) Thêm chips lọc trạng thái + search client-side + no-result
+C) Badge trạng thái + nút pill theo quy ước màu dự án
+*@
+
+@model IEnumerable<Tour_2040.Models.YeuCauHoTro>
+@{
+    ViewData["Title"] = "Hỗ trợ khách hàng";
+    bool isManager = User.IsInRole("Admin") || User.IsInRole("Staff");
+
+    var list = Model?.ToList() ?? new List<Tour_2040.Models.YeuCauHoTro>();
+
+    // KPI
+    var total = list.Count;
+    var pending = list.Count(x => (x.TrangThai ?? "").Trim() == "Chờ xử lý");
+    var done = list.Count(x => (x.TrangThai ?? "").Trim() == "Đã phản hồi");
+    var processing = list.Count(x => (x.TrangThai ?? "").Trim() == "Đang xử lý");
+    var other = total - pending - done - processing;
+
+    string StatusKey(string? stRaw)
+    {
+        var st = (stRaw ?? "").Trim();
+        if (st == "Chờ xử lý") return "pending";
+        if (st == "Đang xử lý") return "processing";
+        if (st == "Đã phản hồi") return "done";
+        return "other";
+    }
+
+    (string css, string text) StatusBadge(string? stRaw)
+    {
+        var st = (stRaw ?? "").Trim();
+        if (st == "Chờ xử lý") return ("badge-yellow", "Chờ xử lý");
+        if (st == "Đang xử lý") return ("badge-blue", "Đang xử lý");
+        if (st == "Đã phản hồi") return ("badge-green", "Đã phản hồi");
+        return ("badge-red", string.IsNullOrWhiteSpace(st) ? "Khác" : st);
+    }
+}
+
+<style>
+    :root {
+        --bg-system: #F7F8FF;
+        --card-bg: rgba(255,255,255,0.86);
+        --glass-border: 1px solid rgba(148,163,184,0.35);
+        --shadow-soft: 0 10px 30px rgba(2, 6, 23, 0.08);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --line: 1px solid rgba(226,232,240,0.9);
+        --primary-blue: #3a86ff; /* confirm */
+        --success-green: #22c55e; /* success */
+        --danger-red: #ef4444; /* danger */
+        --warning-yellow: #f59e0b; /* back */
+
+        --chip-bg: rgba(255,255,255,0.8);
+        --chip-bg-hover: rgba(255,255,255,0.95);
+        /* FIX: lề ngoài ổn định */
+        --outer-gutter: clamp(16px, 4vw, 72px);
+    }
+
+    body {
+        background: radial-gradient(1200px 500px at 20% 0%, rgba(58,134,255,0.12), transparent 60%), radial-gradient(900px 420px at 90% 10%, rgba(34,197,94,0.10), transparent 55%), radial-gradient(900px 420px at 70% 100%, rgba(245,158,11,0.12), transparent 55%), var(--bg-system) !important;
+        font-family: Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+        color: var(--text-main);
+    }
+
+    .page-shell {
+        width: 100%;
+        padding: 12px var(--outer-gutter);
+        box-sizing: border-box;
+    }
+
+    .page-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+    }
+
+    /* ===== Pill buttons (đúng quy ước dự án) ===== */
+    .btn-pill {
+        border-radius: 999px !important;
+        padding: 10px 14px;
+        font-weight: 800;
+        font-size: .85rem;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none !important;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .btn-pill:active {
+            transform: translateY(1px);
+        }
+
+    .btn-pill-primary {
+        background: rgba(58,134,255,0.12);
+        border-color: rgba(58,134,255,0.35);
+        color: #0b2a66 !important;
+    }
+
+        .btn-pill-primary:hover {
+            background: rgba(58,134,255,0.18);
+            box-shadow: 0 10px 18px rgba(58,134,255,0.14);
+        }
+
+    .btn-pill-neutral {
+        background: rgba(100,116,139,0.10);
+        border-color: rgba(100,116,139,0.25);
+        color: var(--text-main) !important;
+    }
+
+        .btn-pill-neutral:hover {
+            background: rgba(100,116,139,0.14);
+        }
+
+    /* ===== USER (Voucher style) ===== */
+    .glass-header {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        border-radius: 20px;
+        padding: 18px 18px;
+        backdrop-filter: blur(10px);
+    }
+
+    .title-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .hero-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(58,134,255,0.10);
+        border: var(--glass-border);
+    }
+
+    .subtitle {
+        margin: 2px 0 0 0;
+        color: var(--text-muted);
+        font-size: .9rem;
+    }
+
+    .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+    }
+
+    .search-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--chip-bg);
+        border: var(--glass-border);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 18px rgba(2,6,23,0.06);
+        min-width: 260px;
+    }
+
+        .search-pill input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 260px;
+            max-width: 65vw;
+            font-size: .9rem;
+            color: var(--text-main);
+        }
+
+    .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .chip {
+        border-radius: 999px;
+        padding: 8px 12px;
+        border: var(--glass-border);
+        background: var(--chip-bg);
+        font-weight: 800;
+        font-size: .78rem;
+        color: var(--text-main);
+        cursor: pointer;
+        transition: background .15s ease, transform .15s ease, border-color .15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .chip:hover {
+            background: var(--chip-bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .chip.active {
+            border-color: rgba(58,134,255,0.45);
+            background: rgba(58,134,255,0.12);
+            color: #0b2a66;
+        }
+
+        .chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: rgba(100,116,139,0.75);
+        }
+
+        .chip.dot-yellow .dot {
+            background: rgba(245,158,11,0.95);
+        }
+
+        .chip.dot-blue .dot {
+            background: rgba(58,134,255,0.9);
+        }
+
+        .chip.dot-green .dot {
+            background: rgba(34,197,94,0.9);
+        }
+
+        .chip.dot-red .dot {
+            background: rgba(239,68,68,0.9);
+        }
+
+        .chip.dot-gray .dot {
+            background: rgba(100,116,139,0.85);
+        }
+
+    .kpi-grid {
+        margin-top: 14px;
+    }
+
+    .kpi-card {
+        background: var(--card-bg);
+        border: var(--glass-border);
+        border-radius: 18px;
+        padding: 16px 16px;
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        backdrop-filter: blur(10px);
+        height: 100%;
+        transition: transform .15s ease, border-color .15s ease;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(58,134,255,0.40);
+        }
+
+    .kpi-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        border: var(--glass-border);
+    }
+
+        .kpi-icon.blue {
+            background: rgba(58,134,255,0.10);
+            color: var(--primary-blue);
+        }
+
+        .kpi-icon.green {
+            background: rgba(34,197,94,0.10);
+            color: var(--success-green);
+        }
+
+        .kpi-icon.yellow {
+            background: rgba(245,158,11,0.12);
+            color: var(--warning-yellow);
+        }
+
+    .kpi-meta .label {
+        color: var(--text-muted);
+        font-size: .72rem;
+        font-weight: 900;
+        letter-spacing: .6px;
+    }
+
+    .kpi-meta .value {
+        font-size: 1.35rem;
+        font-weight: 900;
+        margin-top: 2px;
+        letter-spacing: -.3px;
+    }
+
+    .table-shell {
+        margin-top: 14px;
+        background: var(--card-bg);
+        border: var(--glass-border);
+        border-radius: 20px;
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+        .table-modern thead th {
+            background: rgba(255,255,255,0.92);
+            font-size: .72rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 14px 14px;
+            border-bottom: var(--line);
+            letter-spacing: .6px;
+        }
+
+        .table-modern td {
+            padding: 14px 14px;
+            border-bottom: var(--line);
+            font-size: .92rem;
+            vertical-align: middle;
+        }
+
+        .table-modern tr:hover td {
+            background: rgba(2,6,23,0.02);
+        }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: .76rem;
+        font-weight: 900;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+    .badge-yellow {
+        background: rgba(245,158,11,0.12);
+        border-color: rgba(245,158,11,0.30);
+        color: #5a3a07;
+    }
+
+        .badge-yellow .dot {
+            background: rgba(245,158,11,0.95);
+        }
+
+    .badge-blue {
+        background: rgba(58,134,255,0.12);
+        border-color: rgba(58,134,255,0.30);
+        color: #0b2a66;
+    }
+
+        .badge-blue .dot {
+            background: rgba(58,134,255,0.9);
+        }
+
+    .badge-green {
+        background: rgba(34,197,94,0.10);
+        border-color: rgba(34,197,94,0.30);
+        color: #14532d;
+    }
+
+        .badge-green .dot {
+            background: rgba(34,197,94,0.9);
+        }
+
+    .badge-red {
+        background: rgba(239,68,68,0.10);
+        border-color: rgba(239,68,68,0.30);
+        color: #7f1d1d;
+    }
+
+        .badge-red .dot {
+            background: rgba(239,68,68,0.9);
+        }
+
+    .avatar-xs {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: .75rem;
+        border: var(--line);
+        background: rgba(255,255,255,0.8);
+    }
+
+    .state-box {
+        padding: 44px 18px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+        .state-box i {
+            font-size: 2.4rem;
+            opacity: .25;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+    /* ===== ADMIN (flat quản trị, khác hẳn user) ===== */
+    .admin-head {
+        background: rgba(255,255,255,0.92);
+        border: var(--line);
+        border-radius: 18px;
+        padding: 16px 16px;
+        box-shadow: 0 10px 26px rgba(2,6,23,0.06);
+    }
+
+    .admin-sub {
+        color: var(--text-muted);
+        font-size: .92rem;
+    }
+
+    .admin-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: var(--line);
+        border-radius: 14px;
+        padding: 10px 12px;
+        min-width: 280px;
+    }
+
+        .admin-search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 240px;
+            max-width: 60vw;
+            font-size: .9rem;
+            color: var(--text-main);
+        }
+
+    .kpi-flat {
+        border: var(--line);
+        padding: 1.15rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #fff;
+        transition: transform .2s, border-color .2s;
+    }
+
+        .kpi-flat:hover {
+            transform: translateY(-3px);
+            border-color: rgba(58,134,255,0.35);
+        }
+
+    .icon-flat {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-system);
+        border: var(--line);
+    }
+
+    .table-flat {
+        margin-top: 12px;
+        background: #fff;
+        border: var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 26px rgba(2,6,23,0.06);
+    }
+
+    @@media (max-width: 768px) {
+        .search-pill {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .search-pill input {
+                width: 100%;
+            }
+
+        .toolbar {
+            justify-content: stretch;
+        }
+
+        .admin-search {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .admin-search input {
+                width: 100%;
+            }
+
+        .page-shell {
+            padding: 12px 16px;
+        }
+    }
+</style>
+
+<div class="page-shell">
+    <div class="page-wrap animate__animated animate__fadeIn">
+
+        @* ====================== ADMIN / STAFF ====================== *@
+        @if (isManager)
+        {
+            <div class="admin-head">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="hero-icon" style="background: rgba(245,158,11,0.10);">
+                            <i class="bi bi-headset text-warning"></i>
+                        </div>
+                        <div>
+                            <h4 class="m-0 fw-bold">Quản lý Hỗ trợ</h4>
+                            <div class="admin-sub">Tiếp nhận, phân loại và phản hồi yêu cầu của khách hàng.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div class="admin-search">
+                            <i class="bi bi-search text-muted"></i>
+                            <input type="text" id="adminSearch" placeholder="Tìm mã số, chủ đề, người gửi..." autocomplete="off">
+                            <span id="adminClear" class="btn-pill btn-pill-neutral" style="padding:6px 10px; font-size:0.78rem;">
+                                <i class="bi bi-x-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-3" id="adminChips">
+                    <span class="chip active dot-blue" data-status="all"><span class="dot"></span> Tất cả (@total)</span>
+                    <span class="chip dot-yellow" data-status="pending"><span class="dot"></span> Chờ xử lý (@pending)</span>
+                    <span class="chip dot-blue" data-status="processing"><span class="dot"></span> Đang xử lý (@processing)</span>
+                    <span class="chip dot-green" data-status="done"><span class="dot"></span> Đã phản hồi (@done)</span>
+                    <span class="chip dot-red" data-status="other"><span class="dot"></span> Khác (@other)</span>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-3">
+                <div class="col-md-3">
+                    <div class="kpi-flat">
+                        <div class="icon-flat text-primary"><i class="bi bi-inbox-fill"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">TỔNG PHIẾU</div>
+                            <div class="h5 fw-bold mb-0">@total</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-flat">
+                        <div class="icon-flat text-warning"><i class="bi bi-hourglass-split"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">CHỜ XỬ LÝ</div>
+                            <div class="h5 fw-bold mb-0">@pending</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-flat">
+                        <div class="icon-flat text-info"><i class="bi bi-person-badge"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">ĐANG XỬ LÝ</div>
+                            <div class="h5 fw-bold mb-0">@processing</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-flat">
+                        <div class="icon-flat text-success"><i class="bi bi-shield-check"></i></div>
+                        <div>
+                            <div class="small text-muted fw-bold">HOÀN TẤT</div>
+                            <div class="h5 fw-bold mb-0">@done</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-flat">
+                <div class="table-responsive">
+                    <table class="table-modern" id="adminTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Mã số</th>
+                                <th>Người gửi</th>
+                                <th>Chủ đề & Thời gian</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (list.Any())
+                            {
+                                foreach (var item in list.OrderByDescending(x => x.NgayGui))
+                                {
+                                    var userName = item.User?.HoTen ?? "Khách hàng";
+                                    var avatarChar = userName.Substring(0, 1).ToUpper();
+                                    var key = StatusKey(item.TrangThai);
+                                    var (bCls, bText) = StatusBadge(item.TrangThai);
+
+                                    <tr data-status="@key">
+                                        <td class="ps-4">
+                                            <span class="fw-bold text-primary font-monospace">#@item.MaYeuCauHoTro</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-xs text-secondary">@avatarChar</div>
+                                                <div>
+                                                    <div class="fw-semibold text-dark">@userName</div>
+                                                    <div class="text-muted small" style="font-size:0.75rem;">@item.User?.Email</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-dark">@item.ChuDe</div>
+                                            <div class="text-muted small">
+                                                <i class="bi bi-clock me-1"></i>@item.NgayGui.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="status-badge @bCls"><span class="dot"></span> @bText</span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <a asp-action="Chat" asp-route-id="@item.MaYeuCauHoTro" class="btn-pill btn-pill-primary" style="padding:8px 12px; font-size:0.8rem;">
+                                                Phản hồi <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="state-box">
+                                            <i class="bi bi-chat-dots"></i>
+                                            <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">Chưa có yêu cầu hỗ trợ</div>
+                                            <div class="text-muted small">Dữ liệu sẽ xuất hiện khi khách gửi ticket.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+
+                            <tr id="adminNoRow" style="display:none;">
+                                <td colspan="5">
+                                    <div class="state-box">
+                                        <i class="bi bi-search"></i>
+                                        <div class="fw-bold" style="color: var(--text-main); font-size:1.05rem;">Không có kết quả</div>
+                                        <div class="text-muted small">Thử đổi từ khóa hoặc chip lọc.</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ====================== USER (Voucher style) ====================== *@
+        else
+        {
+            <div class="glass-header">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                    <div class="title-hero">
+                        <div class="hero-icon">
+                            <i class="bi bi-chat-square-dots text-primary"></i>
+                        </div>
+                        <div>
+                            <h4 class="m-0 fw-bold">Yêu cầu hỗ trợ của tôi</h4>
+                            <p class="subtitle">Gửi yêu cầu, theo dõi xử lý và xem phản hồi nhanh.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <a asp-action="Create" class="btn-pill btn-pill-primary">
+                            <i class="bi bi-plus-lg"></i> Gửi yêu cầu
+                        </a>
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <div class="search-pill">
+                        <i class="bi bi-search text-muted"></i>
+                        <input type="text" id="userSearch" placeholder="Tìm mã số, chủ đề..." autocomplete="off">
+                        <span id="userClear" class="btn-pill btn-pill-neutral" style="padding:6px 10px; font-size:0.78rem;">
+                            <i class="bi bi-x-lg"></i>
+                        </span>
+                    </div>
+
+                    <div class="filter-chips" id="userChips">
+                        <span class="chip active dot-blue" data-status="all"><span class="dot"></span> Tất cả (@total)</span>
+                        <span class="chip dot-yellow" data-status="pending"><span class="dot"></span> Chờ xử lý (@pending)</span>
+                        <span class="chip dot-blue" data-status="processing"><span class="dot"></span> Đang xử lý (@processing)</span>
+                        <span class="chip dot-green" data-status="done"><span class="dot"></span> Đã phản hồi (@done)</span>
+                        <span class="chip dot-red" data-status="other"><span class="dot"></span> Khác (@other)</span>
+                    </div>
+                </div>
+
+                
+            </div>
+
+            <div class="table-shell">
+                <div class="table-responsive">
+                    <table class="table-modern" id="userTable">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Mã số</th>
+                                <th>Chủ đề & Thời gian</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (list.Any())
+                            {
+                                foreach (var item in list.OrderByDescending(x => x.NgayGui))
+                                {
+                                    var key = StatusKey(item.TrangThai);
+                                    var (bCls, bText) = StatusBadge(item.TrangThai);
+
+                                    <tr data-status="@key">
+                                        <td class="ps-4">
+                                            <span class="fw-bold text-primary font-monospace">#@item.MaYeuCauHoTro</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-dark">@item.ChuDe</div>
+                                            <div class="text-muted small">
+                                                <i class="bi bi-clock me-1"></i>@item.NgayGui.ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="status-badge @bCls"><span class="dot"></span> @bText</span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <a asp-action="Chat" asp-route-id="@item.MaYeuCauHoTro"
+                                               class="btn-pill btn-pill-primary" style="padding:8px 12px; font-size:0.8rem;">
+                                                Chi tiết <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="state-box">
+                                            <i class="bi bi-chat-dots"></i>
+                                            <div class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">Chưa có yêu cầu hỗ trợ</div>
+                                            <div class="text-muted small mb-3">Gửi ticket để được hỗ trợ nhanh nhé.</div>
+                                            <a asp-action="Create" class="btn-pill btn-pill-primary">
+                                                <i class="bi bi-plus-lg"></i> Gửi yêu cầu
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+
+                            <tr id="userNoRow" style="display:none;">
+                                <td colspan="4">
+                                    <div class="state-box">
+                                        <i class="bi bi-search"></i>
+                                        <div class="fw-bold" style="color: var(--text-main); font-size:1.05rem;">Không có kết quả</div>
+                                        <div class="text-muted small">Thử đổi từ khóa hoặc chip lọc.</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            function initFilter(tableId, searchId, clearId, chipsId, noRowId) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
+                const tbody = table.querySelector('tbody');
+                const search = document.getElementById(searchId);
+                const clearBtn = document.getElementById(clearId);
+                const chips = document.getElementById(chipsId);
+                const noRow = document.getElementById(noRowId);
+
+                let active = 'all';
+                let timer = null;
+
+                const rows = () => Array.from(tbody.querySelectorAll('tr')).filter(r => r.id !== noRowId);
+
+                function apply() {
+                    const q = (search?.value || '').trim().toLowerCase();
+                    let visible = 0;
+
+                    rows().forEach(tr => {
+                        const st = tr.getAttribute('data-status') || 'all';
+                        const text = (tr.textContent || '').toLowerCase();
+
+                        const okStatus = (active === 'all') || (st === active);
+                        const okSearch = !q || text.includes(q);
+
+                        const show = okStatus && okSearch;
+                        tr.style.display = show ? '' : 'none';
+                        if (show) visible++;
+                    });
+
+                    if (noRow) noRow.style.display = (visible === 0) ? '' : 'none';
+                }
+
+                if (search) {
+                    search.addEventListener('input', () => {
+                        clearTimeout(timer);
+                        timer = setTimeout(apply, 150);
+                    });
+                }
+
+                if (clearBtn && search) {
+                    clearBtn.addEventListener('click', () => {
+                        search.value = '';
+                        apply();
+                        search.focus();
+                    });
+                }
+
+                if (chips) {
+                    chips.addEventListener('click', (e) => {
+                        const chip = e.target.closest('.chip');
+                        if (!chip) return;
+
+                        chips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        active = chip.getAttribute('data-status') || 'all';
+                        apply();
+                    });
+                }
+
+                apply();
+            }
+
+            // Admin
+            initFilter('adminTable', 'adminSearch', 'adminClear', 'adminChips', 'adminNoRow');
+
+            // User
+            initFilter('userTable', 'userSearch', 'userClear', 'userChips', 'userNoRow');
+        })();
+    </script>
+}

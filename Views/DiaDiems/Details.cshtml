@@ -1,0 +1,156 @@
+﻿@model Tour_2040.Models.DiaDiem
+@{
+    ViewData["Title"] = "Chi tiết Địa Điểm";
+}
+<style>
+    :root {
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* Thanh kính tiêu đề */
+    .glass-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    /* Card form nhập liệu TO & RỘNG */
+    .form-card-lg {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid rgba(0,0,0,0.03);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        padding: 3rem;
+        height: 100%;
+    }
+
+    /* Table styles */
+    .table-elegant thead th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        padding: 1rem;
+        background: #f9fafb;
+    }
+
+    .table-elegant tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    /* Search Bar Input */
+    .search-input {
+        border-radius: 50px 0 0 50px;
+        padding-left: 20px;
+        border: 1px solid #e5e7eb;
+        border-right: none;
+    }
+
+    .search-btn {
+        border-radius: 0 50px 50px 0;
+        padding-right: 20px;
+        padding-left: 20px;
+        border: 1px solid #e5e7eb;
+        border-left: none;
+        background: white;
+    }
+</style>
+<div class="container py-5 animate__animated animate__fadeIn">
+
+    <div class="card glass-bar rounded-4 mb-4 p-4">
+        <div class="d-flex align-items-center gap-4">
+            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+                <i class="bi bi-info-lg fs-3"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Chi tiết Địa Điểm</h3>
+                <p class="text-muted mb-0 fs-5">Thông tin đầy đủ</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-card-lg">
+                <div class="row g-5">
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold mb-4 border-bottom pb-2">Thông tin chung</h5>
+
+                        <div class="mb-4">
+                            <label class="fw-bold text-muted small text-uppercase d-block mb-1">Mã Địa Điểm</label>
+                            <span class="fs-4 fw-bold font-monospace text-dark">@Model.MaDiaDiem</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="fw-bold text-muted small text-uppercase d-block mb-1">Tên Địa Điểm</label>
+                            <span class="fs-5 text-dark">@Model.TenDiaDiem</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="fw-bold text-muted small text-uppercase d-block mb-1">Trạng Thái</label>
+                            @if (Model.ConSuDung)
+                            {
+                                <span class="badge bg-success fs-6 rounded-pill px-3">Đang hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary fs-6 rounded-pill px-3">Ngưng hoạt động</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-primary fw-bold mb-4 border-bottom pb-2">Vị trí địa lý</h5>
+
+                        <div class="row g-4">
+                            <div class="col-6">
+                                <label class="fw-bold text-muted small text-uppercase d-block mb-1">Tỉnh / Thành phố</label>
+                                <span class="fs-5 fw-medium">@(Model.XaPhuong?.TinhThanh?.TenTinh ?? "---")</span>
+                            </div>
+                            <div class="col-6">
+                                <label class="fw-bold text-muted small text-uppercase d-block mb-1">Xã / Phường</label>
+                                <span class="fs-5 fw-medium">@(Model.XaPhuong?.TenXaPhuong ?? "---")</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="fw-bold text-muted small text-uppercase d-block mb-1">Địa chỉ chi tiết</label>
+                            <div class="p-3 bg-light rounded-3 border">
+                                <i class="bi bi-geo-alt me-2 text-danger"></i>
+                                <span class="fs-5">@(string.IsNullOrWhiteSpace(Model.DiaChiChiTiet) ? "Chưa cập nhật" : Model.DiaChiChiTiet)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h5 class="text-primary fw-bold mb-3 border-bottom pb-2">Mô tả chi tiết</h5>
+                    <div class="p-4 bg-light rounded-4 text-muted border border-light">
+                        @if (string.IsNullOrWhiteSpace(Model.MoTa))
+                        {
+                            <em class="text-muted">Không có mô tả cho địa điểm này.</em>
+                        }
+                        else
+                        {
+                            <span class="fs-5" style="white-space: pre-line;">@Model.MoTa</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-5 d-flex gap-3 pt-4 border-top">
+                    <a asp-action="Edit" asp-route-id="@Model.MaDiaDiem" class="btn btn-warning text-white btn-lg rounded-pill px-5 fw-bold shadow-sm">
+                        <i class="bi bi-pencil-square me-2"></i> Chỉnh sửa
+                    </a>
+                    <a asp-action="Index" class="btn btn-light btn-lg rounded-pill px-5 text-muted fw-medium border">
+                        Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

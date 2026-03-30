@@ -1,0 +1,143 @@
+﻿@* Folder: Views/DanhGiaTours
+   File path: Views/DanhGiaTours/Edit.cshtml
+   File name: Edit.cshtml
+   Labels: A(User edit), B(Star UI + upload ảnh), C(Soft theme)
+   Mô tả: Sửa đánh giá (owner).
+*@
+@model Tour_2040.Models.DanhGiaTourEditViewModel
+@{
+    ViewData["Title"] = "Cập nhật đánh giá";
+}
+<style>
+    :root {
+        --outer-gutter: clamp(10px, 2vw, 28px);
+        --bd: 1px solid rgba(226,232,240,.9);
+        --shadow: 0 18px 40px rgba(2,6,23,.08);
+        --r: 18px;
+    }
+
+    .page-shell {
+        padding: 12px var(--outer-gutter);
+    }
+
+    .cardx {
+        background: rgba(255,255,255,.9);
+        backdrop-filter: blur(12px);
+        border: var(--bd);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-pill {
+        border-radius: 999px !important;
+        font-weight: 900;
+        padding: .55rem 1rem;
+    }
+
+    .star-btn {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        border: var(--bd);
+        background: rgba(248,250,252,.8);
+        cursor: pointer;
+    }
+
+    .thumb {
+        width: 130px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 14px;
+        border: var(--bd);
+    }
+</style>
+
+<div class="page-shell">
+    <div class="cardx p-3 p-md-4 mx-auto" style="max-width: 980px;">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <div class="fw-bold fs-3">Cập nhật đánh giá</div>
+                <div class="text-muted">@Model.TenTourHoacLichTrinh</div>
+            </div>
+            <a asp-action="Create" asp-route-maLichTrinh="@Model.MaLichTrinh" class="btn btn-warning btn-pill">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data" class="row g-3">
+            <input type="hidden" asp-for="MaDanhGia" />
+            <input type="hidden" asp-for="MaLichTrinh" />
+            <input type="hidden" asp-for="SoSao" id="SoSaoInput" />
+
+            <div class="col-12">
+                <div class="fw-bold small text-muted mb-2">Chọn sao</div>
+                <div class="d-flex gap-2 flex-wrap">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <div class="star-btn star-edit" data-val="@i" title="@i sao">
+                            <i class="bi bi-star fs-4 text-muted"></i>
+                        </div>
+                    }
+                </div>
+                <span asp-validation-for="SoSao" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label class="fw-bold small text-muted mb-2">Bình luận</label>
+                <textarea asp-for="BinhLuan" class="form-control bg-light border-0 rounded-4 p-3" rows="4"></textarea>
+                <span asp-validation-for="BinhLuan" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label class="fw-bold small text-muted mb-2">Ảnh minh hoạ (tuỳ chọn)</label>
+                @if (!string.IsNullOrWhiteSpace(Model.HinhAnhUrl))
+                {
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <img src="@Model.HinhAnhUrl" class="thumb" alt="Ảnh hiện tại" />
+                        <div class="text-muted small">Ảnh hiện tại. Chọn ảnh mới để thay thế.</div>
+                    </div>
+                }
+                <input asp-for="TepHinhAnh" type="file" class="form-control rounded-pill" accept="image/*" />
+                <span asp-validation-for="TepHinhAnh" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary btn-pill px-4">
+                    <i class="bi bi-save2"></i> Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const stars = document.querySelectorAll('.star-edit');
+        const input = document.getElementById('SoSaoInput');
+
+        function paint(val){
+            stars.forEach(s=>{
+                const v = parseInt(s.dataset.val);
+                const icon = s.querySelector('i');
+                if(v <= val){
+                    icon.classList.remove('bi-star','text-muted');
+                    icon.classList.add('bi-star-fill','text-warning');
+                } else {
+                    icon.classList.remove('bi-star-fill','text-warning');
+                    icon.classList.add('bi-star','text-muted');
+                }
+            });
+        }
+        stars.forEach(s=>{
+            s.addEventListener('click', ()=>{
+                const val = parseInt(s.dataset.val);
+                input.value = val;
+                paint(val);
+            });
+        });
+        paint(parseInt(input.value || "5"));
+    </script>
+}

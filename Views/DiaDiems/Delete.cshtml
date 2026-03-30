@@ -1,0 +1,120 @@
+﻿@model Tour_2040.Models.DiaDiem
+@{
+    ViewData["Title"] = "Xóa Địa Điểm";
+}
+<style>
+    :root {
+        --primary: #4f46e5;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* Thanh kính tiêu đề */
+    .glass-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    /* Card form nhập liệu TO & RỘNG */
+    .form-card-lg {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid rgba(0,0,0,0.03);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        padding: 3rem;
+        height: 100%;
+    }
+
+    /* Table styles */
+    .table-elegant thead th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        padding: 1rem;
+        background: #f9fafb;
+    }
+
+    .table-elegant tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    /* Search Bar Input */
+    .search-input {
+        border-radius: 50px 0 0 50px;
+        padding-left: 20px;
+        border: 1px solid #e5e7eb;
+        border-right: none;
+    }
+
+    .search-btn {
+        border-radius: 0 50px 50px 0;
+        padding-right: 20px;
+        padding-left: 20px;
+        border: 1px solid #e5e7eb;
+        border-left: none;
+        background: white;
+    }
+</style>
+<div class="container py-5 animate__animated animate__fadeIn">
+
+    <div class="card glass-bar rounded-4 mb-4 p-4">
+        <div class="d-flex align-items-center gap-4">
+            <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px;">
+                <i class="bi bi-trash3 fs-3"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Xóa Địa Điểm</h3>
+                <p class="text-muted mb-0 fs-5">Xác nhận xóa dữ liệu khỏi hệ thống</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-card-lg text-center p-5">
+
+                <div class="mb-4">
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                        <i class="bi bi-exclamation-triangle-fill display-4"></i>
+                    </div>
+                    <h2 class="fw-bold text-danger mb-2">Bạn có chắc chắn muốn xóa?</h2>
+                    <p class="text-muted fs-5">Hành động này sẽ xóa địa điểm vĩnh viễn và không thể khôi phục.</p>
+                </div>
+
+                <div class="bg-light rounded-4 p-4 text-start mb-5 border mx-auto shadow-sm" style="max-width: 600px;">
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                        <span class="text-muted fw-bold text-uppercase small">Mã Địa Điểm</span>
+                        <span class="fs-5 fw-bold font-monospace text-dark">@Model.MaDiaDiem</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                        <span class="text-muted fw-bold text-uppercase small">Tên Địa Điểm</span>
+                        <span class="fs-5 fw-bold text-dark">@Model.TenDiaDiem</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted fw-bold text-uppercase small">Địa chỉ</span>
+                        <span class="fs-5 text-secondary text-end">@Model.DiaChiChiTiet</span>
+                    </div>
+                </div>
+
+                <form asp-action="Delete" method="post" class="d-grid gap-3 d-sm-flex justify-content-center">
+                    <input type="hidden" asp-for="MaDiaDiem" />
+
+                    <button type="submit" class="btn btn-danger btn-lg rounded-pill px-5 py-3 fw-bold shadow-sm fs-5">
+                        <i class="bi bi-trash-fill me-2"></i> Đồng ý xóa
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-light btn-lg rounded-pill px-5 py-3 text-muted fw-medium fs-5 border">
+                        Hủy bỏ
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

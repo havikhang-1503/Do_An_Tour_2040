@@ -1,0 +1,280 @@
+﻿@page
+@model Tour_2040.Areas.Identity.Pages.Account.Manage.IndexModel
+@{
+    ViewData["Title"] = "Bảng điều khiển quý tộc";
+}
+
+<style>
+    /* 1. Dashboard Grid Layout */
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: 1fr 3fr; /* 1 phần trái, 3 phần phải */
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    /* 2. Glassmorphism Card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 2.5rem;
+        padding: 2rem;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+
+    /* 3. Avatar Styles */
+    .avatar-wrapper {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 1.5rem;
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        background: var(--primary-indigo, #4f46e5);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        font-weight: 800;
+        box-shadow: 0 12px 25px rgba(79, 70, 229, 0.15);
+    }
+
+    .btn-camera {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: var(--primary-indigo, #4f46e5);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .btn-camera:hover {
+            transform: scale(1.1);
+            background: #312e81;
+        }
+
+    /* 4. SIDEBAR MENU STYLES (Phần em bị thiếu) */
+    .sidebar-menu .nav-link {
+        padding: 1rem 1.5rem;
+        border-radius: 1.5rem;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 0.5rem;
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+    }
+
+        /* Hiệu ứng khi Active hoặc Hover */
+        .sidebar-menu .nav-link.active,
+        .sidebar-menu .nav-link:hover {
+            background: white;
+            color: var(--primary-indigo, #4f46e5);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transform: translateX(5px); /* Đẩy nhẹ sang phải */
+            border-color: #e2e8f0;
+        }
+
+        /* Nút Đăng xuất màu đỏ */
+        .sidebar-menu .nav-link.text-danger:hover {
+            background: #fee2e2;
+            color: #dc2626 !important;
+            border-color: #fca5a5;
+        }
+
+    /* 5. Widgets Styles */
+    .widget-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .widget-full {
+        grid-column: span 2;
+    }
+
+    .widget-header {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .widget-header i {
+            color: var(--primary-indigo, #4f46e5);
+            font-size: 1.2rem;
+        }
+
+    .stat-box {
+        background: #f8fafc;
+        border-radius: 1.5rem;
+        padding: 1.2rem;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5 animate__animated animate__fadeIn">
+
+    <div class="dashboard-container">
+
+        <aside class="glass-card text-center d-flex flex-column">
+
+            <form id="avatar-form" method="post" enctype="multipart/form-data">
+                <div class="avatar-wrapper">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                    {
+                        <img src="@Model.ProfilePictureUrl" class="avatar-img" />
+                    }
+                    else
+                    {
+                        <div class="avatar-img">@((Model.Input.HoTen ?? Model.Username).Substring(0, 1).ToUpper())</div>
+                    }
+                    <label for="fileAvatar" class="btn-camera shadow"><i class="bi bi-camera-fill"></i></label>
+                    <input type="file" id="fileAvatar" name="Input.AvatarFile" class="d-none" onchange="document.getElementById('avatar-form').submit()" />
+                </div>
+            </form>
+
+            <h4 class="fw-bold text-dark mb-1">@Model.Input.HoTen</h4>
+            <p class="text-muted small mb-4">@Model.Username</p>
+
+            <div class="text-start border-top border-bottom py-4 mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small fw-bold text-muted text-uppercase">Mã ID</span>
+                    <span class="text-primary fw-bold">#@Model.MaNguoiDung</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small fw-bold text-muted text-uppercase">Hạng thẻ</span>
+                    <span class="badge bg-warning text-dark rounded-pill px-3"><i class="bi bi-star-fill me-1"></i>Vàng</span>
+                </div>
+            </div>
+
+            <div class="nav flex-column nav-pills sidebar-menu mt-auto">
+                <a class="nav-link active" asp-page="./Index">
+                    <i class="bi bi-grid-1x2-fill me-3"></i>Tổng quan hồ sơ
+                </a>
+                <a class="nav-link" asp-page="./ChangePassword">
+                    <i class="bi bi-shield-lock-fill me-3"></i>Đổi mật khẩu
+                </a>
+                <a class="nav-link" asp-page="./Email">
+                    <i class="bi bi-envelope-check-fill me-3"></i>Xác thực Email
+                </a>
+
+                <form id="logoutForm" class="mt-3 border-top pt-3" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                    <button type="submit" class="nav-link text-danger w-100 bg-transparent">
+                        <i class="bi bi-box-arrow-right me-3"></i>Đăng xuất
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="widget-container">
+
+            <div class="glass-card widget-full">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="widget-header mb-0"><i class="bi bi-pencil-square"></i> Cập nhật thông tin</div>
+                    <span class="badge bg-light text-muted border rounded-pill px-3">Lần cập nhật cuối: Hôm nay</span>
+                </div>
+
+                <form id="profile-form" method="post">
+                    <partial name="_StatusMessage" model="Model.StatusMessage" />
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label asp-for="Input.HoTen" class="small fw-bold text-muted mb-2 text-uppercase">Họ và tên</label>
+                            <input asp-for="Input.HoTen" class="form-control rounded-pill px-4 bg-light border-0 py-2" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.PhoneNumber" class="small fw-bold text-muted mb-2 text-uppercase">Số điện thoại</label>
+                            <input asp-for="Input.PhoneNumber" class="form-control rounded-pill px-4 bg-light border-0 py-2" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.CCCD" class="small fw-bold text-muted mb-2 text-uppercase">CCCD / Hộ chiếu</label>
+                            <input asp-for="Input.CCCD" class="form-control rounded-pill px-4 bg-light border-0 py-2" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.NgaySinh" class="small fw-bold text-muted mb-2 text-uppercase">Ngày sinh</label>
+                            <input asp-for="Input.NgaySinh" type="date" class="form-control rounded-pill px-4 bg-light border-0 py-2" />
+                        </div>
+                        <div class="col-12 text-end mt-2">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-lg">LƯU THAY ĐỔI</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="glass-card">
+                <div class="widget-header"><i class="bi bi-airplane-engines"></i> Thống kê tour</div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="stat-box">
+                            <div class="stat-value text-primary">08</div>
+                            <div class="small fw-bold text-muted">ĐÃ ĐI</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-box">
+                            <div class="stat-value text-success">02</div>
+                            <div class="small fw-bold text-muted">SẮP ĐI</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-top text-center">
+                    <a asp-controller="GiaoDiches" asp-action="Index" class="small fw-bold text-decoration-none">Xem lịch sử chi tiết <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="widget-header"><i class="bi bi-ticket-perforated"></i> Ví Voucher</div>
+
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-4 bg-indigo-subtle border border-primary-subtle mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary text-white p-2 rounded-circle shadow-sm"><i class="bi bi-gift-fill"></i></div>
+                        <div>
+                            <div class="fw-bold text-dark">VIP Member</div>
+                            <div class="small text-muted">Giảm 10% trọn đời</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info rounded-4 border-0 mb-0 py-2 px-3 small">
+                    <i class="bi bi-info-circle me-1"></i> Bạn có <strong>1 mã</strong> sắp hết hạn!
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
